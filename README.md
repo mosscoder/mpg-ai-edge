@@ -18,7 +18,6 @@ Additionally, there are two directories:
 
 ## Workflow
 
-The typical workflow likely involves:
 1.  Setting up the Jetson device with the necessary libraries and the DINOv2 model.
 2.  Connecting a camera and an RTK-enabled GNSS receiver to the Jetson.
 3.  Using the scripts to:
@@ -28,4 +27,3 @@ The typical workflow likely involves:
     *   Synchronize image timestamps with RTK data to geotag the images accurately.
     *   Store the results (e.g., geotagged images with inference overlays) in the `results/` directory.
 
-This project is suitable for applications requiring on-device AI processing with precise geospatial information, such as robotics-based surveying.
