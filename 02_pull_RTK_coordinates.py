@@ -1,1 +1,1 @@
-# This script is used to pull RTK coordinates from an GNSS receiver.
+# This script demonstrates how to pull RTK coordinates from an GNSS receiver.

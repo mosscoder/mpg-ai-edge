@@ -1,6 +1,6 @@
 # MPG Edge AI
 
-This project focuses on performing computer vision tasks, specifically image inference using the DINOv2 model, on a NVIDIA Jetson embedded device. A core feature of this project is the ability to precisely geotag captured images by synchronizing them with RTK (Real-Time Kinematic) GPS data.
+This project focuses on developing an AI edge device for environmental monitoring. Specifically, we conducte image inference using the DINOv2 model on a NVIDIA Jetson embedded device. A core feature of this project is the ability to precisely geotag captured images by synchronizing them with RTK (Real-Time Kinematic) GPS data.
 
 ## Project Structure
 

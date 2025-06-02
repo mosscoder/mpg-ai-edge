@@ -26,21 +26,19 @@ with torch.no_grad():
     model.eval()  # Set the model to evaluation mode
     outputs = model(**inputs)
 
-# Convert outputs to CPU and to list for JSON serialization
-outputs_cpu = {}
-for k, v in outputs.items():
-    if isinstance(v, torch.Tensor):
-        outputs_cpu[k] = v.cpu().tolist()
-    else:
-        outputs_cpu[k] = v
+# Extract the 768 features from the pooler_output
+pooler_output_tensor = outputs.pooler_output
+
+# Squeeze to remove the batch dimension (e.g., from (1, 768) to (768,)) then convert to CPU and list
+features_list = pooler_output_tensor.squeeze().cpu().tolist()
 
 # Create results directory if it doesn't exist
 results_dir = "results"
 os.makedirs(results_dir, exist_ok=True)
 
-# Save outputs to a JSON file
+# Save the extracted features to a JSON file
 output_file_path = os.path.join(results_dir, "offline_inference.json")
 with open(output_file_path, 'w') as f:
-    json.dump(outputs_cpu, f, indent=4)
+    json.dump(features_list, f, indent=4)
 
-print(f"Results saved to {output_file_path}")
+print(f"Extracted 768 features saved to {output_file_path}")

@@ -1,0 +1,1 @@
+# This script tests inference on a Jetson device using a live camera feed and DINOv2 (base) model.
