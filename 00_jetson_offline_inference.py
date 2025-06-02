@@ -9,7 +9,7 @@ from PIL import Image
 test_image_path = "data/raster/sample_images/bitterroots.jpg"
 
 # Ensure device is CUDA if available
-device = torch.device("mps")
+device = torch.device("cuda")
 print(f"Using device: {device}")
 
 # Load the DINOv2 model and processor
