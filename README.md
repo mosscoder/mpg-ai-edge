@@ -27,3 +27,144 @@ Additionally, there are two directories:
     *   Synchronize image timestamps with RTK data to geotag the images accurately.
     *   Store the results (e.g., geotagged images with inference overlays) in the `results/` directory.
 
+## Emlid-SparkFun Integration (Beta)
+
+This section provides entry-level instructions for setting up high-precision RTK GPS using an Emlid base station with a SparkFun GPS-RTK2 rover for centimeter-level accuracy.
+
+### Hardware Requirements
+
+**Base Station (Already Set Up):**
+- Emlid Reach RS2, RS+, or RS3 broadcasting RTK corrections
+- Note: This guide assumes your base station is already configured and broadcasting
+
+**Rover/Mobile Unit:**
+- SparkFun GPS-RTK2 Board (ZED-F9P chipset)
+- NVIDIA Jetson or computer with USB port
+- Internet connection for receiving corrections
+
+### Software Requirements
+
+Install required Python packages:
+```bash
+pip install pyserial
+```
+
+### Step 1: Get Base Station Information
+
+Since your Emlid base station is already broadcasting, you'll need these details from your base station operator:
+
+- **NTRIP Server**: Usually `caster.emlid.com`
+- **Port**: Typically `2101`
+- **Mountpoint**: Your specific base station identifier (e.g., `MyBase2024`)
+- **Username/Password**: Emlid account credentials for accessing the stream
+
+*Compatible with all Emlid Reach models: RS2, RS+, and RS3*
+
+### Step 2: Connect SparkFun GPS-RTK2
+
+1. **Physical Connection**
+   - Connect SparkFun GPS-RTK2 to your Jetson/computer via USB
+   - GPS module should appear as `/dev/ttyUSB0` (Linux) or similar
+   - Ensure clear sky view for GPS antenna
+
+2. **Verify Connection**
+   ```bash
+   # Check if device is detected
+   ls /dev/ttyUSB*
+   
+   # Should show something like /dev/ttyUSB0
+   ```
+
+### Step 3: Configure NTRIP Credentials
+
+Set up environment variables with your Emlid account details:
+
+```bash
+# Export your Emlid account credentials
+export EMLID_USERNAME="your_emlid_username"
+export EMLID_PASSWORD="your_emlid_password"
+export EMLID_MOUNTPOINT="MyBase2024"  # Your base station mountpoint
+
+# Optional: Custom NTRIP settings
+export EMLID_NTRIP_HOST="caster.emlid.com"
+export EMLID_NTRIP_PORT="2101"
+```
+
+### Step 4: Run RTK Coordinate Collection
+
+Execute the RTK coordinate script:
+
+```bash
+# Navigate to project directory
+cd /path/to/mpg-ai-edge
+
+# Run the RTK coordinate collection script
+python 02_pull_RTK_coordinates.py
+```
+
+### Expected Output
+
+The script will display real-time GPS coordinates with RTK corrections:
+
+```
+SparkFun RTK GPS Coordinate Puller with Emlid NTRIP Corrections
+Based on u-blox ZED-F9P protocols + Emlid RTCM corrections
+------------------------------------------------------------
+NTRIP Config: caster.emlid.com:2101/MyBase2024
+✓ Connected to Emlid NTRIP caster - receiving RTCM corrections
+Waiting for RTK fix with Emlid corrections...
+RTK Fixed achieved! Accuracy: 0.014m
+
+Pulling RTK coordinates with Emlid corrections (Ctrl+C to stop):
+Time        Latitude         Longitude        Altitude    Accuracy    Sats  Fix        RTCM
+14:32:45    40.12345678     -105.87654321    1542.34m    0.012m      14    RTK Fixed  ✓ RTK
+14:32:46    40.12345679     -105.87654320    1542.35m    0.011m      14    RTK Fixed  ✓ RTK
+```
+
+### Understanding the Output
+
+- **Fix Types**: No Fix → 2D Fix → 3D Fix → RTK Float → **RTK Fixed** (best)
+- **Accuracy**: Distance uncertainty in meters (lower = better)
+- **RTCM Status**: 
+  - `✓ RTK` - Receiving corrections, RTK fix active
+  - `⚡ CORR` - Receiving corrections, working toward RTK fix
+  - `✗ NONE` - No corrections available
+
+### Troubleshooting
+
+**GPS Module Not Found:**
+```bash
+# Check USB connections
+lsusb | grep -i gps
+
+# Try different USB port or cable
+# Check permissions: sudo chmod 666 /dev/ttyUSB0
+```
+
+**NTRIP Connection Failed:**
+- Verify internet connection
+- Check Emlid account credentials
+- Ensure base station is broadcasting
+- Confirm mountpoint name is correct
+
+**No RTK Fix:**
+- Wait 2-5 minutes for convergence
+- Ensure clear sky view (no buildings/trees blocking)
+- Check base station distance (should be < 20km)
+- Verify base station has good GPS reception
+
+**Poor Accuracy:**
+- RTK Fixed should give 1-5cm accuracy
+- RTK Float gives 10-50cm accuracy
+- Standard GPS gives 2-5m accuracy
+
+### Integration with Image Geotagging
+
+Once RTK coordinates are working, you can integrate with other scripts:
+
+```bash
+# Use RTK coordinates with image geotagging
+python 04_online_inference_and_geotag.py
+```
+
+This will capture images with centimeter-level GPS coordinates, enabling highly accurate environmental monitoring and mapping applications.
