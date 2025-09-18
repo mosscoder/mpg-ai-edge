@@ -11,3 +11,5 @@ dependencies:
       - pillow
       - opencv-python
       - ultralytics
+      - pyserial
+      - pynmea2

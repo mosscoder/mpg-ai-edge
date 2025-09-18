@@ -1,0 +1,17 @@
+# Logs
+logs/
+*.log
+*.swp
+
+# Output runs
+runs/
+
+# Model files
+*.pt
+*.pth
+*.whl
+
+# Other temp artifacts
+results/
+mapping.txt
+

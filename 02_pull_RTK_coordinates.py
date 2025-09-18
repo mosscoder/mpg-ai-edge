@@ -27,7 +27,7 @@ Software Requirements:
 
 import time
 import sys
-import serial
+import serial, pynmea2
 import struct
 import socket
 import base64
@@ -125,7 +125,7 @@ class EmlidNTRIPClient:
             f"User-Agent: EmlidRTKClient/1.0\r\n"
             f"Authorization: Basic {auth_header}\r\n"
             f"Accept: */*\r\n"
-            f"Connection: close\r\n"
+            f"Connection: keep-alive\r\n"
             f"\r\n"
         )
         
@@ -230,8 +230,38 @@ class UBloxRTKGPS:
     UBX_CFG_CLASS = 0x06
     UBX_CFG_RATE = 0x08     # Navigation rate
     UBX_CFG_PRT = 0x00      # Port configuration
-    
-    def __init__(self, port: str = '/dev/ttyUSB0', baudrate: int = 38400):
+
+    def get_nmea_position(self) -> Optional[RTKPosition]:
+        """Read position from NMEA $GNGGA sentences"""
+        if not self.serial_conn:
+            logger.error("GPS not connected")
+            return None
+
+        line = self.serial_conn.readline().decode('ascii', errors='replace')
+        if not line.startswith('$GNGGA'):
+            return None
+
+        try:
+            msg = pynmea2.parse(line)
+            if int(msg.gps_qual) == 0:
+                return None  # no fix
+
+            return RTKPosition(
+                latitude=msg.latitude,
+                longitude=msg.longitude,
+                altitude=float(msg.altitude),
+                accuracy_horizontal=float(msg.horizontal_dil),
+                accuracy_vertical=float(msg.altitude),  # NMEA doesn’t provide vertical accuracy
+                fix_type=int(msg.gps_qual),
+                satellites_used=int(msg.num_sats),
+                timestamp=time.time()
+            )
+        except Exception as e:
+            logger.error(f"NMEA parse error: {e}")
+            return None
+
+        
+    def __init__(self, port: str = '/dev/ttyACM0', baudrate: int = 38400):
         """
         Initialize RTK GPS connection
         
@@ -290,7 +320,7 @@ class UBloxRTKGPS:
         message = bytes([self.UBX_SYNC_CHAR1, self.UBX_SYNC_CHAR2])
         
         # Class, ID, Length
-        header = struct.pack('<BBHH', msg_class, msg_id, len(payload))
+        header = struct.pack('<BBH', msg_class, msg_id, len(payload))
         message += header
         message += payload
         
@@ -303,42 +333,47 @@ class UBloxRTKGPS:
         
         self.serial_conn.write(message)
         self.serial_conn.flush()
-    
-    def _read_ubx_message(self, timeout: float = 5.0) -> Optional[bytes]:
-        """Read and validate UBX message"""
+        
+    def _read_ubx_message(self, timeout: float = 2.0) -> Optional[bytes]:
         if not self.serial_conn:
             return None
-            
-        start_time = time.time()
-        
-        while (time.time() - start_time) < timeout:
-            # Look for sync characters
-            if self.serial_conn.read(1) == bytes([self.UBX_SYNC_CHAR1]):
-                if self.serial_conn.read(1) == bytes([self.UBX_SYNC_CHAR2]):
-                    # Read header (class, id, length)
-                    header = self.serial_conn.read(4)
-                    if len(header) != 4:
-                        continue
-                        
-                    msg_class, msg_id, length = struct.unpack('<BBH', header)
-                    
-                    # Read payload and checksum
-                    payload = self.serial_conn.read(length)
-                    checksum = self.serial_conn.read(2)
-                    
-                    if len(payload) != length or len(checksum) != 2:
-                        continue
-                    
-                    # Verify checksum
-                    checksum_a = checksum_b = 0
-                    for byte in header + payload:
-                        checksum_a = (checksum_a + byte) & 0xFF
-                        checksum_b = (checksum_b + checksum_a) & 0xFF
-                    
-                    if checksum == bytes([checksum_a, checksum_b]):
-                        return bytes([msg_class, msg_id]) + payload
-        
+
+        end = time.time() + timeout
+        while time.time() < end:
+            # find sync chars 0xB5 0x62
+            b = self.serial_conn.read(1)
+            if b != b'\xB5':
+                continue
+            if self.serial_conn.read(1) != b'\x62':
+                continue
+
+            # header: class, id, length(2)
+            hdr = self._read_exact(4, timeout=0.2)
+            if not hdr:
+                continue
+            msg_class, msg_id, length = struct.unpack('<BBH', hdr)
+
+            payload = self._read_exact(length, timeout=0.5)
+            if not payload:
+                continue
+
+            ck = self._read_exact(2, timeout=0.2)
+            if not ck:
+                continue
+
+            # verify checksum
+            ca = cb = 0
+            for byte in hdr + payload:
+                ca = (ca + byte) & 0xFF
+                cb = (cb + ca) & 0xFF
+            if ck != bytes([ca, cb]):
+                # bad frame, skip
+                continue
+
+            return bytes([msg_class, msg_id]) + payload
+
         return None
+
     
     def get_rtk_position(self, high_precision: bool = True) -> Optional[RTKPosition]:
         """
@@ -378,89 +413,121 @@ class UBloxRTKGPS:
     def _parse_position_message(self, payload: bytes, high_precision: bool) -> Optional[RTKPosition]:
         """Parse UBX position message"""
         try:
-            if high_precision and len(payload) >= 36:
-                # UBX-NAV-HPPOSLLH format
-                version, reserved1, iTOW, lon, lat, height, hMSL = struct.unpack('<BBIIIII', payload[:24])
-                lonHp, latHp, heightHp, hMSLHp = struct.unpack('<bbbb', payload[24:28])
-                hAcc, vAcc = struct.unpack('<II', payload[28:36])
-                
-                # Convert to degrees with high precision
-                longitude = (lon * 1e-7) + (lonHp * 1e-9)
-                latitude = (lat * 1e-7) + (latHp * 1e-9)
-                altitude = (height * 1e-3) + (heightHp * 1e-4)
-                
-                # Accuracy in meters
+            if high_precision and len(payload) >= 34:
+                # UBX-NAV-HPPOSLLH (usually 34 bytes; sometimes 36 depending on FW)
+                version, flags, iTOW, lon, lat, height, hMSL = struct.unpack('<BBIiiii', payload[:22])
+                lonHp, latHp, heightHp, hMSLHp = struct.unpack('<bbbb', payload[22:26])
+                hAcc, vAcc = struct.unpack('<II', payload[26:34])
+
+                longitude = lon * 1e-7 + lonHp * 1e-9
+                latitude  = lat * 1e-7 + latHp * 1e-9
+                altitude  = height * 1e-3 + heightHp * 1e-4  # mm + 0.1 mm
+
                 h_accuracy = hAcc * 1e-4
                 v_accuracy = vAcc * 1e-4
+
+                # HPPOSLLH doesn’t include RTK status or satellites; reuse last NAV-PVT if available
+                fix_type = self.last_position.fix_type if self.last_position else 3
+                satellites = self.last_position.satellites_used if self.last_position else 0
+
+                position = RTKPosition(
+                    latitude=latitude,
+                    longitude=longitude,
+                    altitude=altitude,
+                    accuracy_horizontal=h_accuracy,
+                    accuracy_vertical=v_accuracy,
+                    fix_type=fix_type,
+                    satellites_used=satellites,
+                    timestamp=time.time()
+                )
+                self.last_position = position
+                return position
+
                 
-                fix_type = 3  # High precision RTK
-                satellites = 12  # Estimated for RTK
-                
-            elif len(payload) >= 84:
-                # UBX-NAV-PVT format
+            elif len(payload) >= 92:
+                # UBX-NAV-PVT (see Interface Description)
+                # Offsets:
+                #  0  iTOW (U4)
+                #  4  year (U2) 6:month(U1) 7:day(U1) 8:hour(U1) 9:min(U1) 10:sec(U1) 11:valid(X1)
+                # 12 tAcc(U4) 16 nano(I4) 20 fixType(U1) 21 flags(X1) 22 flags2(X1) 23 numSV(U1)
+                # 24 lon(I4) 28 lat(I4) 32 height(I4) 36 hMSL(I4)
+                # 40 hAcc(U4) 44 vAcc(U4) ... (more fields after this we don't need here)
                 iTOW, year, month, day, hour, minute, second, valid = struct.unpack('<IHBBBBBB', payload[:12])
                 tAcc, nano, fixType, flags, flags2, numSV = struct.unpack('<IBIBBB', payload[12:24])
                 lon, lat, height, hMSL = struct.unpack('<iiii', payload[24:40])
                 hAcc, vAcc = struct.unpack('<II', payload[40:48])
-                
-                # Convert to degrees
+
                 longitude = lon * 1e-7
-                latitude = lat * 1e-7
-                altitude = height * 1e-3
-                
-                # Accuracy in meters
+                latitude  = lat * 1e-7
+                altitude  = height * 1e-3
                 h_accuracy = hAcc * 1e-3
                 v_accuracy = vAcc * 1e-3
-                
-                fix_type = fixType
-                satellites = numSV
-            else:
-                logger.error("Invalid payload length")
-                return None
-            
-            position = RTKPosition(
-                latitude=latitude,
-                longitude=longitude,
-                altitude=altitude,
-                accuracy_horizontal=h_accuracy,
-                accuracy_vertical=v_accuracy,
-                fix_type=fix_type,
-                satellites_used=satellites,
-                timestamp=time.time()
-            )
-            
-            self.last_position = position
-            return position
+
+                # RTK status from flags2.carrSoln (bits 6-7 in older docs; use &0b11 on carrSoln field)
+                carrSoln = (flags2 >> 6) & 0x03 if False else (flags2 & 0x03)  # many firmwares place it in lower bits; try low 2 first
+                # safer approach: carrSoln usually low 2 bits in recent firmwares
+                carrSoln = flags2 & 0x03
+
+                # Keep fixType for GNSS/DR classification, but compute rtk_fix_type for display
+                rtk_fix_type = {0: 0, 1: 5, 2: 6}.get(carrSoln, 0)  # 0 none, 5 float, 6 fixed
+
+                position = RTKPosition(
+                    latitude=latitude,
+                    longitude=longitude,
+                    altitude=altitude,
+                    accuracy_horizontal=h_accuracy,
+                    accuracy_vertical=v_accuracy,
+                    # report RTK via fix_type: 6 fixed, 5 float, else fall back to fixType mapping
+                    fix_type=rtk_fix_type if rtk_fix_type else fixType,
+                    satellites_used=numSV,
+                    timestamp=time.time()
+                )
+                self.last_position = position
+                return position
+
             
         except Exception as e:
             logger.error(f"Error parsing position message: {e}")
             return None
-    
+        
     def wait_for_rtk_fix(self, timeout: float = 300.0) -> bool:
         """
-        Wait for RTK fix with high precision
-        
+        Wait for GPS fix using NMEA $GNGGA sentences.
+
         Args:
-            timeout: Maximum time to wait for RTK fix (seconds)
-            
+            timeout: Maximum time to wait (seconds)
         Returns:
-            True if RTK fix achieved, False if timeout
+            True if 3D or RTK fix achieved, False if timeout
         """
-        logger.info("Waiting for RTK fix...")
+        logger.info("Waiting for GPS fix via NMEA $GNGGA...")
         start_time = time.time()
-        
+
         while (time.time() - start_time) < timeout:
-            position = self.get_rtk_position()
-            
-            if position and position.fix_type >= 5:  # RTK Float or Fixed
-                fix_type_str = "RTK Fixed" if position.fix_type == 6 else "RTK Float"
-                logger.info(f"{fix_type_str} achieved! Accuracy: {position.accuracy_horizontal:.3f}m")
-                return True
-            
+            position = self.get_nmea_position()
+            if position:
+                if position.fix_type >= 3:  # 3D fix or RTK
+                    fix_str = "3D Fix" if position.fix_type < 5 else "RTK Fix"
+                    logger.info(f"{fix_str} achieved! Lat: {position.latitude:.8f}, Lon: {position.longitude:.8f}")
+                    return True
             time.sleep(1.0)
-        
-        logger.error("RTK fix timeout")
+
+        logger.error("GPS fix timeout")
         return False
+
+
+    def _read_exact(self, n: int, timeout: float = 1.0) -> bytes:
+        """Read exactly n bytes or return b'' on timeout/short read."""
+        end = time.time() + timeout
+        buf = bytearray()
+        while len(buf) < n and time.time() < end:
+            chunk = self.serial_conn.read(n - len(buf))
+            if chunk:
+                buf.extend(chunk)
+            else:
+                # brief sleep to avoid tight loop when nothing is available
+                time.sleep(0.005)
+        return bytes(buf) if len(buf) == n else b''
+
 
 def main():
     """Main demonstration of RTK coordinate pulling with Emlid NTRIP corrections"""
@@ -489,7 +556,7 @@ def main():
     print(f"NTRIP Config: {ntrip_config.host}:{ntrip_config.port}/{ntrip_config.mountpoint}")
     
     # Initialize GPS with SparkFun defaults
-    gps = UBloxRTKGPS(port='/dev/ttyUSB0', baudrate=38400)
+    gps = UBloxRTKGPS(port='/dev/ttyACM0', baudrate=38400)
     
     # Initialize Emlid NTRIP client
     ntrip_client = EmlidNTRIPClient(ntrip_config)
@@ -518,7 +585,7 @@ def main():
         print("Time\t\tLatitude\t\tLongitude\t\tAltitude\tAccuracy\tSats\tFix\t\tRTCM")
         
         while True:
-            position = gps.get_rtk_position(high_precision=True)
+            position = gps.get_nmea_position()
             
             if position:
                 fix_types = {
