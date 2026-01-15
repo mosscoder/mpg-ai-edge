@@ -93,7 +93,7 @@ python autonomous_nav/mission/mission_01.py  # Multi-waypoint
 **Script:** `autonomous_nav/mission/mission_00.py`
 
 **Behavior:**
-1. Connects to RTK GPS and waits for fix
+1. Connects to RTK GPS and waits for RTK Float fix (type 5+)
 2. Connects to Go2 robot via LocalSTA (same WiFi network)
 3. Navigates to **Point 0** only
 4. Stops when within 0.2m of target
