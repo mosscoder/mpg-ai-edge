@@ -125,7 +125,7 @@ python autonomous_nav/mission/mission_01.py  # Multi-waypoint
 | Arrival tolerance | 0.2m | Distance threshold to consider waypoint reached |
 | Max velocity | 0.3 m/s | Forward speed (conservative for precision) |
 | Rotation rate | 0.3 rad/s | Turning speed when correcting heading |
-| Min fix type | 5 (Mission 01) | RTK Float or better required |
+| Min fix type | 5 | RTK Float or better required |
 
 ### Movement Control
 

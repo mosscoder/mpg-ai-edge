@@ -6,18 +6,17 @@ Navigates the Go2 robot to the first waypoint in tennis_court_points.geojson
 using RTK GPS positioning.
 
 Requirements:
-- SparkFun ZED-F9P GPS connected (default: /dev/ttyACM0)
-- NTRIP credentials set via environment variables (or defaults)
-- Laptop connected to Go2's WiFi hotspot (LocalAP mode)
+- SparkFun ZED-F9P GPS connected to Jetson (default: /dev/ttyACM0)
+- Go2 and Jetson on same WiFi network (LocalSTA mode)
+- NTRIP credentials set via environment variables
 
 Environment Variables:
-    GPS_PORT        - GPS serial port (default: /dev/ttyACM0)
-    GPS_BAUD        - GPS baud rate (default: 38400)
-    EMLID_NTRIP_HOST - NTRIP caster host (default: caster.emlid.com)
-    EMLID_NTRIP_PORT - NTRIP caster port (default: 2101)
-    EMLID_MOUNTPOINT - NTRIP mountpoint (default: MP1979)
+    ROBOT_IP         - Go2's IP address on local network (required)
+    GPS_PORT         - GPS serial port (default: /dev/ttyACM0)
+    GPS_BAUD         - GPS baud rate (default: 38400)
     EMLID_USERNAME   - NTRIP username
     EMLID_PASSWORD   - NTRIP password
+    EMLID_MOUNTPOINT - NTRIP mountpoint (default: MP1979)
 
 Usage:
     python autonomous_nav/mission/mission_00.py
