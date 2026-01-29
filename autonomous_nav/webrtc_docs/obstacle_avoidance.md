@@ -4,7 +4,7 @@ This document describes obstacle avoidance capabilities on the Go2 robot and how
 
 ## Default State
 
-Obstacle avoidance is **disabled by default** on the Go2 and must be explicitly enabled.
+Obstacle avoidance is **enabled by default** on the Go2.
 
 ## RC Controller Method
 
@@ -12,8 +12,8 @@ The handheld remote controller provides the simplest way to toggle obstacle avoi
 
 | Action | Effect |
 |--------|--------|
-| L2 double-tap | Enable obstacle avoidance |
-| L2 single-tap | Disable obstacle avoidance |
+| X (Click) | Avoidance on (default) |
+| Y (Long Press for 3s) | Avoidance off |
 
 **Note:** You cannot use the app and companion remote simultaneously.
 
