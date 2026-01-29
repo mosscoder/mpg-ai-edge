@@ -18,6 +18,7 @@ import struct
 import threading
 import time
 from collections import Counter
+import math
 from dataclasses import dataclass
 from math import asin, atan2, cos, degrees, radians, sin, sqrt
 from typing import Dict, List, Optional, Tuple
@@ -490,6 +491,7 @@ class Go2Robot:
         self.robot_serial = robot_serial
         self.conn: Optional[UnitreeWebRTCConnection] = None
         self._connected = False
+        self._latest_imu: Optional[Dict] = None
 
     async def connect(self) -> bool:
         """Establish WebRTC connection to robot."""
@@ -517,6 +519,12 @@ class Go2Robot:
             if not await self._wait_for_api():
                 raise RuntimeError("Robot API not responding")
 
+            # Subscribe to sport mode state for IMU data
+            self.conn.datachannel.pub_sub.subscribe(
+                RTC_TOPIC["LF_SPORT_MOD_STATE"], self._on_sport_state
+            )
+            logger.info("Subscribed to sport mode state (IMU)")
+
             self._connected = True
             return True
         except Exception as e:
@@ -538,6 +546,27 @@ class Go2Robot:
                 logger.debug(f"API not ready: {e}")
             await asyncio.sleep(0.5)
         return False
+
+    def _on_sport_state(self, message: Dict):
+        """Callback for sport mode state updates containing IMU data."""
+        try:
+            self._latest_imu = message["data"]["imu_state"]
+        except (KeyError, TypeError):
+            pass
+
+    def get_yaw_degrees(self) -> Optional[float]:
+        """Get current IMU yaw in degrees.
+
+        Returns:
+            Yaw angle in degrees, or None if IMU data not available.
+            The yaw is relative to the robot's power-on orientation.
+        """
+        if self._latest_imu is None:
+            return None
+        try:
+            return math.degrees(self._latest_imu["rpy"][2])
+        except (KeyError, TypeError, IndexError):
+            return None
 
     async def ensure_normal_mode(self):
         """Ensure robot is in normal walking mode."""
@@ -705,9 +734,11 @@ class WaypointNavigator:
 
         self._running = False
         self._paused = False
-        self._last_heading: Optional[float] = None
-        self._prev_pos: Optional[RTKPosition] = None
-        self._is_moving_forward = False
+
+        # IMU calibration state
+        self._imu_north_offset: Optional[float] = None  # Degrees to add to IMU yaw
+        self._calibration_start_pos: Optional[RTKPosition] = None
+        self._calibration_start_yaw: Optional[float] = None
 
     async def navigate_to(self, waypoint: Waypoint) -> bool:
         """
@@ -726,8 +757,6 @@ class WaypointNavigator:
 
         self._running = True
         self._paused = False
-        self._prev_pos = None
-        self._is_moving_forward = False
 
         while self._running:
             # Get current position
@@ -747,8 +776,7 @@ class WaypointNavigator:
             if self._paused:
                 logger.info(f"GPS fix restored (type {pos.fix_type}), resuming navigation")
                 self._paused = False
-                self._last_heading = None  # Reset heading - will re-establish by walking forward
-                self._prev_pos = None
+                # IMU heading survives GPS outages - no need to reset calibration
 
             # Calculate distance and bearing to target
             distance = haversine_distance(
@@ -766,32 +794,36 @@ class WaypointNavigator:
                 await self.robot.stop()
                 return True
 
-            # Estimate current heading (only update if moving forward)
-            current_heading = self._estimate_heading(pos, self._is_moving_forward)
+            # Get IMU yaw (if available)
+            imu_yaw = self.robot.get_yaw_degrees()
+
+            # Calibrate IMU if needed (during first forward motion)
+            if self._imu_north_offset is None and imu_yaw is not None:
+                self._calibrate_imu(pos, imu_yaw)
+
+            # Get calibrated heading
+            current_heading = self.get_calibrated_heading()
 
             # Calculate heading error
             if current_heading is not None:
                 heading_error = normalize_angle(bearing - current_heading)
             else:
-                # No heading info - walk forward slowly to establish heading
-                # Once we've moved enough, position delta will give us heading
+                # No calibrated heading yet - walk forward toward waypoint to calibrate
                 heading_error = 0
 
             # Compute velocity commands
             vx, vz = self._compute_velocity(distance, heading_error)
 
-            # Track if we're moving forward (for heading estimation)
-            self._is_moving_forward = vx > 0
-
             # Send command
             await self.robot.send_velocity(x=vx, z=vz)
 
             # Log status
+            calibrated = "yes" if self._imu_north_offset is not None else "no"
             logger.debug(
                 f"Pos: ({pos.latitude:.8f}, {pos.longitude:.8f}) | "
                 f"Dist: {distance:.2f}m | Fix: {pos.fix_type} | hAcc: {pos.accuracy_horizontal:.3f}m | "
                 f"Bearing: {bearing:.1f}° | Heading: {current_heading or '?'}° | "
-                f"Error: {heading_error:.1f}° | Vel: x={vx:.2f}, z={vz:.2f}"
+                f"Error: {heading_error:.1f}° | Vel: x={vx:.2f}, z={vz:.2f} | IMU cal: {calibrated}"
             )
 
             await asyncio.sleep(0.2)  # 5Hz navigation loop
@@ -799,45 +831,65 @@ class WaypointNavigator:
         await self.robot.stop()
         return False
 
-    def _estimate_heading(
-        self, pos: RTKPosition, is_moving_forward: bool
-    ) -> Optional[float]:
-        """Estimate heading from position changes during forward motion.
+    def _calibrate_imu(self, pos: RTKPosition, imu_yaw: float) -> bool:
+        """Calibrate IMU yaw against GPS bearing during forward motion.
 
-        Only updates heading when the robot is moving forward, as rotation
-        in place does not provide meaningful heading information. Heading
-        is computed from the bearing between the previous and current position
-        when sufficient displacement (>1.5m) has occurred. The 1.5m threshold
-        ensures accuracy even with RTK Float GPS noise (10-50cm).
+        The IMU provides yaw relative to power-on orientation. This method
+        computes an offset to convert IMU yaw to true heading (relative to
+        north) by comparing IMU yaw change with GPS-derived bearing during
+        a period of forward motion.
+
+        Args:
+            pos: Current GPS position
+            imu_yaw: Current IMU yaw in degrees
+
+        Returns:
+            True when calibration is complete
         """
-        if not is_moving_forward:
-            # Don't update heading during rotation
-            return self._last_heading
+        if self._calibration_start_pos is None:
+            # Start calibration
+            self._calibration_start_pos = pos
+            self._calibration_start_yaw = imu_yaw
+            logger.info("IMU calibration started - walking forward to calibrate...")
+            return False
 
-        if self._prev_pos is None:
-            # Start tracking position
-            self._prev_pos = pos
-            return self._last_heading
-
-        # Compute displacement since last position update
+        # Check displacement since calibration started
         displacement = haversine_distance(
-            self._prev_pos.latitude,
-            self._prev_pos.longitude,
+            self._calibration_start_pos.latitude,
+            self._calibration_start_pos.longitude,
             pos.latitude,
             pos.longitude,
         )
 
-        # Only update heading if moved enough (>1.5m to exceed GPS noise)
-        if displacement >= 1.5:
-            self._last_heading = calculate_bearing(
-                self._prev_pos.latitude,
-                self._prev_pos.longitude,
+        if displacement >= 1.5:  # Enough movement for reliable GPS bearing
+            gps_bearing = calculate_bearing(
+                self._calibration_start_pos.latitude,
+                self._calibration_start_pos.longitude,
                 pos.latitude,
                 pos.longitude,
             )
-            self._prev_pos = pos
+            imu_delta = imu_yaw - self._calibration_start_yaw
+            # Offset = GPS bearing - IMU delta (converts IMU yaw to true heading)
+            self._imu_north_offset = normalize_angle(gps_bearing - imu_delta)
+            logger.info(
+                f"IMU calibrated! Offset: {self._imu_north_offset:.1f}° "
+                f"(GPS bearing: {gps_bearing:.1f}°, IMU delta: {imu_delta:.1f}°)"
+            )
+            return True
 
-        return self._last_heading
+        return False
+
+    def get_calibrated_heading(self) -> Optional[float]:
+        """Get IMU yaw converted to true heading (relative to north).
+
+        Returns:
+            Heading in degrees (0-360, where 0=North, 90=East),
+            or None if IMU not calibrated or data unavailable.
+        """
+        imu_yaw = self.robot.get_yaw_degrees()
+        if imu_yaw is None or self._imu_north_offset is None:
+            return None
+        return (imu_yaw + self._imu_north_offset) % 360
 
     def _compute_velocity(
         self, distance: float, heading_error: float

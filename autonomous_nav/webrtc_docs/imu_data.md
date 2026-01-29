@@ -127,41 +127,23 @@ def state_callback(message):
 
 ## Integration with Go2Robot Class
 
-To add IMU data to the existing `Go2Robot` class in `nav_utils.py`:
+**Status: IMPLEMENTED** in `autonomous_nav/nav_utils.py`
+
+The `Go2Robot` class now includes IMU integration:
 
 ```python
-from unitree_webrtc_connect.constants import RTC_TOPIC
-
-class Go2Robot:
-    def __init__(self, ip="192.168.12.1"):
-        # ... existing init code ...
-        self.latest_imu = None
-
-    async def connect(self):
-        # ... existing connect code ...
-
-        # Subscribe to IMU data after connection
-        self.conn.datachannel.pub_sub.subscribe(
-            RTC_TOPIC['LF_SPORT_MOD_STATE'],
-            self._on_sport_state
-        )
-
-    def _on_sport_state(self, message):
-        """Callback for sport mode state updates."""
-        self.latest_imu = message['data']['imu_state']
-
-    def get_yaw(self):
-        """Get current yaw angle in radians."""
-        if self.latest_imu is None:
-            return None
-        return self.latest_imu['rpy'][2]
-
-    def get_orientation_quaternion(self):
-        """Get current orientation as quaternion [w, x, y, z]."""
-        if self.latest_imu is None:
-            return None
-        return self.latest_imu['quaternion']
+# Get IMU yaw in degrees (relative to power-on orientation)
+yaw = robot.get_yaw_degrees()
 ```
+
+The `WaypointNavigator` class uses IMU for heading with GPS calibration:
+
+```python
+# Get true heading (calibrated to north) in degrees
+heading = navigator.get_calibrated_heading()
+```
+
+See `autonomous_nav/mission/changelog.md` for details on the IMU-GPS sensor fusion strategy.
 
 ## Important Notes
 

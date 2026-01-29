@@ -41,6 +41,17 @@ Configure the Go2 to join your local WiFi network:
 4. Select your local WiFi network and enter the password
 5. The robot will reboot and join the network
 
+## Finding the Jetson's IP Address
+
+The Jetson reports its local IP to a web service every 5 minutes, making it easy to find even if it changes networks:
+
+```bash
+# Query the Jetson's last known IP
+curl -s "https://mpg.commsat.org/api/lastIP?password=robotanist"
+```
+
+This returns the Jetson's current IP address for SSH access.
+
 ## Finding the Robot's IP Address
 
 After the Go2 joins your network, find its IP:
@@ -129,16 +140,22 @@ python autonomous_nav/mission/mission_01.py  # Multi-waypoint
 
 ### Movement Control
 
-The robot uses proportional navigation with position-based heading estimation:
+The robot uses proportional navigation with IMU-based heading:
 
-**Heading Estimation:**
-- Heading is computed from position changes, not GPS course-over-ground (COG)
-- Only updates heading when moving forward (vx > 0) and after moving >1.5m
-- The 1.5m threshold ensures accuracy even with RTK Float GPS noise
-- If heading is unknown, robot walks forward ~5 seconds to establish it
+**Sensor Fusion:**
+| Sensor | Purpose |
+|--------|---------|
+| RTK GPS | Absolute position, distance/bearing to waypoint |
+| IMU | Current heading (calibrated to true north) |
+
+**IMU Heading Calibration:**
+- On startup, the IMU yaw is relative to power-on orientation (not north)
+- During the first ~1.5m of forward motion, the system calibrates IMU yaw against GPS bearing
+- After calibration, heading is available instantly at ~50-100 Hz
+- Calibration offset is computed once and persists for the mission
 
 **Navigation Behavior:**
-- **No heading:** Walks forward slowly to establish heading from position delta
+- **Pre-calibration:** Walks forward toward waypoint to calibrate IMU (~5 seconds)
 - **Large heading error (>30deg):** Rotates in place to face target
 - **Small heading error:** Moves forward while correcting heading
 - **Approaching target:** Slows down as distance decreases
@@ -148,10 +165,9 @@ The robot uses proportional navigation with position-based heading estimation:
 If RTK fix degrades below minimum threshold:
 1. Robot **stops immediately**
 2. Waits for fix to be restored
-3. **Resets heading** to unknown when fix returns
-4. **Resumes navigation** by walking forward to re-establish heading
+3. **Resumes navigation** immediately - IMU heading survives GPS outages
 
-This prevents drift or inaccurate movement during GPS outages and ensures heading is re-calibrated after recovery.
+The IMU provides continuous heading even during GPS outages, enabling faster recovery compared to position-based heading estimation.
 
 ### Velocity Commands
 
@@ -187,8 +203,9 @@ From `data/vector/tennis_court_points.geojson`:
 - Check GPS serial port connection
 
 **Robot moves erratically or spins**
-- Heading establishes after ~1.5m of forward movement (~5 seconds)
-- If robot spins repeatedly, check that position-based heading is updating (see logs)
+- IMU calibration completes after ~1.5m of forward movement (~5 seconds)
+- Check logs for "IMU calibrated!" message indicating successful calibration
+- If robot spins repeatedly after calibration, verify IMU data is being received (check for `IMU cal: yes` in logs)
 - Ensure RTK fix is stable (type 5+) before expecting accurate navigation
 
 ---
