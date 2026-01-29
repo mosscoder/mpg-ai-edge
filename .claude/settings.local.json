@@ -12,7 +12,10 @@
       "WebFetch(domain:api.github.com)",
       "Bash(python:*)",
       "Bash(gh api:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "WebFetch(domain:wiki.theroboverse.com)",
+      "WebFetch(domain:docs.openmind.org)",
+      "WebFetch(domain:support.unitree.com)"
     ],
     "deny": []
   }
