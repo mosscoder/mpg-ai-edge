@@ -5,7 +5,14 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(git checkout:*)",
       "Bash(git merge:*)",
-      "Bash(python -m py_compile:*)"
+      "Bash(python -m py_compile:*)",
+      "Bash(python3:*)",
+      "Bash(xargs ls:*)",
+      "WebSearch",
+      "WebFetch(domain:api.github.com)",
+      "Bash(python:*)",
+      "Bash(gh api:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   }

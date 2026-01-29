@@ -129,7 +129,16 @@ python autonomous_nav/mission/mission_01.py  # Multi-waypoint
 
 ### Movement Control
 
-The robot uses proportional navigation:
+The robot uses proportional navigation with position-based heading estimation:
+
+**Heading Estimation:**
+- Heading is computed from position changes, not GPS course-over-ground (COG)
+- Only updates heading when moving forward (vx > 0) and after moving >1.5m
+- The 1.5m threshold ensures accuracy even with RTK Float GPS noise
+- If heading is unknown, robot walks forward ~5 seconds to establish it
+
+**Navigation Behavior:**
+- **No heading:** Walks forward slowly to establish heading from position delta
 - **Large heading error (>30deg):** Rotates in place to face target
 - **Small heading error:** Moves forward while correcting heading
 - **Approaching target:** Slows down as distance decreases
@@ -139,9 +148,10 @@ The robot uses proportional navigation:
 If RTK fix degrades below minimum threshold:
 1. Robot **stops immediately**
 2. Waits for fix to be restored
-3. **Resumes navigation** automatically when fix returns
+3. **Resets heading** to unknown when fix returns
+4. **Resumes navigation** by walking forward to re-establish heading
 
-This prevents drift or inaccurate movement during GPS outages.
+This prevents drift or inaccurate movement during GPS outages and ensures heading is re-calibrated after recovery.
 
 ### Velocity Commands
 
@@ -176,16 +186,22 @@ From `data/vector/tennis_court_points.geojson`:
 - Verify NTRIP credentials are correct
 - Check GPS serial port connection
 
-**Robot moves erratically**
-- GPS course-over-ground (COG) only accurate when moving
-- Allow robot to walk briefly to establish heading
+**Robot moves erratically or spins**
+- Heading establishes after ~1.5m of forward movement (~5 seconds)
+- If robot spins repeatedly, check that position-based heading is updating (see logs)
+- Ensure RTK fix is stable (type 5+) before expecting accurate navigation
 
 ---
 
 ## Logs
 
-Mission logs are saved to `autonomous_nav/logs/`:
+Mission logs are saved to `autonomous_nav/mission/logs/`:
 ```
-autonomous_nav/logs/mission_00_2025-01-15_10-30-45.log
-autonomous_nav/logs/mission_01_2025-01-15_11-00-00.log
+autonomous_nav/mission/logs/mission_00_2026-01-29_10-30-45.log
+autonomous_nav/mission/logs/mission_01_2026-01-29_11-00-00.log
+```
+
+Log entries include fix type and horizontal accuracy for debugging:
+```
+Pos: (46.67389244, -114.01613655) | Dist: 5.23m | Fix: 6 | hAcc: 0.014m | ...
 ```

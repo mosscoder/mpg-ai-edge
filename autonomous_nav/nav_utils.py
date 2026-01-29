@@ -706,6 +706,8 @@ class WaypointNavigator:
         self._running = False
         self._paused = False
         self._last_heading: Optional[float] = None
+        self._prev_pos: Optional[RTKPosition] = None
+        self._is_moving_forward = False
 
     async def navigate_to(self, waypoint: Waypoint) -> bool:
         """
@@ -724,6 +726,8 @@ class WaypointNavigator:
 
         self._running = True
         self._paused = False
+        self._prev_pos = None
+        self._is_moving_forward = False
 
         while self._running:
             # Get current position
@@ -743,6 +747,8 @@ class WaypointNavigator:
             if self._paused:
                 logger.info(f"GPS fix restored (type {pos.fix_type}), resuming navigation")
                 self._paused = False
+                self._last_heading = None  # Reset heading - will re-establish by walking forward
+                self._prev_pos = None
 
             # Calculate distance and bearing to target
             distance = haversine_distance(
@@ -760,19 +766,22 @@ class WaypointNavigator:
                 await self.robot.stop()
                 return True
 
-            # Estimate current heading
-            current_heading = self._estimate_heading(pos)
+            # Estimate current heading (only update if moving forward)
+            current_heading = self._estimate_heading(pos, self._is_moving_forward)
 
             # Calculate heading error
             if current_heading is not None:
                 heading_error = normalize_angle(bearing - current_heading)
             else:
-                # No heading info - walk forward slowly to establish COG
-                # Once moving, GPS will provide course-over-ground
+                # No heading info - walk forward slowly to establish heading
+                # Once we've moved enough, position delta will give us heading
                 heading_error = 0
 
             # Compute velocity commands
             vx, vz = self._compute_velocity(distance, heading_error)
+
+            # Track if we're moving forward (for heading estimation)
+            self._is_moving_forward = vx > 0
 
             # Send command
             await self.robot.send_velocity(x=vx, z=vz)
@@ -780,9 +789,9 @@ class WaypointNavigator:
             # Log status
             logger.debug(
                 f"Pos: ({pos.latitude:.8f}, {pos.longitude:.8f}) | "
-                f"Dist: {distance:.2f}m | Bearing: {bearing:.1f}° | "
-                f"Heading: {current_heading or '?'}° | Error: {heading_error:.1f}° | "
-                f"Vel: x={vx:.2f}, z={vz:.2f}"
+                f"Dist: {distance:.2f}m | Fix: {pos.fix_type} | hAcc: {pos.accuracy_horizontal:.3f}m | "
+                f"Bearing: {bearing:.1f}° | Heading: {current_heading or '?'}° | "
+                f"Error: {heading_error:.1f}° | Vel: x={vx:.2f}, z={vz:.2f}"
             )
 
             await asyncio.sleep(0.2)  # 5Hz navigation loop
@@ -790,11 +799,44 @@ class WaypointNavigator:
         await self.robot.stop()
         return False
 
-    def _estimate_heading(self, pos: RTKPosition) -> Optional[float]:
-        """Estimate current heading from GPS COG or history."""
-        if pos.course_over_ground is not None:
-            self._last_heading = pos.course_over_ground
-            return pos.course_over_ground
+    def _estimate_heading(
+        self, pos: RTKPosition, is_moving_forward: bool
+    ) -> Optional[float]:
+        """Estimate heading from position changes during forward motion.
+
+        Only updates heading when the robot is moving forward, as rotation
+        in place does not provide meaningful heading information. Heading
+        is computed from the bearing between the previous and current position
+        when sufficient displacement (>1.5m) has occurred. The 1.5m threshold
+        ensures accuracy even with RTK Float GPS noise (10-50cm).
+        """
+        if not is_moving_forward:
+            # Don't update heading during rotation
+            return self._last_heading
+
+        if self._prev_pos is None:
+            # Start tracking position
+            self._prev_pos = pos
+            return self._last_heading
+
+        # Compute displacement since last position update
+        displacement = haversine_distance(
+            self._prev_pos.latitude,
+            self._prev_pos.longitude,
+            pos.latitude,
+            pos.longitude,
+        )
+
+        # Only update heading if moved enough (>1.5m to exceed GPS noise)
+        if displacement >= 1.5:
+            self._last_heading = calculate_bearing(
+                self._prev_pos.latitude,
+                self._prev_pos.longitude,
+                pos.latitude,
+                pos.longitude,
+            )
+            self._prev_pos = pos
+
         return self._last_heading
 
     def _compute_velocity(
