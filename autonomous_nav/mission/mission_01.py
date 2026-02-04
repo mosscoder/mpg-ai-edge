@@ -79,7 +79,7 @@ MIN_FIX_TYPE = 5  # Minimum fix quality (5=RTK Float or better)
 
 def setup_logging():
     """Configure logging to console and file."""
-    log_dir = os.path.join(os.path.dirname(__file__), "..", "logs")
+    log_dir = os.path.join(os.path.dirname(__file__), "logs")
     os.makedirs(log_dir, exist_ok=True)
     timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
     logfile = os.path.join(log_dir, f"mission_01_{timestamp}.log")
