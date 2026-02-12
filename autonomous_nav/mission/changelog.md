@@ -1,5 +1,116 @@
 # Navigation Changelog
 
+## 2026-02-12: Human-Readable Mission Epoch Logging
+
+### Problem
+
+Log output is a wall of text — major state transitions (GPS fix achieved, IMU calibration complete, arrival at waypoint) are visually indistinguishable from routine 5 Hz telemetry lines. During long waits (GPS fix, GPS pause, IMU calibration), logs go silent for minutes with no indication of progress.
+
+### Solution: Banner Logging + Progress Messages
+
+A `_log_banner()` helper produces 3-line bordered banners at every major state transition, making them easy to spot in scrolling output or log files:
+
+```
+============================================================
+========= GPS RTK Fixed ACHIEVED | hAcc: 0.014m ============
+============================================================
+```
+
+Error/warning banners use `!!!` borders:
+
+```
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!! GPS FIX TIMEOUT after 300s !!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+```
+
+### Banner Locations
+
+| Event | Level | Border |
+|-------|-------|--------|
+| GPS fix achieved | info | `===` |
+| GPS fix timeout | error | `!!!` |
+| IMU calibration started | info | `---` |
+| IMU calibrated (offset computed) | info | `===` |
+| IMU calibration timeout | error | `!!!` |
+| Navigation started (per waypoint) | info | `===` |
+| Arrived at waypoint | info | `===` |
+| Navigation timeout | error | `!!!` |
+| GPS fix lost (pausing) | warning | `!!!` |
+| GPS fix restored (resuming) | info | `===` |
+| GPS pause timeout | error | `!!!` |
+
+### Progress Messages During Waits
+
+- **GPS fix wait:** Status every 15 s with elapsed time, current fix type, satellite count
+- **GPS pause (fix lost):** Status every 15 s with elapsed time and timeout limit
+- **IMU calibration:** Status every 5 s with displacement progress (e.g. `0.73m / 1.50m needed`)
+
+### Enhanced Failure Messages
+
+- Navigation timeout includes remaining distance to waypoint
+- GPS pause timeout includes actual elapsed time and which waypoint was targeted
+- IMU calibration timeout includes displacement achieved vs. required
+
+### Verification
+
+- `python -m py_compile autonomous_nav/nav_utils.py` passes
+- No function signatures changed — existing mission scripts run unmodified
+
+---
+
+## 2026-02-12: IMU Robustness and Timeout Failure Modes
+
+### Problem
+
+Several open-ended waits could hang forever if conditions didn't improve:
+
+1. **No navigation timeout** — if the robot couldn't reach a waypoint (obstacle, drift), `navigate_to()` would run indefinitely
+2. **No GPS pause timeout** — if GPS fix was lost mid-navigation, the robot would wait forever for restoration
+3. **No IMU calibration timeout** — if the robot was blocked and couldn't walk 1.5 m, calibration would never complete
+4. **Stale IMU data undetected** — if the sport-mode state topic stopped publishing, the last IMU reading would be used silently
+
+### Solution
+
+**IMU staleness detection:**
+- `Go2Robot._imu_timestamp` tracks when the last IMU reading arrived
+- `get_yaw_degrees(max_age=1.0)` returns `None` if data is older than `max_age` seconds
+- When heading is stale and calibration was previously complete, a warning is logged and the robot falls back to forward motion
+
+**Navigation timeout:**
+- `navigate_to()` accepts a `timeout` parameter (default 300 s)
+- If the waypoint isn't reached within `timeout` seconds, navigation aborts with an error
+
+**GPS pause timeout:**
+- `WaypointNavigator.__init__()` accepts `gps_timeout` (default 300 s)
+- If GPS fix isn't restored within `gps_timeout` seconds after loss, navigation aborts
+
+**IMU calibration timeout:**
+- `WaypointNavigator.__init__()` accepts `calibration_timeout` (default 30 s)
+- If displacement doesn't reach 1.5 m within the timeout, calibration state is reset and retried automatically
+
+**Rotation rate clamping:**
+- `_compute_velocity()` now clamps `vz` to `[-rotation_rate, rotation_rate]`, preventing runaway spinning from large proportional heading errors
+
+### Code Changes
+
+**New parameters:**
+- `Go2Robot.get_yaw_degrees(max_age: float = 1.0)`
+- `WaypointNavigator.__init__(..., gps_timeout=300.0, calibration_timeout=30.0)`
+- `WaypointNavigator.navigate_to(waypoint, timeout=300.0)`
+
+**New attributes:**
+- `Go2Robot._imu_timestamp: float`
+- `WaypointNavigator._pause_start: Optional[float]`
+- `WaypointNavigator._calibration_start_time: Optional[float]`
+
+### Verification
+
+- No API changes visible to mission scripts — all new parameters have defaults
+- `python -m py_compile autonomous_nav/nav_utils.py` passes
+
+---
+
 ## 2026-01-29: IMU-Based Heading with GPS Calibration
 
 ### Problem

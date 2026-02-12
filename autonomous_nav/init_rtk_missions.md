@@ -137,6 +137,9 @@ python autonomous_nav/mission/mission_01.py  # Multi-waypoint
 | Max velocity | 0.3 m/s | Forward speed (conservative for precision) |
 | Rotation rate | 0.3 rad/s | Turning speed when correcting heading |
 | Min fix type | 5 | RTK Float or better required |
+| Navigation timeout | 300s | Max time to reach a single waypoint |
+| GPS pause timeout | 300s | Max wait for GPS fix restore during navigation |
+| Calibration timeout | 30s | Max time for IMU calibration walk |
 
 ### Movement Control
 
@@ -153,6 +156,7 @@ The robot uses proportional navigation with IMU-based heading:
 - During the first ~1.5m of forward motion, the system calibrates IMU yaw against GPS bearing
 - After calibration, heading is available instantly at ~50-100 Hz
 - Calibration offset is computed once and persists for the mission
+- If calibration doesn't complete within 30s (robot blocked, insufficient displacement), it resets and retries automatically
 
 **Navigation Behavior:**
 - **Pre-calibration:** Walks forward toward waypoint to calibrate IMU (~5 seconds)
@@ -164,8 +168,9 @@ The robot uses proportional navigation with IMU-based heading:
 
 If RTK fix degrades below minimum threshold:
 1. Robot **stops immediately**
-2. Waits for fix to be restored
-3. **Resumes navigation** immediately - IMU heading survives GPS outages
+2. Waits for fix to be restored (periodic status logged every 15s)
+3. If fix is not restored within **300s**, navigation aborts with a timeout error
+4. **Resumes navigation** immediately once fix returns — IMU heading survives GPS outages
 
 The IMU provides continuous heading even during GPS outages, enabling faster recovery compared to position-based heading estimation.
 
@@ -197,10 +202,22 @@ From `data/vector/tennis_court_points.geojson`:
 - Verify ROBOT_IP environment variable is set correctly
 - Confirm Go2 is on the same WiFi network as the Jetson
 
-**"GPS fix timeout"**
+**"GPS fix timeout after 300s"**
+- Message includes elapsed time (e.g. `GPS fix timeout after 300s`)
 - Ensure clear sky view for GPS antenna
 - Verify NTRIP credentials are correct
 - Check GPS serial port connection
+
+**"Navigation timeout after 300s for waypoint ..."**
+- Waypoint was not reached within the timeout (default 300s)
+- Check for physical obstacles blocking the robot's path
+- Verify GPS accuracy is sufficient — if hAcc is high the robot may oscillate near the target
+- Message includes remaining distance to waypoint
+
+**"IMU calibration timeout after 30s"**
+- Robot couldn't walk 1.5m within 30s (obstacle, terrain, leash)
+- Calibration resets automatically and retries
+- Ensure the robot has a clear path forward at startup
 
 **Robot moves erratically or spins**
 - IMU calibration completes after ~1.5m of forward movement (~5 seconds)
@@ -222,3 +239,19 @@ Log entries include fix type and horizontal accuracy for debugging:
 ```
 Pos: (46.67389244, -114.01613655) | Dist: 5.23m | Fix: 6 | hAcc: 0.014m | ...
 ```
+
+Major state transitions are highlighted with bordered banners for easy scanning:
+```
+============================================================
+========= GPS RTK Fixed ACHIEVED | hAcc: 0.014m ============
+============================================================
+```
+
+Error and warning banners use `!` borders:
+```
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!! GPS FIX LOST | type 2 | robot paused !!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+```
+
+During long waits (GPS fix, GPS pause, IMU calibration), periodic progress messages are logged so the output doesn't go silent.
