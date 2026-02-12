@@ -492,6 +492,7 @@ class Go2Robot:
         self.conn: Optional[UnitreeWebRTCConnection] = None
         self._connected = False
         self._latest_imu: Optional[Dict] = None
+        self._imu_timestamp: float = 0.0
 
     async def connect(self) -> bool:
         """Establish WebRTC connection to robot."""
@@ -551,17 +552,24 @@ class Go2Robot:
         """Callback for sport mode state updates containing IMU data."""
         try:
             self._latest_imu = message["data"]["imu_state"]
+            self._imu_timestamp = time.time()
         except (KeyError, TypeError):
             pass
 
-    def get_yaw_degrees(self) -> Optional[float]:
+    def get_yaw_degrees(self, max_age: float = 1.0) -> Optional[float]:
         """Get current IMU yaw in degrees.
 
+        Args:
+            max_age: Maximum age of IMU data in seconds. Returns None if
+                data is older than this threshold.
+
         Returns:
-            Yaw angle in degrees, or None if IMU data not available.
+            Yaw angle in degrees, or None if IMU data not available or stale.
             The yaw is relative to the robot's power-on orientation.
         """
         if self._latest_imu is None:
+            return None
+        if time.time() - self._imu_timestamp > max_age:
             return None
         try:
             return math.degrees(self._latest_imu["rpy"][2])
@@ -724,6 +732,8 @@ class WaypointNavigator:
         rotation_rate: float = 0.3,
         arrival_tolerance: float = 0.2,
         min_fix_type: int = 5,
+        gps_timeout: float = 300.0,
+        calibration_timeout: float = 30.0,
     ):
         self.gps = gps
         self.robot = robot
@@ -731,21 +741,26 @@ class WaypointNavigator:
         self.rotation_rate = rotation_rate
         self.arrival_tolerance = arrival_tolerance
         self.min_fix_type = min_fix_type
+        self.gps_timeout = gps_timeout
+        self.calibration_timeout = calibration_timeout
 
         self._running = False
         self._paused = False
+        self._pause_start: Optional[float] = None
 
         # IMU calibration state
         self._imu_north_offset: Optional[float] = None  # Degrees to add to IMU yaw
         self._calibration_start_pos: Optional[RTKPosition] = None
         self._calibration_start_yaw: Optional[float] = None
+        self._calibration_start_time: Optional[float] = None
 
-    async def navigate_to(self, waypoint: Waypoint) -> bool:
+    async def navigate_to(self, waypoint: Waypoint, timeout: float = 300.0) -> bool:
         """
         Navigate to a single waypoint.
 
         Args:
             waypoint: Target waypoint
+            timeout: Maximum time in seconds to reach the waypoint
 
         Returns:
             True if waypoint reached within tolerance
@@ -757,8 +772,16 @@ class WaypointNavigator:
 
         self._running = True
         self._paused = False
+        nav_start = time.time()
 
         while self._running:
+            if time.time() - nav_start > timeout:
+                logger.error(
+                    f"Navigation timeout after {timeout:.0f}s for waypoint {waypoint.name}"
+                )
+                await self.robot.stop()
+                return False
+
             # Get current position
             pos = self.gps.get_position()
 
@@ -769,6 +792,13 @@ class WaypointNavigator:
                     logger.warning(f"GPS fix lost or degraded ({fix_info}), pausing robot...")
                     await self.robot.stop()
                     self._paused = True
+                    self._pause_start = time.time()
+                elif time.time() - self._pause_start > self.gps_timeout:
+                    logger.error(
+                        f"GPS fix not restored after {self.gps_timeout:.0f}s, aborting navigation"
+                    )
+                    await self.robot.stop()
+                    return False
                 await asyncio.sleep(0.5)
                 continue
 
@@ -776,6 +806,7 @@ class WaypointNavigator:
             if self._paused:
                 logger.info(f"GPS fix restored (type {pos.fix_type}), resuming navigation")
                 self._paused = False
+                self._pause_start = None
                 # IMU heading survives GPS outages - no need to reset calibration
 
             # Calculate distance and bearing to target
@@ -808,7 +839,8 @@ class WaypointNavigator:
             if current_heading is not None:
                 heading_error = normalize_angle(bearing - current_heading)
             else:
-                # No calibrated heading yet - walk forward toward waypoint to calibrate
+                if self._imu_north_offset is not None:
+                    logger.warning("IMU heading stale - falling back to forward motion")
                 heading_error = 0
 
             # Compute velocity commands
@@ -850,7 +882,19 @@ class WaypointNavigator:
             # Start calibration
             self._calibration_start_pos = pos
             self._calibration_start_yaw = imu_yaw
+            self._calibration_start_time = time.time()
             logger.info("IMU calibration started - walking forward to calibrate...")
+            return False
+
+        # Check for calibration timeout
+        if time.time() - self._calibration_start_time > self.calibration_timeout:
+            logger.error(
+                f"IMU calibration timeout after {self.calibration_timeout:.0f}s "
+                f"(insufficient displacement). Resetting to allow retry."
+            )
+            self._calibration_start_pos = None
+            self._calibration_start_yaw = None
+            self._calibration_start_time = None
             return False
 
         # Check displacement since calibration started
@@ -914,6 +958,7 @@ class WaypointNavigator:
 
             # Proportional heading correction
             vz = heading_error * 0.015
+            vz = max(-self.rotation_rate, min(self.rotation_rate, vz))
 
         return vx, vz
 
