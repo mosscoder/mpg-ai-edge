@@ -32,6 +32,16 @@ from unitree_webrtc_connect.webrtc_driver import (
 
 logger = logging.getLogger(__name__)
 
+
+def _log_banner(message: str, level: str = "info", char: str = "=", width: int = 60):
+    border = char * width
+    padded = f" {message} ".center(width, char)
+    log_fn = getattr(logger, level)
+    log_fn(border)
+    log_fn(padded)
+    log_fn(border)
+
+
 # =============================================================================
 # DATA STRUCTURES
 # =============================================================================
@@ -395,6 +405,7 @@ class UBloxRTKGPS:
         """Wait for GPS fix. Returns True if fix achieved."""
         logger.info(f"Waiting for GPS fix (min type {min_fix_type})...")
         start = time.time()
+        last_progress = start
         while time.time() - start < timeout:
             pos = self.get_position()
             if pos and pos.fix_type >= min_fix_type:
@@ -404,14 +415,25 @@ class UBloxRTKGPS:
                     5: "RTK Float",
                     6: "RTK Fixed",
                 }
+                fix_label = fix_names.get(pos.fix_type, "Fix")
                 logger.info(
-                    f"{fix_names.get(pos.fix_type, 'Fix')} achieved! "
+                    f"{fix_label} achieved! "
                     f"Lat: {pos.latitude:.8f}, Lon: {pos.longitude:.8f}, "
                     f"hAcc: {pos.accuracy_horizontal:.3f}m"
                 )
+                _log_banner(f"GPS {fix_label} ACHIEVED | hAcc: {pos.accuracy_horizontal:.3f}m")
                 return True
+            now = time.time()
+            if now - last_progress >= 15.0:
+                elapsed = now - start
+                fix_type = pos.fix_type if pos else "?"
+                num_sv = pos.satellites_used if pos else "?"
+                logger.info(f"Waiting for GPS fix... ({elapsed:.0f}s elapsed, type {fix_type}, {num_sv} SVs)")
+                last_progress = now
             time.sleep(1.0)
-        logger.error("GPS fix timeout")
+        elapsed = time.time() - start
+        logger.error(f"GPS fix timeout after {elapsed:.0f}s")
+        _log_banner(f"GPS FIX TIMEOUT after {elapsed:.0f}s", level="error", char="!")
         return False
 
 
@@ -747,12 +769,14 @@ class WaypointNavigator:
         self._running = False
         self._paused = False
         self._pause_start: Optional[float] = None
+        self._pause_last_progress: Optional[float] = None
 
         # IMU calibration state
         self._imu_north_offset: Optional[float] = None  # Degrees to add to IMU yaw
         self._calibration_start_pos: Optional[RTKPosition] = None
         self._calibration_start_yaw: Optional[float] = None
         self._calibration_start_time: Optional[float] = None
+        self._calibration_last_progress: Optional[float] = None
 
     async def navigate_to(self, waypoint: Waypoint, timeout: float = 300.0) -> bool:
         """
@@ -769,6 +793,7 @@ class WaypointNavigator:
             f"Navigating to {waypoint.name}: "
             f"({waypoint.latitude:.8f}, {waypoint.longitude:.8f})"
         )
+        _log_banner(f"NAVIGATING TO {waypoint.name}")
 
         self._running = True
         self._paused = False
@@ -776,9 +801,15 @@ class WaypointNavigator:
 
         while self._running:
             if time.time() - nav_start > timeout:
+                pos_check = self.gps.get_position()
+                remaining = ""
+                if pos_check:
+                    dist = haversine_distance(pos_check.latitude, pos_check.longitude, waypoint.latitude, waypoint.longitude)
+                    remaining = f" | {dist:.1f}m remaining"
                 logger.error(
-                    f"Navigation timeout after {timeout:.0f}s for waypoint {waypoint.name}"
+                    f"Navigation timeout after {timeout:.0f}s for waypoint {waypoint.name}{remaining}"
                 )
+                _log_banner(f"NAVIGATION TIMEOUT | {waypoint.name} | {timeout:.0f}s", level="error", char="!")
                 await self.robot.stop()
                 return False
 
@@ -790,23 +821,37 @@ class WaypointNavigator:
                 if not self._paused:
                     fix_info = f"type {pos.fix_type}" if pos else "no position"
                     logger.warning(f"GPS fix lost or degraded ({fix_info}), pausing robot...")
+                    _log_banner(f"GPS FIX LOST | {fix_info} | robot paused", level="warning", char="!")
                     await self.robot.stop()
                     self._paused = True
                     self._pause_start = time.time()
+                    self._pause_last_progress = time.time()
                 elif time.time() - self._pause_start > self.gps_timeout:
+                    pause_elapsed = time.time() - self._pause_start
                     logger.error(
-                        f"GPS fix not restored after {self.gps_timeout:.0f}s, aborting navigation"
+                        f"GPS fix not restored after {pause_elapsed:.0f}s "
+                        f"(limit: {self.gps_timeout:.0f}s), aborting navigation to {waypoint.name}"
                     )
+                    _log_banner(f"GPS PAUSE TIMEOUT | {pause_elapsed:.0f}s | aborting", level="error", char="!")
                     await self.robot.stop()
                     return False
+                else:
+                    now = time.time()
+                    if now - self._pause_last_progress >= 15.0:
+                        pause_elapsed = now - self._pause_start
+                        logger.info(f"GPS fix lost -- still waiting... ({pause_elapsed:.0f}s / {self.gps_timeout:.0f}s timeout)")
+                        self._pause_last_progress = now
                 await asyncio.sleep(0.5)
                 continue
 
             # Fix restored - resume if we were paused
             if self._paused:
+                pause_duration = time.time() - self._pause_start
                 logger.info(f"GPS fix restored (type {pos.fix_type}), resuming navigation")
+                _log_banner(f"GPS FIX RESTORED | type {pos.fix_type} | paused {pause_duration:.0f}s")
                 self._paused = False
                 self._pause_start = None
+                self._pause_last_progress = None
                 # IMU heading survives GPS outages - no need to reset calibration
 
             # Calculate distance and bearing to target
@@ -819,9 +864,11 @@ class WaypointNavigator:
 
             # Check arrival
             if distance < self.arrival_tolerance:
+                elapsed = time.time() - nav_start
                 logger.info(
                     f"ARRIVED at {waypoint.name}! Distance: {distance:.3f}m"
                 )
+                _log_banner(f"ARRIVED at {waypoint.name} | {distance:.3f}m | {elapsed:.0f}s")
                 await self.robot.stop()
                 return True
 
@@ -883,27 +930,38 @@ class WaypointNavigator:
             self._calibration_start_pos = pos
             self._calibration_start_yaw = imu_yaw
             self._calibration_start_time = time.time()
+            self._calibration_last_progress = time.time()
             logger.info("IMU calibration started - walking forward to calibrate...")
+            _log_banner("IMU CALIBRATION STARTED", char="-")
             return False
 
-        # Check for calibration timeout
-        if time.time() - self._calibration_start_time > self.calibration_timeout:
-            logger.error(
-                f"IMU calibration timeout after {self.calibration_timeout:.0f}s "
-                f"(insufficient displacement). Resetting to allow retry."
-            )
-            self._calibration_start_pos = None
-            self._calibration_start_yaw = None
-            self._calibration_start_time = None
-            return False
-
-        # Check displacement since calibration started
+        # Compute displacement first (needed for timeout message and progress)
         displacement = haversine_distance(
             self._calibration_start_pos.latitude,
             self._calibration_start_pos.longitude,
             pos.latitude,
             pos.longitude,
         )
+
+        # Check for calibration timeout
+        elapsed = time.time() - self._calibration_start_time
+        if elapsed > self.calibration_timeout:
+            logger.error(
+                f"IMU calibration timeout after {self.calibration_timeout:.0f}s "
+                f"(displacement: {displacement:.2f}m / 1.50m needed). Resetting to allow retry."
+            )
+            _log_banner(f"IMU CALIBRATION TIMEOUT after {self.calibration_timeout:.0f}s", level="error", char="!")
+            self._calibration_start_pos = None
+            self._calibration_start_yaw = None
+            self._calibration_start_time = None
+            self._calibration_last_progress = None
+            return False
+
+        # Periodic progress
+        now = time.time()
+        if self._calibration_last_progress is not None and now - self._calibration_last_progress >= 5.0:
+            logger.info(f"IMU calibrating... displacement: {displacement:.2f}m / 1.50m needed ({elapsed:.0f}s)")
+            self._calibration_last_progress = now
 
         if displacement >= 1.5:  # Enough movement for reliable GPS bearing
             gps_bearing = calculate_bearing(
@@ -919,6 +977,7 @@ class WaypointNavigator:
                 f"IMU calibrated! Offset: {self._imu_north_offset:.1f}° "
                 f"(GPS bearing: {gps_bearing:.1f}°, IMU delta: {imu_delta:.1f}°)"
             )
+            _log_banner(f"IMU CALIBRATED | Offset: {self._imu_north_offset:.1f} deg")
             return True
 
         return False
