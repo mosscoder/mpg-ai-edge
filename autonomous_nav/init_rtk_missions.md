@@ -41,6 +41,17 @@ Configure the Go2 to join your local WiFi network:
 4. Select your local WiFi network and enter the password
 5. The robot will reboot and join the network
 
+## Finding the Jetson's IP Address
+
+The Jetson reports its local IP to a web service every 5 minutes, making it easy to find even if it changes networks:
+
+```bash
+# Query the Jetson's last known IP
+curl -s "https://mpg.commsat.org/api/lastIP?password=robotanist"
+```
+
+This returns the Jetson's current IP address for SSH access.
+
 ## Finding the Robot's IP Address
 
 After the Go2 joins your network, find its IP:
@@ -126,10 +137,29 @@ python autonomous_nav/mission/mission_01.py  # Multi-waypoint
 | Max velocity | 0.3 m/s | Forward speed (conservative for precision) |
 | Rotation rate | 0.3 rad/s | Turning speed when correcting heading |
 | Min fix type | 5 | RTK Float or better required |
+| Navigation timeout | 300s | Max time to reach a single waypoint |
+| GPS pause timeout | 300s | Max wait for GPS fix restore during navigation |
+| Calibration timeout | 30s | Max time for IMU calibration walk |
 
 ### Movement Control
 
-The robot uses proportional navigation:
+The robot uses proportional navigation with IMU-based heading:
+
+**Sensor Fusion:**
+| Sensor | Purpose |
+|--------|---------|
+| RTK GPS | Absolute position, distance/bearing to waypoint |
+| IMU | Current heading (calibrated to true north) |
+
+**IMU Heading Calibration:**
+- On startup, the IMU yaw is relative to power-on orientation (not north)
+- During the first ~1.5m of forward motion, the system calibrates IMU yaw against GPS bearing
+- After calibration, heading is available instantly at ~50-100 Hz
+- Calibration offset is computed once and persists for the mission
+- If calibration doesn't complete within 30s (robot blocked, insufficient displacement), it resets and retries automatically
+
+**Navigation Behavior:**
+- **Pre-calibration:** Walks forward toward waypoint to calibrate IMU (~5 seconds)
 - **Large heading error (>30deg):** Rotates in place to face target
 - **Small heading error:** Moves forward while correcting heading
 - **Approaching target:** Slows down as distance decreases
@@ -138,10 +168,11 @@ The robot uses proportional navigation:
 
 If RTK fix degrades below minimum threshold:
 1. Robot **stops immediately**
-2. Waits for fix to be restored
-3. **Resumes navigation** automatically when fix returns
+2. Waits for fix to be restored (periodic status logged every 15s)
+3. If fix is not restored within **300s**, navigation aborts with a timeout error
+4. **Resumes navigation** immediately once fix returns — IMU heading survives GPS outages
 
-This prevents drift or inaccurate movement during GPS outages.
+The IMU provides continuous heading even during GPS outages, enabling faster recovery compared to position-based heading estimation.
 
 ### Velocity Commands
 
@@ -171,21 +202,56 @@ From `data/vector/tennis_court_points.geojson`:
 - Verify ROBOT_IP environment variable is set correctly
 - Confirm Go2 is on the same WiFi network as the Jetson
 
-**"GPS fix timeout"**
+**"GPS fix timeout after 300s"**
+- Message includes elapsed time (e.g. `GPS fix timeout after 300s`)
 - Ensure clear sky view for GPS antenna
 - Verify NTRIP credentials are correct
 - Check GPS serial port connection
 
-**Robot moves erratically**
-- GPS course-over-ground (COG) only accurate when moving
-- Allow robot to walk briefly to establish heading
+**"Navigation timeout after 300s for waypoint ..."**
+- Waypoint was not reached within the timeout (default 300s)
+- Check for physical obstacles blocking the robot's path
+- Verify GPS accuracy is sufficient — if hAcc is high the robot may oscillate near the target
+- Message includes remaining distance to waypoint
+
+**"IMU calibration timeout after 30s"**
+- Robot couldn't walk 1.5m within 30s (obstacle, terrain, leash)
+- Calibration resets automatically and retries
+- Ensure the robot has a clear path forward at startup
+
+**Robot moves erratically or spins**
+- IMU calibration completes after ~1.5m of forward movement (~5 seconds)
+- Check logs for "IMU calibrated!" message indicating successful calibration
+- If robot spins repeatedly after calibration, verify IMU data is being received (check for `IMU cal: yes` in logs)
+- Ensure RTK fix is stable (type 5+) before expecting accurate navigation
 
 ---
 
 ## Logs
 
-Mission logs are saved to `autonomous_nav/logs/`:
+Mission logs are saved to `autonomous_nav/mission/logs/`:
 ```
-autonomous_nav/logs/mission_00_2025-01-15_10-30-45.log
-autonomous_nav/logs/mission_01_2025-01-15_11-00-00.log
+autonomous_nav/mission/logs/mission_00_2026-01-29_10-30-45.log
+autonomous_nav/mission/logs/mission_01_2026-01-29_11-00-00.log
 ```
+
+Log entries include fix type and horizontal accuracy for debugging:
+```
+Pos: (46.67389244, -114.01613655) | Dist: 5.23m | Fix: 6 | hAcc: 0.014m | ...
+```
+
+Major state transitions are highlighted with bordered banners for easy scanning:
+```
+============================================================
+========= GPS RTK Fixed ACHIEVED | hAcc: 0.014m ============
+============================================================
+```
+
+Error and warning banners use `!` borders:
+```
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!! GPS FIX LOST | type 2 | robot paused !!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+```
+
+During long waits (GPS fix, GPS pause, IMU calibration), periodic progress messages are logged so the output doesn't go silent.

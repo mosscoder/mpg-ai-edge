@@ -18,6 +18,7 @@ import struct
 import threading
 import time
 from collections import Counter
+import math
 from dataclasses import dataclass
 from math import asin, atan2, cos, degrees, radians, sin, sqrt
 from typing import Dict, List, Optional, Tuple
@@ -30,6 +31,16 @@ from unitree_webrtc_connect.webrtc_driver import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+def _log_banner(message: str, level: str = "info", char: str = "=", width: int = 60):
+    border = char * width
+    padded = f" {message} ".center(width, char)
+    log_fn = getattr(logger, level)
+    log_fn(border)
+    log_fn(padded)
+    log_fn(border)
+
 
 # =============================================================================
 # DATA STRUCTURES
@@ -394,6 +405,7 @@ class UBloxRTKGPS:
         """Wait for GPS fix. Returns True if fix achieved."""
         logger.info(f"Waiting for GPS fix (min type {min_fix_type})...")
         start = time.time()
+        last_progress = start
         while time.time() - start < timeout:
             pos = self.get_position()
             if pos and pos.fix_type >= min_fix_type:
@@ -403,14 +415,25 @@ class UBloxRTKGPS:
                     5: "RTK Float",
                     6: "RTK Fixed",
                 }
+                fix_label = fix_names.get(pos.fix_type, "Fix")
                 logger.info(
-                    f"{fix_names.get(pos.fix_type, 'Fix')} achieved! "
+                    f"{fix_label} achieved! "
                     f"Lat: {pos.latitude:.8f}, Lon: {pos.longitude:.8f}, "
                     f"hAcc: {pos.accuracy_horizontal:.3f}m"
                 )
+                _log_banner(f"GPS {fix_label} ACHIEVED | hAcc: {pos.accuracy_horizontal:.3f}m")
                 return True
+            now = time.time()
+            if now - last_progress >= 15.0:
+                elapsed = now - start
+                fix_type = pos.fix_type if pos else "?"
+                num_sv = pos.satellites_used if pos else "?"
+                logger.info(f"Waiting for GPS fix... ({elapsed:.0f}s elapsed, type {fix_type}, {num_sv} SVs)")
+                last_progress = now
             time.sleep(1.0)
-        logger.error("GPS fix timeout")
+        elapsed = time.time() - start
+        logger.error(f"GPS fix timeout after {elapsed:.0f}s")
+        _log_banner(f"GPS FIX TIMEOUT after {elapsed:.0f}s", level="error", char="!")
         return False
 
 
@@ -490,6 +513,8 @@ class Go2Robot:
         self.robot_serial = robot_serial
         self.conn: Optional[UnitreeWebRTCConnection] = None
         self._connected = False
+        self._latest_imu: Optional[Dict] = None
+        self._imu_timestamp: float = 0.0
 
     async def connect(self) -> bool:
         """Establish WebRTC connection to robot."""
@@ -517,6 +542,12 @@ class Go2Robot:
             if not await self._wait_for_api():
                 raise RuntimeError("Robot API not responding")
 
+            # Subscribe to sport mode state for IMU data
+            self.conn.datachannel.pub_sub.subscribe(
+                RTC_TOPIC["LF_SPORT_MOD_STATE"], self._on_sport_state
+            )
+            logger.info("Subscribed to sport mode state (IMU)")
+
             self._connected = True
             return True
         except Exception as e:
@@ -538,6 +569,34 @@ class Go2Robot:
                 logger.debug(f"API not ready: {e}")
             await asyncio.sleep(0.5)
         return False
+
+    def _on_sport_state(self, message: Dict):
+        """Callback for sport mode state updates containing IMU data."""
+        try:
+            self._latest_imu = message["data"]["imu_state"]
+            self._imu_timestamp = time.time()
+        except (KeyError, TypeError):
+            pass
+
+    def get_yaw_degrees(self, max_age: float = 1.0) -> Optional[float]:
+        """Get current IMU yaw in degrees.
+
+        Args:
+            max_age: Maximum age of IMU data in seconds. Returns None if
+                data is older than this threshold.
+
+        Returns:
+            Yaw angle in degrees, or None if IMU data not available or stale.
+            The yaw is relative to the robot's power-on orientation.
+        """
+        if self._latest_imu is None:
+            return None
+        if time.time() - self._imu_timestamp > max_age:
+            return None
+        try:
+            return math.degrees(self._latest_imu["rpy"][2])
+        except (KeyError, TypeError, IndexError):
+            return None
 
     async def ensure_normal_mode(self):
         """Ensure robot is in normal walking mode."""
@@ -695,6 +754,8 @@ class WaypointNavigator:
         rotation_rate: float = 0.3,
         arrival_tolerance: float = 0.2,
         min_fix_type: int = 5,
+        gps_timeout: float = 300.0,
+        calibration_timeout: float = 30.0,
     ):
         self.gps = gps
         self.robot = robot
@@ -702,17 +763,28 @@ class WaypointNavigator:
         self.rotation_rate = rotation_rate
         self.arrival_tolerance = arrival_tolerance
         self.min_fix_type = min_fix_type
+        self.gps_timeout = gps_timeout
+        self.calibration_timeout = calibration_timeout
 
         self._running = False
         self._paused = False
-        self._last_heading: Optional[float] = None
+        self._pause_start: Optional[float] = None
+        self._pause_last_progress: Optional[float] = None
 
-    async def navigate_to(self, waypoint: Waypoint) -> bool:
+        # IMU calibration state
+        self._imu_north_offset: Optional[float] = None  # Degrees to add to IMU yaw
+        self._calibration_start_pos: Optional[RTKPosition] = None
+        self._calibration_start_yaw: Optional[float] = None
+        self._calibration_start_time: Optional[float] = None
+        self._calibration_last_progress: Optional[float] = None
+
+    async def navigate_to(self, waypoint: Waypoint, timeout: float = 300.0) -> bool:
         """
         Navigate to a single waypoint.
 
         Args:
             waypoint: Target waypoint
+            timeout: Maximum time in seconds to reach the waypoint
 
         Returns:
             True if waypoint reached within tolerance
@@ -721,11 +793,26 @@ class WaypointNavigator:
             f"Navigating to {waypoint.name}: "
             f"({waypoint.latitude:.8f}, {waypoint.longitude:.8f})"
         )
+        _log_banner(f"NAVIGATING TO {waypoint.name}")
 
         self._running = True
         self._paused = False
+        nav_start = time.time()
 
         while self._running:
+            if time.time() - nav_start > timeout:
+                pos_check = self.gps.get_position()
+                remaining = ""
+                if pos_check:
+                    dist = haversine_distance(pos_check.latitude, pos_check.longitude, waypoint.latitude, waypoint.longitude)
+                    remaining = f" | {dist:.1f}m remaining"
+                logger.error(
+                    f"Navigation timeout after {timeout:.0f}s for waypoint {waypoint.name}{remaining}"
+                )
+                _log_banner(f"NAVIGATION TIMEOUT | {waypoint.name} | {timeout:.0f}s", level="error", char="!")
+                await self.robot.stop()
+                return False
+
             # Get current position
             pos = self.gps.get_position()
 
@@ -734,15 +821,38 @@ class WaypointNavigator:
                 if not self._paused:
                     fix_info = f"type {pos.fix_type}" if pos else "no position"
                     logger.warning(f"GPS fix lost or degraded ({fix_info}), pausing robot...")
+                    _log_banner(f"GPS FIX LOST | {fix_info} | robot paused", level="warning", char="!")
                     await self.robot.stop()
                     self._paused = True
+                    self._pause_start = time.time()
+                    self._pause_last_progress = time.time()
+                elif time.time() - self._pause_start > self.gps_timeout:
+                    pause_elapsed = time.time() - self._pause_start
+                    logger.error(
+                        f"GPS fix not restored after {pause_elapsed:.0f}s "
+                        f"(limit: {self.gps_timeout:.0f}s), aborting navigation to {waypoint.name}"
+                    )
+                    _log_banner(f"GPS PAUSE TIMEOUT | {pause_elapsed:.0f}s | aborting", level="error", char="!")
+                    await self.robot.stop()
+                    return False
+                else:
+                    now = time.time()
+                    if now - self._pause_last_progress >= 15.0:
+                        pause_elapsed = now - self._pause_start
+                        logger.info(f"GPS fix lost -- still waiting... ({pause_elapsed:.0f}s / {self.gps_timeout:.0f}s timeout)")
+                        self._pause_last_progress = now
                 await asyncio.sleep(0.5)
                 continue
 
             # Fix restored - resume if we were paused
             if self._paused:
+                pause_duration = time.time() - self._pause_start
                 logger.info(f"GPS fix restored (type {pos.fix_type}), resuming navigation")
+                _log_banner(f"GPS FIX RESTORED | type {pos.fix_type} | paused {pause_duration:.0f}s")
                 self._paused = False
+                self._pause_start = None
+                self._pause_last_progress = None
+                # IMU heading survives GPS outages - no need to reset calibration
 
             # Calculate distance and bearing to target
             distance = haversine_distance(
@@ -754,21 +864,30 @@ class WaypointNavigator:
 
             # Check arrival
             if distance < self.arrival_tolerance:
+                elapsed = time.time() - nav_start
                 logger.info(
                     f"ARRIVED at {waypoint.name}! Distance: {distance:.3f}m"
                 )
+                _log_banner(f"ARRIVED at {waypoint.name} | {distance:.3f}m | {elapsed:.0f}s")
                 await self.robot.stop()
                 return True
 
-            # Estimate current heading
-            current_heading = self._estimate_heading(pos)
+            # Get IMU yaw (if available)
+            imu_yaw = self.robot.get_yaw_degrees()
+
+            # Calibrate IMU if needed (during first forward motion)
+            if self._imu_north_offset is None and imu_yaw is not None:
+                self._calibrate_imu(pos, imu_yaw)
+
+            # Get calibrated heading
+            current_heading = self.get_calibrated_heading()
 
             # Calculate heading error
             if current_heading is not None:
                 heading_error = normalize_angle(bearing - current_heading)
             else:
-                # No heading info - walk forward slowly to establish COG
-                # Once moving, GPS will provide course-over-ground
+                if self._imu_north_offset is not None:
+                    logger.warning("IMU heading stale - falling back to forward motion")
                 heading_error = 0
 
             # Compute velocity commands
@@ -778,11 +897,12 @@ class WaypointNavigator:
             await self.robot.send_velocity(x=vx, z=vz)
 
             # Log status
+            calibrated = "yes" if self._imu_north_offset is not None else "no"
             logger.debug(
                 f"Pos: ({pos.latitude:.8f}, {pos.longitude:.8f}) | "
-                f"Dist: {distance:.2f}m | Bearing: {bearing:.1f}° | "
-                f"Heading: {current_heading or '?'}° | Error: {heading_error:.1f}° | "
-                f"Vel: x={vx:.2f}, z={vz:.2f}"
+                f"Dist: {distance:.2f}m | Fix: {pos.fix_type} | hAcc: {pos.accuracy_horizontal:.3f}m | "
+                f"Bearing: {bearing:.1f}° | Heading: {current_heading or '?'}° | "
+                f"Error: {heading_error:.1f}° | Vel: x={vx:.2f}, z={vz:.2f} | IMU cal: {calibrated}"
             )
 
             await asyncio.sleep(0.2)  # 5Hz navigation loop
@@ -790,12 +910,89 @@ class WaypointNavigator:
         await self.robot.stop()
         return False
 
-    def _estimate_heading(self, pos: RTKPosition) -> Optional[float]:
-        """Estimate current heading from GPS COG or history."""
-        if pos.course_over_ground is not None:
-            self._last_heading = pos.course_over_ground
-            return pos.course_over_ground
-        return self._last_heading
+    def _calibrate_imu(self, pos: RTKPosition, imu_yaw: float) -> bool:
+        """Calibrate IMU yaw against GPS bearing during forward motion.
+
+        The IMU provides yaw relative to power-on orientation. This method
+        computes an offset to convert IMU yaw to true heading (relative to
+        north) by comparing IMU yaw change with GPS-derived bearing during
+        a period of forward motion.
+
+        Args:
+            pos: Current GPS position
+            imu_yaw: Current IMU yaw in degrees
+
+        Returns:
+            True when calibration is complete
+        """
+        if self._calibration_start_pos is None:
+            # Start calibration
+            self._calibration_start_pos = pos
+            self._calibration_start_yaw = imu_yaw
+            self._calibration_start_time = time.time()
+            self._calibration_last_progress = time.time()
+            logger.info("IMU calibration started - walking forward to calibrate...")
+            _log_banner("IMU CALIBRATION STARTED", char="-")
+            return False
+
+        # Compute displacement first (needed for timeout message and progress)
+        displacement = haversine_distance(
+            self._calibration_start_pos.latitude,
+            self._calibration_start_pos.longitude,
+            pos.latitude,
+            pos.longitude,
+        )
+
+        # Check for calibration timeout
+        elapsed = time.time() - self._calibration_start_time
+        if elapsed > self.calibration_timeout:
+            logger.error(
+                f"IMU calibration timeout after {self.calibration_timeout:.0f}s "
+                f"(displacement: {displacement:.2f}m / 1.50m needed). Resetting to allow retry."
+            )
+            _log_banner(f"IMU CALIBRATION TIMEOUT after {self.calibration_timeout:.0f}s", level="error", char="!")
+            self._calibration_start_pos = None
+            self._calibration_start_yaw = None
+            self._calibration_start_time = None
+            self._calibration_last_progress = None
+            return False
+
+        # Periodic progress
+        now = time.time()
+        if self._calibration_last_progress is not None and now - self._calibration_last_progress >= 5.0:
+            logger.info(f"IMU calibrating... displacement: {displacement:.2f}m / 1.50m needed ({elapsed:.0f}s)")
+            self._calibration_last_progress = now
+
+        if displacement >= 1.5:  # Enough movement for reliable GPS bearing
+            gps_bearing = calculate_bearing(
+                self._calibration_start_pos.latitude,
+                self._calibration_start_pos.longitude,
+                pos.latitude,
+                pos.longitude,
+            )
+            imu_delta = imu_yaw - self._calibration_start_yaw
+            # Offset = GPS bearing - IMU delta (converts IMU yaw to true heading)
+            self._imu_north_offset = normalize_angle(gps_bearing - imu_delta)
+            logger.info(
+                f"IMU calibrated! Offset: {self._imu_north_offset:.1f}° "
+                f"(GPS bearing: {gps_bearing:.1f}°, IMU delta: {imu_delta:.1f}°)"
+            )
+            _log_banner(f"IMU CALIBRATED | Offset: {self._imu_north_offset:.1f} deg")
+            return True
+
+        return False
+
+    def get_calibrated_heading(self) -> Optional[float]:
+        """Get IMU yaw converted to true heading (relative to north).
+
+        Returns:
+            Heading in degrees (0-360, where 0=North, 90=East),
+            or None if IMU not calibrated or data unavailable.
+        """
+        imu_yaw = self.robot.get_yaw_degrees()
+        if imu_yaw is None or self._imu_north_offset is None:
+            return None
+        return (imu_yaw + self._imu_north_offset) % 360
 
     def _compute_velocity(
         self, distance: float, heading_error: float
@@ -820,6 +1017,7 @@ class WaypointNavigator:
 
             # Proportional heading correction
             vz = heading_error * 0.015
+            vz = max(-self.rotation_rate, min(self.rotation_rate, vz))
 
         return vx, vz
 
