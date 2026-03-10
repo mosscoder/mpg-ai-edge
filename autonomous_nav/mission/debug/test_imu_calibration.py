@@ -70,6 +70,7 @@ GPS_LOG_INTERVAL = 0.5  # seconds between GPS logs during walk
 HEADING_TOLERANCE = 5.0  # degrees — close enough to north
 TURN_RATE = 0.8  # rad/s rotation speed (field data: ~7% command-to-actual ratio)
 TURN_TIMEOUT = 60.0  # seconds — abort rotation if not aligned
+CALIBRATION_TIMEOUT = 90.0  # seconds — overall Phase 2 timeout
 MIN_FIX_TYPE = 4  # GNSS+DR or better
 MAX_HACC = 1.0  # meters — max horizontal accuracy
 GPS_FIX_TIMEOUT = 300  # seconds
@@ -159,6 +160,8 @@ async def run():
             gps=gps,
             robot=robot,
             max_velocity=CALIBRATION_WALK_SPEED,
+            min_fix_type=MIN_FIX_TYPE,
+            max_hacc=MAX_HACC,
         )
 
         print("\nWalking forward to calibrate IMU...")
@@ -167,6 +170,15 @@ async def run():
         cal_last_log = 0.0
 
         while not calibrated:
+            # Overall Phase 2 timeout
+            cal_elapsed = time.time() - cal_start
+            if cal_elapsed > CALIBRATION_TIMEOUT:
+                logger.error(
+                    f"Phase 2 calibration timeout after {cal_elapsed:.0f}s — aborting"
+                )
+                await robot.stop()
+                return False
+
             pos = gps.get_position()
             imu_yaw = robot.get_yaw_degrees()
 

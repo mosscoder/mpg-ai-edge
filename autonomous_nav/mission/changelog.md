@@ -11,6 +11,8 @@ First field test of `test_imu_calibration.py` failed. The robot walked forward (
 3. **TURN_RATE too low** — field data showed ~7% command-to-actual ratio at 0.3 rad/s
 4. **GPS constraints too tight** — requiring RTK Float (fix_type 5) caused unnecessary stalls; GNSS+DR (fix_type 4) with hAcc gating is sufficient
 5. **GPS status logging insufficient** — no visibility into hAcc, fix_type, or position during calibration walk or rotation phases
+6. **No overall Phase 2 timeout** — the calibration walk loop had no exit condition other than success; inner `_calibrate_imu` 30s timeout just reset and retried, so the robot could walk forward indefinitely
+7. **Navigator config inconsistent** — `min_fix_type` and `max_hacc` not passed to the `WaypointNavigator` constructor in the calibration script
 
 ### Changes
 
@@ -25,9 +27,11 @@ First field test of `test_imu_calibration.py` failed. The robot walked forward (
 - Added `MAX_HACC = 1.0` — skip noisy positions during calibration (don't feed to `_calibrate_imu`)
 - `TURN_RATE`: 0.3 → 0.8 rad/s
 - Added `TURN_TIMEOUT = 60.0` — abort rotation if not aligned within this time
+- Added `CALIBRATION_TIMEOUT = 90.0` — overall Phase 2 timeout; stops robot and aborts if calibration doesn't complete (including inner retries)
 - Phase 2: added GPS logging every 2s (position, hAcc, fix_type, displacement)
 - Phase 3: re-issue `balance_stand()` before rotation loop; added 2s periodic logging (heading, error, GPS status)
 - Phase 4: re-issue `balance_stand()` before northward walk
+- Navigator constructor now passes `min_fix_type=MIN_FIX_TYPE` and `max_hacc=MAX_HACC` for consistency
 
 **`mission_00.py` and `mission_01.py`:**
 - `MIN_FIX_TYPE`: 5 → 4
