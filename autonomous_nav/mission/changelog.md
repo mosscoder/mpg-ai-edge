@@ -1,5 +1,45 @@
 # Navigation Changelog
 
+## 2026-03-10: Fix Rotation Failure, Relax GPS Constraints, Add GPS Visibility
+
+### Problem
+
+First field test of `test_imu_calibration.py` failed. The robot walked forward (calibration succeeded), but Phase 3 rotation did nothing for 25s until techs killed it. Root causes:
+
+1. **BalanceStand not re-issued** — after the calibration walk+stop, the gait controller was not re-primed, so `send_velocity(z=...)` had no effect
+2. **Mode switch failure (code 7004)** — the switch to "normal" mode had failed silently
+3. **TURN_RATE too low** — field data showed ~7% command-to-actual ratio at 0.3 rad/s
+4. **GPS constraints too tight** — requiring RTK Float (fix_type 5) caused unnecessary stalls; GNSS+DR (fix_type 4) with hAcc gating is sufficient
+5. **GPS status logging insufficient** — no visibility into hAcc, fix_type, or position during calibration walk or rotation phases
+
+### Changes
+
+**`nav_utils.py` — WaypointNavigator:**
+- Added `max_hacc` parameter (default 1.0m) to `__init__()`
+- `navigate_to()` now issues `balance_stand()` + 1s sleep before the nav loop, ensuring the gait controller is ready for every waypoint (including between waypoints in multi-waypoint missions)
+- GPS degradation check now also pauses when `hAcc > max_hacc`, with hAcc included in the log message
+- Added periodic INFO-level nav status every 5s: position, hAcc, fix_type, distance to target, heading, calibration status
+
+**`test_imu_calibration.py`:**
+- `MIN_FIX_TYPE`: 5 → 4 (GNSS+DR or better)
+- Added `MAX_HACC = 1.0` — skip noisy positions during calibration (don't feed to `_calibrate_imu`)
+- `TURN_RATE`: 0.3 → 0.8 rad/s
+- Added `TURN_TIMEOUT = 60.0` — abort rotation if not aligned within this time
+- Phase 2: added GPS logging every 2s (position, hAcc, fix_type, displacement)
+- Phase 3: re-issue `balance_stand()` before rotation loop; added 2s periodic logging (heading, error, GPS status)
+- Phase 4: re-issue `balance_stand()` before northward walk
+
+**`mission_00.py` and `mission_01.py`:**
+- `MIN_FIX_TYPE`: 5 → 4
+- All nav_utils improvements (BalanceStand per waypoint, hAcc gating, INFO logging) flow through automatically
+
+### Verification
+
+- `python -m py_compile` passes for all four files
+- No API changes visible to mission scripts — all new parameters have defaults
+
+---
+
 ## 2026-02-12: Human-Readable Mission Epoch Logging
 
 ### Problem
