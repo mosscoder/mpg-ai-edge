@@ -68,8 +68,11 @@ WALK_NORTH_SPEED = 0.5  # m/s during the northward walk
 WALK_NORTH_DURATION = 10.0  # seconds
 GPS_LOG_INTERVAL = 0.5  # seconds between GPS logs during walk
 HEADING_TOLERANCE = 5.0  # degrees — close enough to north
-TURN_RATE = 0.3  # rad/s rotation speed
-MIN_FIX_TYPE = 5  # RTK Float or better
+TURN_RATE = 0.8  # rad/s rotation speed (field data: ~7% command-to-actual ratio)
+TURN_TIMEOUT = 60.0  # seconds — abort rotation if not aligned
+CALIBRATION_TIMEOUT = 90.0  # seconds — overall Phase 2 timeout
+MIN_FIX_TYPE = 4  # GNSS+DR or better
+MAX_HACC = 1.0  # meters — max horizontal accuracy
 GPS_FIX_TIMEOUT = 300  # seconds
 
 
@@ -157,17 +160,51 @@ async def run():
             gps=gps,
             robot=robot,
             max_velocity=CALIBRATION_WALK_SPEED,
+            min_fix_type=MIN_FIX_TYPE,
+            max_hacc=MAX_HACC,
         )
 
         print("\nWalking forward to calibrate IMU...")
         calibrated = False
         cal_start = time.time()
+        cal_last_log = 0.0
 
         while not calibrated:
+            # Overall Phase 2 timeout
+            cal_elapsed = time.time() - cal_start
+            if cal_elapsed > CALIBRATION_TIMEOUT:
+                logger.error(
+                    f"Phase 2 calibration timeout after {cal_elapsed:.0f}s — aborting"
+                )
+                await robot.stop()
+                return False
+
             pos = gps.get_position()
             imu_yaw = robot.get_yaw_degrees()
 
             if pos is None or imu_yaw is None:
+                await asyncio.sleep(0.2)
+                continue
+
+            # Periodic GPS logging during calibration walk
+            now = time.time()
+            if now - cal_last_log >= 2.0:
+                displacement = 0.0
+                if start_pos:
+                    displacement = haversine_distance(
+                        start_pos.latitude, start_pos.longitude,
+                        pos.latitude, pos.longitude,
+                    )
+                logger.info(
+                    f"[cal walk] ({pos.latitude:.8f}, {pos.longitude:.8f}) "
+                    f"fix={pos.fix_type} hAcc={pos.accuracy_horizontal:.3f}m "
+                    f"disp={displacement:.2f}m"
+                )
+                cal_last_log = now
+
+            # Skip noisy positions for calibration
+            if pos.accuracy_horizontal > MAX_HACC:
+                await robot.send_velocity(x=CALIBRATION_WALK_SPEED)
                 await asyncio.sleep(0.2)
                 continue
 
@@ -192,9 +229,25 @@ async def run():
         # =================================================================
         _log_banner("PHASE 3: TURN TO NORTH")
 
+        # Re-issue BalanceStand to ensure gait controller is ready after stop
+        await robot.balance_stand()
+        await asyncio.sleep(1.0)
+
         print("\nRotating to face north (0°)...")
         aligned = False
+        turn_start = time.time()
+        turn_last_log = 0.0
         while not aligned:
+            # Check turn timeout
+            if time.time() - turn_start > TURN_TIMEOUT:
+                heading = navigator.get_calibrated_heading()
+                logger.error(
+                    f"Turn timeout after {TURN_TIMEOUT:.0f}s — "
+                    f"heading: {heading}°, aborting rotation"
+                )
+                await robot.stop()
+                return False
+
             heading = navigator.get_calibrated_heading()
             if heading is None:
                 await asyncio.sleep(0.1)
@@ -202,6 +255,20 @@ async def run():
 
             # Error to 0° (north)
             error = normalize_angle(0 - heading)
+
+            # Periodic logging during rotation
+            now = time.time()
+            if now - turn_last_log >= 2.0:
+                pos = gps.get_position()
+                if pos:
+                    logger.info(
+                        f"[turn] hdg={heading:.1f}° err={error:.1f}° | "
+                        f"({pos.latitude:.8f}, {pos.longitude:.8f}) "
+                        f"fix={pos.fix_type} hAcc={pos.accuracy_horizontal:.3f}m"
+                    )
+                else:
+                    logger.info(f"[turn] hdg={heading:.1f}° err={error:.1f}° | no GPS pos")
+                turn_last_log = now
 
             if abs(error) < HEADING_TOLERANCE:
                 aligned = True
@@ -222,6 +289,10 @@ async def run():
         # Phase 4: Walk North for 10s (dead reckoning)
         # =================================================================
         _log_banner("PHASE 4: WALK NORTH 10s @ 0.5 m/s")
+
+        # Re-issue BalanceStand to ensure gait controller is ready
+        await robot.balance_stand()
+        await asyncio.sleep(1.0)
 
         walk_start_pos = gps.get_position()
         print(f"\nWalking north for {WALK_NORTH_DURATION}s at {WALK_NORTH_SPEED} m/s...")

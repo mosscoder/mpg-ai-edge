@@ -754,6 +754,7 @@ class WaypointNavigator:
         rotation_rate: float = 0.3,
         arrival_tolerance: float = 0.2,
         min_fix_type: int = 5,
+        max_hacc: float = 1.0,
         gps_timeout: float = 300.0,
         calibration_timeout: float = 30.0,
     ):
@@ -763,6 +764,7 @@ class WaypointNavigator:
         self.rotation_rate = rotation_rate
         self.arrival_tolerance = arrival_tolerance
         self.min_fix_type = min_fix_type
+        self.max_hacc = max_hacc
         self.gps_timeout = gps_timeout
         self.calibration_timeout = calibration_timeout
 
@@ -770,6 +772,7 @@ class WaypointNavigator:
         self._paused = False
         self._pause_start: Optional[float] = None
         self._pause_last_progress: Optional[float] = None
+        self._nav_last_status: Optional[float] = None
 
         # IMU calibration state
         self._imu_north_offset: Optional[float] = None  # Degrees to add to IMU yaw
@@ -797,7 +800,12 @@ class WaypointNavigator:
 
         self._running = True
         self._paused = False
+        self._nav_last_status = None
         nav_start = time.time()
+
+        # Ensure gait controller is ready for motion
+        await self.robot.balance_stand()
+        await asyncio.sleep(1.0)
 
         while self._running:
             if time.time() - nav_start > timeout:
@@ -817,9 +825,12 @@ class WaypointNavigator:
             pos = self.gps.get_position()
 
             # Check for GPS loss or fix degradation
-            if not pos or pos.fix_type < self.min_fix_type:
+            if not pos or pos.fix_type < self.min_fix_type or pos.accuracy_horizontal > self.max_hacc:
                 if not self._paused:
-                    fix_info = f"type {pos.fix_type}" if pos else "no position"
+                    if pos:
+                        fix_info = f"type {pos.fix_type}, hAcc {pos.accuracy_horizontal:.3f}m"
+                    else:
+                        fix_info = "no position"
                     logger.warning(f"GPS fix lost or degraded ({fix_info}), pausing robot...")
                     _log_banner(f"GPS FIX LOST | {fix_info} | robot paused", level="warning", char="!")
                     await self.robot.stop()
@@ -904,6 +915,17 @@ class WaypointNavigator:
                 f"Bearing: {bearing:.1f}° | Heading: {current_heading or '?'}° | "
                 f"Error: {heading_error:.1f}° | Vel: x={vx:.2f}, z={vz:.2f} | IMU cal: {calibrated}"
             )
+
+            # Periodic INFO-level nav status every 5s
+            now = time.time()
+            if self._nav_last_status is None or now - self._nav_last_status >= 5.0:
+                heading_str = f"{current_heading:.1f}°" if current_heading is not None else "?"
+                logger.info(
+                    f"NAV | ({pos.latitude:.8f}, {pos.longitude:.8f}) | "
+                    f"fix={pos.fix_type} hAcc={pos.accuracy_horizontal:.3f}m | "
+                    f"dist={distance:.2f}m | hdg={heading_str} | IMU cal: {calibrated}"
+                )
+                self._nav_last_status = now
 
             await asyncio.sleep(0.2)  # 5Hz navigation loop
 
