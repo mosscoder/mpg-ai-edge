@@ -59,7 +59,7 @@ NTRIP_CONFIG = NTRIPConfig(
     password=os.getenv("EMLID_PASSWORD", ""),
 )
 
-CONNECTION_MODE = os.getenv("CONNECTION_MODE", "LocalSTA")
+CONNECTION_MODE = os.getenv("CONNECTION_MODE", "LocalAP")
 ROBOT_IP = os.getenv("ROBOT_IP", "192.168.1.105")
 ROBOT_SERIAL = os.getenv("ROBOT_SERIAL", None)
 
