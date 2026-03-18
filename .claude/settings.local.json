@@ -15,7 +15,22 @@
       "Bash(curl:*)",
       "WebFetch(domain:wiki.theroboverse.com)",
       "WebFetch(domain:docs.openmind.org)",
-      "WebFetch(domain:support.unitree.com)"
+      "WebFetch(domain:support.unitree.com)",
+      "Bash(pip show:*)",
+      "WebFetch(domain:www.docs.quadruped.de)",
+      "WebFetch(domain:www.k-robotic.com)",
+      "WebFetch(domain:ric.engineering)",
+      "Bash(gh search:*)",
+      "WebFetch(domain:techshare.co.jp)",
+      "Bash(find /Users/kdoherty/mpg-ai-edge -type f \\\\\\(-name *.log -o -name *.txt \\\\\\))",
+      "Bash(find /Users/kdoherty/mpg-ai-edge -type f -name *.json)",
+      "Bash(find /Users/kdoherty/mpg-ai-edge -type f \\\\\\(-name *.json -o -name *.yaml -o -name *.yml -o -name *.xml \\\\\\))",
+      "Bash(wc:*)",
+      "Bash(find /Users/kdoherty/mpg-ai-edge -type f -name *march* -o -name *field* -o -name *gps*)",
+      "Bash(find /Users/kdoherty/mpg-ai-edge -type f -name *.md)",
+      "Bash(grep:*)",
+      "Bash(find /Users/kdoherty/mpg-ai-edge -type f \\\\\\(-name *.log -o -name *.csv -o -name *.json -o -name *.gpx \\\\\\))",
+      "Bash(du:*)"
     ],
     "deny": []
   }

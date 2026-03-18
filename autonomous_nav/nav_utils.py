@@ -777,7 +777,7 @@ class WaypointNavigator:
         # IMU calibration state
         self._imu_north_offset: Optional[float] = None  # Degrees to add to IMU yaw
         self._calibration_start_pos: Optional[RTKPosition] = None
-        self._calibration_start_yaw: Optional[float] = None
+
         self._calibration_start_time: Optional[float] = None
         self._calibration_last_progress: Optional[float] = None
 
@@ -937,8 +937,8 @@ class WaypointNavigator:
 
         The IMU provides yaw relative to power-on orientation. This method
         computes an offset to convert IMU yaw to true heading (relative to
-        north) by comparing IMU yaw change with GPS-derived bearing during
-        a period of forward motion.
+        north) using: offset = GPS bearing - absolute IMU yaw. After
+        calibration, heading = imu_yaw + offset = GPS bearing.
 
         Args:
             pos: Current GPS position
@@ -950,7 +950,6 @@ class WaypointNavigator:
         if self._calibration_start_pos is None:
             # Start calibration
             self._calibration_start_pos = pos
-            self._calibration_start_yaw = imu_yaw
             self._calibration_start_time = time.time()
             self._calibration_last_progress = time.time()
             logger.info("IMU calibration started - walking forward to calibrate...")
@@ -974,7 +973,6 @@ class WaypointNavigator:
             )
             _log_banner(f"IMU CALIBRATION TIMEOUT after {self.calibration_timeout:.0f}s", level="error", char="!")
             self._calibration_start_pos = None
-            self._calibration_start_yaw = None
             self._calibration_start_time = None
             self._calibration_last_progress = None
             return False
@@ -992,12 +990,11 @@ class WaypointNavigator:
                 pos.latitude,
                 pos.longitude,
             )
-            imu_delta = imu_yaw - self._calibration_start_yaw
-            # Offset = GPS bearing - IMU delta (converts IMU yaw to true heading)
-            self._imu_north_offset = normalize_angle(gps_bearing - imu_delta)
+            # Offset = GPS bearing - absolute IMU yaw (converts IMU yaw to true heading)
+            self._imu_north_offset = normalize_angle(gps_bearing - imu_yaw)
             logger.info(
                 f"IMU calibrated! Offset: {self._imu_north_offset:.1f}° "
-                f"(GPS bearing: {gps_bearing:.1f}°, IMU delta: {imu_delta:.1f}°)"
+                f"(GPS bearing: {gps_bearing:.1f}°, IMU yaw: {imu_yaw:.1f}°)"
             )
             _log_banner(f"IMU CALIBRATED | Offset: {self._imu_north_offset:.1f} deg")
             return True

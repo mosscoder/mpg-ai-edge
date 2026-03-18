@@ -1,5 +1,56 @@
 # Navigation Changelog
 
+## 2026-03-18: Fix IMU Calibration Offset Bug
+
+### Problem
+
+March 18 field test: robot calibrated IMU, aligned to "north" (Phase 3 succeeded), then walked **southwest at ~231°** instead of north. Replicated on second attempt.
+
+### Root Cause
+
+The offset formula in `_calibrate_imu()` used IMU yaw *delta* (current minus start) instead of the *absolute* IMU yaw at calibration end:
+
+```python
+# BUG:
+imu_delta = imu_yaw - self._calibration_start_yaw
+self._imu_north_offset = normalize_angle(gps_bearing - imu_delta)
+```
+
+Math trace showing the error:
+
+```
+heading = imu_yaw + offset
+        = imu_yaw + (gps_bearing - (imu_yaw - start_yaw))
+        = gps_bearing + start_yaw   ← WRONG (includes start_yaw)
+```
+
+The bug was always present but masked in March 10 tests where the starting yaw was small (~-22°). On March 18, the starting yaw was ~103.5°, producing a heading error of ~104°.
+
+### Fix
+
+One-line change — use absolute IMU yaw instead of delta:
+
+```python
+self._imu_north_offset = normalize_angle(gps_bearing - imu_yaw)
+```
+
+Corrected math:
+
+```
+heading = imu_yaw + offset
+        = imu_yaw + (gps_bearing - imu_yaw)
+        = gps_bearing   ✓
+```
+
+Also removed the now-unused `_calibration_start_yaw` variable from `__init__()`, the calibration start block, and the timeout reset block.
+
+### Verification
+
+- `python -m py_compile autonomous_nav/nav_utils.py` passes
+- No remaining references to `_calibration_start_yaw`
+
+---
+
 ## 2026-03-10: Fix Rotation Failure, Relax GPS Constraints, Add GPS Visibility
 
 ### Problem
