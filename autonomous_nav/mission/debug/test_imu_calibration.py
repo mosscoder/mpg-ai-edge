@@ -55,8 +55,8 @@ NTRIP_CONFIG = NTRIPConfig(
     host=os.getenv("EMLID_NTRIP_HOST", "caster.emlid.com"),
     port=int(os.getenv("EMLID_NTRIP_PORT", "2101")),
     mountpoint=os.getenv("EMLID_MOUNTPOINT", "MP15774"),
-    username=os.getenv("EMLID_USERNAME", ""),
-    password=os.getenv("EMLID_PASSWORD", ""),
+    username=os.getenv("EMLID_USERNAME", "u65352"),
+    password=os.getenv("EMLID_PASSWORD", "338ca"),
 )
 
 CONNECTION_MODE = os.getenv("CONNECTION_MODE", "LocalSTA")

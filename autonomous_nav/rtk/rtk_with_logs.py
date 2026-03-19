@@ -393,8 +393,8 @@ def main():
         host=os.getenv('EMLID_NTRIP_HOST', "caster.emlid.com"),
         port=int(os.getenv('EMLID_NTRIP_PORT', "2101")),
         mountpoint=os.getenv('EMLID_MOUNTPOINT', "MP15774"),
-        username=os.getenv('EMLID_USERNAME', "your_username"),
-        password=os.getenv('EMLID_PASSWORD', "your_password"),
+        username=os.getenv('EMLID_USERNAME', "u65352"),
+        password=os.getenv('EMLID_PASSWORD', "338ca"),
     )
     print(f"NTRIP Config: {ntrip_config.host}:{ntrip_config.port}/{ntrip_config.mountpoint}")
     logger.info(f"Session start: log={logfile}")

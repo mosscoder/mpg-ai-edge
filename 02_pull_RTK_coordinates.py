@@ -541,8 +541,8 @@ def main():
         host="caster.emlid.com",           # Emlid NTRIP caster
         port=2101,                         # Standard NTRIP port
         mountpoint="MP15774",              # Your base station mountpoint
-        username="your_username",          # Your Emlid account username
-        password="your_password"           # Your Emlid account password
+        username="u65352",                 # Emlid NTRIP username
+        password="338ca"                   # Emlid NTRIP password
     )
     
     # Allow override from environment variables
@@ -644,8 +644,8 @@ Environment Variables (optional):
   EMLID_PASSWORD       - Your Emlid account password
 
 Example:
-  export EMLID_USERNAME="your_username"
-  export EMLID_PASSWORD="your_password"
+  export EMLID_USERNAME="u65352"
+  export EMLID_PASSWORD="338ca"
   export EMLID_MOUNTPOINT="your_base_station"
   python 02_pull_RTK_coordinates.py
 
