@@ -60,6 +60,8 @@ class RTKPosition:
     satellites_used: int
     course_over_ground: Optional[float]  # degrees, None if stationary
     timestamp: float
+    head_vehicle: Optional[float] = None  # F9R sensor-fused heading (degrees, true north)
+    head_vehicle_accuracy: Optional[float] = None  # Heading accuracy estimate (degrees)
 
 
 @dataclass
@@ -347,6 +349,11 @@ class UBloxRTKGPS:
             gSpeed = struct.unpack("<i", payload[60:64])[0]  # ground speed mm/s
             headMot = struct.unpack("<i", payload[64:68])[0]  # heading 1e-5 deg
 
+            # F9R sensor-fused heading (offset 84-91)
+            headVeh = struct.unpack("<i", payload[84:88])[0]  # 1e-5 degrees
+            headAcc = struct.unpack("<I", payload[88:92])[0]  # 1e-5 degrees
+            head_veh_valid = bool(flags & 0x20)  # flags bit 5
+
             carrSoln = flags2 & 0x03
             diffSoln = flags & 0x01
 
@@ -368,11 +375,71 @@ class UBloxRTKGPS:
                 "vAcc": vAcc * 1e-3,
                 "gSpeed": gSpeed * 1e-3,  # m/s
                 "cog": cog,  # degrees or None
+                "headVeh": headVeh,
+                "headAcc": headAcc,
+                "headVehValid": head_veh_valid,
             }
             self.last_pvt = out
             return out
         except Exception as e:
             logger.error(f"Error parsing NAV-PVT: {e}")
+            return None
+
+    def poll_esf_status(self) -> Optional[Dict]:
+        """Poll UBX-ESF-STATUS for F9R sensor fusion status."""
+        self._send_ubx_message(0x10, 0x10, b"")
+        msg = self._read_ubx_message(timeout=0.5)
+        if not msg:
+            return None
+        msg_class, msg_id, payload = msg
+        if msg_class != 0x10 or msg_id != 0x10 or len(payload) < 16:
+            return None
+
+        try:
+            iTOW = struct.unpack("<I", payload[0:4])[0]
+            version = payload[4]
+            fusionMode = payload[12]
+            numSens = payload[15]
+
+            fusion_labels = {0: "initialization", 1: "active", 2: "suspended", 3: "disabled"}
+
+            sensors = []
+            for i in range(numSens):
+                offset = 16 + i * 4
+                if offset + 4 > len(payload):
+                    break
+                sens_data = struct.unpack("<BBBB", payload[offset:offset + 4])
+                sens_type = sens_data[0] & 0x3F
+                is_used = bool(sens_data[0] & 0x40)
+                is_ready = bool(sens_data[0] & 0x80)
+                calib_status = sens_data[1] & 0x03
+                time_status = (sens_data[1] >> 2) & 0x03
+
+                type_labels = {
+                    0: "none", 1: "gyro_z", 2: "wheel_fl", 3: "wheel_fr",
+                    4: "wheel_rl", 5: "wheel_rr", 6: "speed", 7: "gyro_y",
+                    8: "gyro_x", 9: "accel_z", 10: "accel_y", 11: "accel_x",
+                }
+                calib_labels = {0: "not_calibrated", 1: "calibrating", 2: "calibrated", 3: "calibrated"}
+
+                sensors.append({
+                    "type": type_labels.get(sens_type, f"unknown_{sens_type}"),
+                    "used": is_used,
+                    "ready": is_ready,
+                    "calibration": calib_labels.get(calib_status, f"unknown_{calib_status}"),
+                    "time_status": time_status,
+                })
+
+            return {
+                "iTOW": iTOW,
+                "version": version,
+                "fusionMode": fusionMode,
+                "fusionModeLabel": fusion_labels.get(fusionMode, f"unknown_{fusionMode}"),
+                "numSensors": numSens,
+                "sensors": sensors,
+            }
+        except Exception as e:
+            logger.error(f"Error parsing ESF-STATUS: {e}")
             return None
 
     def get_position(self) -> Optional[RTKPosition]:
@@ -399,6 +466,8 @@ class UBloxRTKGPS:
             satellites_used=pvt["numSV"],
             course_over_ground=pvt["cog"],
             timestamp=time.time(),
+            head_vehicle=pvt["headVeh"] * 1e-5 if pvt["headVehValid"] else None,
+            head_vehicle_accuracy=pvt["headAcc"] * 1e-5,
         )
 
     def wait_for_rtk_fix(self, timeout: float = 300.0, min_fix_type: int = 4) -> bool:

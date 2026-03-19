@@ -30,7 +30,9 @@
       "Bash(find /Users/kdoherty/mpg-ai-edge -type f -name *.md)",
       "Bash(grep:*)",
       "Bash(find /Users/kdoherty/mpg-ai-edge -type f \\\\\\(-name *.log -o -name *.csv -o -name *.json -o -name *.gpx \\\\\\))",
-      "Bash(du:*)"
+      "Bash(du:*)",
+      "WebFetch(domain:www.sparkfun.com)",
+      "WebFetch(domain:cdn.sparkfun.com)"
     ],
     "deny": []
   }

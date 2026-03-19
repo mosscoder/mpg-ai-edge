@@ -1,5 +1,44 @@
 # Navigation Changelog
 
+## 2026-03-19: SparkFun F9R Sensor-Fused Heading (headVeh) Support
+
+### Discovery
+
+The SparkFun module is a **ZED-F9R** (not ZED-F9P) — a sensor fusion GNSS receiver with a built-in IMU. Its High Precision Sensor fusion (HPS) engine continuously fuses IMU with GNSS data to produce `headVeh` (vehicle heading referenced to true north) at 0.2° accuracy. This eliminates the need for the GPS calibration walk used by the robot IMU approach.
+
+### Changes
+
+**`nav_utils.py` — RTKPosition & UBloxRTKGPS:**
+- Added `head_vehicle` and `head_vehicle_accuracy` optional fields to `RTKPosition` (default `None` — no breaking changes)
+- `poll_nav_pvt()` now extracts `headVeh` (offset 84), `headAcc` (offset 88), and `headVehValid` (flags bit 5) from NAV-PVT
+- `get_position()` passes through F9R heading to RTKPosition when `headVehValid` is set
+- New `poll_esf_status()` method polls UBX-ESF-STATUS for fusion mode and per-sensor calibration status
+
+**`test_sparkfun_imu.py` — new debug script:**
+- Phase 0: Diagnostic probes (GPS-only) — tests F9R sensor fusion status, correction source, and headVeh validity
+- Phase 1: GPS + robot connection (same as existing script)
+- Phase 2: F9R heading acquisition — skips calibration walk if headVeh already valid, otherwise walks to trigger HPS auto-calibration; logs both F9R and robot IMU headings for comparison
+- Phase 3: Turn to north using `pos.head_vehicle` instead of `navigator.get_calibrated_heading()`
+- Phase 4: Walk north logging both heading sources side-by-side
+
+### Key Differences from Robot IMU Approach
+
+| Aspect | Robot IMU | F9R headVeh |
+|--------|-----------|-------------|
+| Calibration | 1.5m walk required | Auto-calibrates during motion |
+| Reference | Relative to power-on | True north |
+| Accuracy | Unknown + drift | 0.2° (datasheet) |
+| Code complexity | offset formula, calibration state machine | Single field extraction |
+
+### Verification
+
+- `python -m py_compile autonomous_nav/nav_utils.py` passes
+- `python -m py_compile autonomous_nav/mission/debug/test_sparkfun_imu.py` passes
+- Existing `test_imu_calibration.py` still compiles (no breaking changes)
+- `RTKPosition` new fields have defaults — existing constructors unaffected
+
+---
+
 ## 2026-03-18: Fix IMU Calibration Offset Bug
 
 ### Problem
