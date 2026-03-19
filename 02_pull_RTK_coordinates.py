@@ -540,7 +540,7 @@ def main():
     ntrip_config = NTRIPConfig(
         host="caster.emlid.com",           # Emlid NTRIP caster
         port=2101,                         # Standard NTRIP port
-        mountpoint="MP1979",               # Your base station mountpoint
+        mountpoint="MP15774",              # Your base station mountpoint
         username="your_username",          # Your Emlid account username
         password="your_password"           # Your Emlid account password
     )
@@ -639,7 +639,7 @@ Usage: python 02_pull_RTK_coordinates.py
 Environment Variables (optional):
   EMLID_NTRIP_HOST     - Emlid NTRIP caster hostname (default: caster.emlid.com)
   EMLID_NTRIP_PORT     - NTRIP port (default: 2101)
-  EMLID_MOUNTPOINT     - Your base station mountpoint (default: MP1979)
+  EMLID_MOUNTPOINT     - Your base station mountpoint (default: MP15774)
   EMLID_USERNAME       - Your Emlid account username
   EMLID_PASSWORD       - Your Emlid account password
 

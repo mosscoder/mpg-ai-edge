@@ -32,7 +32,8 @@
       "Bash(find /Users/kdoherty/mpg-ai-edge -type f \\\\\\(-name *.log -o -name *.csv -o -name *.json -o -name *.gpx \\\\\\))",
       "Bash(du:*)",
       "WebFetch(domain:www.sparkfun.com)",
-      "WebFetch(domain:cdn.sparkfun.com)"
+      "WebFetch(domain:cdn.sparkfun.com)",
+      "Bash(find /Users/kdoherty/mpg-ai-edge -type f -name *.log)"
     ],
     "deny": []
   }

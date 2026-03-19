@@ -16,7 +16,7 @@ Environment Variables:
     GPS_BAUD         - GPS baud rate (default: 38400)
     EMLID_USERNAME   - NTRIP username
     EMLID_PASSWORD   - NTRIP password
-    EMLID_MOUNTPOINT - NTRIP mountpoint (default: MP1979)
+    EMLID_MOUNTPOINT - NTRIP mountpoint (default: MP15774)
 
 Usage:
     python autonomous_nav/mission/mission_00.py
@@ -52,7 +52,7 @@ GPS_BAUD = int(os.getenv("GPS_BAUD", "38400"))
 NTRIP_CONFIG = NTRIPConfig(
     host=os.getenv("EMLID_NTRIP_HOST", "caster.emlid.com"),
     port=int(os.getenv("EMLID_NTRIP_PORT", "2101")),
-    mountpoint=os.getenv("EMLID_MOUNTPOINT", "MP1979"),
+    mountpoint=os.getenv("EMLID_MOUNTPOINT", "MP15774"),
     username=os.getenv("EMLID_USERNAME", ""),
     password=os.getenv("EMLID_PASSWORD", ""),
 )

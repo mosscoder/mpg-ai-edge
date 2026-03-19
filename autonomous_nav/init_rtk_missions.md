@@ -80,7 +80,7 @@ export EMLID_USERNAME="your_username"
 export EMLID_PASSWORD="your_password"
 
 # Optional overrides
-export EMLID_MOUNTPOINT="MP1979"
+export EMLID_MOUNTPOINT="MP15774"
 export GPS_PORT="/dev/ttyACM0"
 export GPS_BAUD="38400"
 ```

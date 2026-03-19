@@ -392,7 +392,7 @@ def main():
     ntrip_config = NTRIPConfig(
         host=os.getenv('EMLID_NTRIP_HOST', "caster.emlid.com"),
         port=int(os.getenv('EMLID_NTRIP_PORT', "2101")),
-        mountpoint=os.getenv('EMLID_MOUNTPOINT', "MP1979"),
+        mountpoint=os.getenv('EMLID_MOUNTPOINT', "MP15774"),
         username=os.getenv('EMLID_USERNAME', "your_username"),
         password=os.getenv('EMLID_PASSWORD', "your_password"),
     )
