@@ -1,0 +1,6 @@
+numpy<2
+Pillow>=9.1
+transformers
+opencv-python
+pyserial
+pynmea2
