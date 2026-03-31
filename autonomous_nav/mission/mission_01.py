@@ -68,7 +68,7 @@ WAYPOINT_FILE = os.path.join(
 )
 ARRIVAL_TOLERANCE = 0.2  # meters - stop when within this distance
 MAX_VELOCITY = 0.3  # m/s - conservative for precision
-ROTATION_RATE = 0.3  # rad/s - rotation speed when turning
+ROTATION_RATE = 0.8  # rad/s - rotation speed when turning
 GPS_FIX_TIMEOUT = 300  # seconds to wait for GPS fix
 MIN_FIX_TYPE = 4  # Minimum fix quality (4=GNSS+DR or better)
 

@@ -34,6 +34,28 @@ March field tests showed 250mm horizontal accuracy instead of the 14mm achieved 
 - `python -m py_compile` passes on all modified Python files
 - MP15774 confirmed live on Emlid caster: RTCM 3.3, 4-constellation, Emlid Reach RS3 at (46.67, -114.02)
 
+### NTRIP Password Fix
+
+Initial NTRIP tests returned `HTTP/1.1 400 BAD REQUEST "Protocol parsing error"` with password `338ca`. Every authenticated request to any mountpoint got 400; wrong credentials got 401. The password was a typo — correct password is `338zca`. With the fix, caster returns `ICY 200 OK` and hAcc drops to **14mm** within seconds.
+
+### Mission Rotation Stall Fix
+
+First mission_02 field test: robot calibrated IMU successfully, then needed to rotate ~125° to face waypoint 1. It rotated extremely slowly (~1°/s) and appeared to stall. Two causes:
+
+1. **`ROTATION_RATE` too low in mission scripts** — missions 00/01/02 used 0.3 rad/s (the original default), while debug test scripts had already been bumped to 0.8 after the March 10 field test. At 0.3 with the Go2's ~7% command-to-actual ratio, the robot turns at ~1.2°/s — a 125° turn would take ~104 seconds.
+
+2. **No `balance_stand()` after IMU calibration walk** — `navigate_to()` issues `balance_stand()` at the start, but the IMU calibration walk happens after that. Once calibration completes and the robot needs to rotate toward the waypoint, the gait controller is no longer primed. This is the same root cause as the March 10 rotation failure, but in the `navigate_to()` code path rather than the test script.
+
+**Changes:**
+
+- `nav_utils.py`: `navigate_to()` now calls `stop()` + `balance_stand()` + 1s sleep immediately after `_calibrate_imu()` returns True
+- `mission_00.py`, `mission_01.py`, `mission_02.py`: `ROTATION_RATE` 0.3 → 0.8 rad/s
+
+### New: Mission 02
+
+- `mission_02.py`: Two hardcoded waypoints (46.86164631, -113.99780057) → (46.86154957, -113.99796955)
+- `run_mission_02.sh`: Shell wrapper with robot discovery and env setup
+
 ---
 
 ## 2026-03-19: SparkFun F9R Sensor-Fused Heading (headVeh) Support

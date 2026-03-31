@@ -933,6 +933,9 @@ class WaypointNavigator:
                 self._pause_start = None
                 self._pause_last_progress = None
                 # IMU heading survives GPS outages - no need to reset calibration
+                # Re-prime gait controller after pause
+                await self.robot.balance_stand()
+                await asyncio.sleep(1.0)
 
             # Calculate distance and bearing to target
             distance = haversine_distance(
@@ -957,7 +960,11 @@ class WaypointNavigator:
 
             # Calibrate IMU if needed (during first forward motion)
             if self._imu_north_offset is None and imu_yaw is not None:
-                self._calibrate_imu(pos, imu_yaw)
+                if self._calibrate_imu(pos, imu_yaw):
+                    # Re-prime gait controller after calibration walk
+                    await self.robot.stop()
+                    await self.robot.balance_stand()
+                    await asyncio.sleep(1.0)
 
             # Get calibrated heading
             current_heading = self.get_calibrated_heading()
