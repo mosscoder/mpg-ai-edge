@@ -61,11 +61,13 @@ Second mission_02 field test: NTRIP working (14mm hAcc), robot turned and walked
 
 Also added hAcc to calibration progress and completion log messages for visibility.
 
-### Continuous IMU Recalibration via GPS COG
+### Continuous IMU Recalibration via Position-Derived Bearing
 
 The IMU offset was computed once during the calibration walk and never updated. Any IMU drift accumulated as permanent heading error for the rest of the mission.
 
-**Fix:** After initial calibration, `navigate_to()` continuously recalibrates the IMU offset using GPS course-over-ground (`headMot` from NAV-PVT, available when ground speed > 0.1 m/s). Updates only when hAcc < 10cm. Uses exponential smoothing (alpha=0.05) to blend new COG measurements into the offset without jumps from noisy single readings. At 5Hz nav rate, the effective time constant is ~4 seconds — fast enough to track drift, slow enough to filter noise.
+Initial attempt used `headMot` (GPS heading-of-motion from NAV-PVT) for continuous recalibration. This failed because the F9R's sensor fusion (HPS) corrupts `headMot` with its own uncalibrated internal IMU — `headMot` on the F9R is not a pure GPS velocity-derived COG. The recalibration was actively overwriting the good initial offset with bad data, causing the robot to walk in the wrong direction within seconds.
+
+**Fix:** Recalibration now uses **position-derived bearing** — the same method as the initial calibration. Tracks a reference position and recomputes bearing when the robot has moved >= 0.5m from it (enough displacement for a clean bearing at 14mm hAcc). Only the SparkFun's RTK position is used; `headMot` and all F9R sensor fusion outputs are ignored. Uses exponential smoothing (alpha=0.3) to blend updates. The 0.5m threshold means updates arrive roughly every 1.5s at walking speed (0.3 m/s).
 
 ### New: Mission 02
 

@@ -851,6 +851,7 @@ class WaypointNavigator:
 
         self._calibration_start_time: Optional[float] = None
         self._calibration_last_progress: Optional[float] = None
+        self._recal_pos: Optional[RTKPosition] = None  # Last position used for COG recalibration
 
     async def navigate_to(self, waypoint: Waypoint, timeout: float = 300.0) -> bool:
         """
@@ -963,24 +964,36 @@ class WaypointNavigator:
             # Calibrate IMU if needed (during first forward motion)
             if self._imu_north_offset is None and imu_yaw is not None:
                 if self._calibrate_imu(pos, imu_yaw):
+                    self._recal_pos = pos  # Start recalibration tracking from here
                     # Re-prime gait controller after calibration walk
                     await self.robot.stop()
                     await self.robot.balance_stand()
                     await asyncio.sleep(1.0)
 
-            # Continuously recalibrate IMU using GPS course-over-ground
+            # Continuously recalibrate IMU using position-derived bearing
             if (
                 self._imu_north_offset is not None
                 and imu_yaw is not None
-                and pos.course_over_ground is not None
                 and pos.accuracy_horizontal <= self.calibration_hacc
             ):
-                new_offset = normalize_angle(pos.course_over_ground - imu_yaw)
-                old_offset = self._imu_north_offset
-                # Smooth update to avoid jumps from noisy COG
-                alpha = 0.05
-                delta = normalize_angle(new_offset - old_offset)
-                self._imu_north_offset = normalize_angle(old_offset + alpha * delta)
+                if self._recal_pos is None:
+                    self._recal_pos = pos
+                else:
+                    recal_disp = haversine_distance(
+                        self._recal_pos.latitude, self._recal_pos.longitude,
+                        pos.latitude, pos.longitude,
+                    )
+                    if recal_disp >= 0.5:
+                        pos_bearing = calculate_bearing(
+                            self._recal_pos.latitude, self._recal_pos.longitude,
+                            pos.latitude, pos.longitude,
+                        )
+                        new_offset = normalize_angle(pos_bearing - imu_yaw)
+                        old_offset = self._imu_north_offset
+                        alpha = 0.3
+                        delta = normalize_angle(new_offset - old_offset)
+                        self._imu_north_offset = normalize_angle(old_offset + alpha * delta)
+                        self._recal_pos = pos
 
             # Get calibrated heading
             current_heading = self.get_calibrated_heading()

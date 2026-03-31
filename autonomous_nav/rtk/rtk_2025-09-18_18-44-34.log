@@ -1,0 +1,162 @@
+2025-09-18 18:44:34,907 [INFO] Session start: log=logs/rtk_2025-09-18_18-44-34.log
+2025-09-18 18:44:34,907 [INFO] Session start: log=logs/rtk_2025-09-18_18-44-34.log
+2025-09-18 18:44:34,907 [INFO] NTRIP host=caster.emlid.com port=2101 mount=MP15774 user=u65352
+2025-09-18 18:44:34,907 [INFO] NTRIP host=caster.emlid.com port=2101 mount=MP15774 user=u65352
+2025-09-18 18:44:34,908 [INFO] Connected to GPS module on /dev/ttyACM0 @ 38400 baud
+2025-09-18 18:44:34,908 [INFO] Connected to GPS module on /dev/ttyACM0 @ 38400 baud
+2025-09-18 18:44:34,909 [INFO] Connecting to Emlid NTRIP caster at caster.emlid.com:2101
+2025-09-18 18:44:34,909 [INFO] Connecting to Emlid NTRIP caster at caster.emlid.com:2101
+2025-09-18 18:44:35,382 [INFO] Connected to NTRIP mountpoint: MP15774
+2025-09-18 18:44:35,382 [INFO] Connected to NTRIP mountpoint: MP15774
+2025-09-18 18:44:35,383 [INFO] Started RTCM correction stream from Emlid NTRIP caster
+2025-09-18 18:44:35,383 [INFO] Started RTCM correction stream from Emlid NTRIP caster
+2025-09-18 18:44:35,384 [INFO] Receiving RTCM corrections
+2025-09-18 18:44:35,384 [INFO] Receiving RTCM corrections
+2025-09-18 18:44:35,384 [INFO] Waiting for GPS fix via NMEA $GNGGA...
+2025-09-18 18:44:35,384 [INFO] Waiting for GPS fix via NMEA $GNGGA...
+2025-09-18 18:44:46,787 [INFO] RTCM types (running counts): 1006:1, 1074:6, 1084:6, 1094:6, 1124:6, 1230:1 | total msgs=26, bytes=2893
+2025-09-18 18:44:46,787 [INFO] RTCM types (running counts): 1006:1, 1074:6, 1084:6, 1094:6, 1124:6, 1230:1 | total msgs=26, bytes=2893
+2025-09-18 18:44:49,424 [INFO] 3D Fix achieved! Lat: 46.86167950, Lon: -113.99790200
+2025-09-18 18:44:49,424 [INFO] 3D Fix achieved! Lat: 46.86167950, Lon: -113.99790200
+2025-09-18 18:44:50,259 [INFO] PVT fixType=67108757 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86164950 lon=-113.99790650 h=964.845m hAcc=0.014m vAcc=0.010m rtcm_msgs=32 rtcm_bytes=3406
+2025-09-18 18:44:50,259 [INFO] PVT fixType=67108757 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86164950 lon=-113.99790650 h=964.845m hAcc=0.014m vAcc=0.010m rtcm_msgs=32 rtcm_bytes=3406
+2025-09-18 18:44:51,285 [INFO] PVT fixType=67108755 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86164410 lon=-113.99790720 h=964.867m hAcc=0.014m vAcc=0.010m rtcm_msgs=36 rtcm_bytes=3882
+2025-09-18 18:44:51,285 [INFO] PVT fixType=67108755 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86164410 lon=-113.99790720 h=964.867m hAcc=0.014m vAcc=0.010m rtcm_msgs=36 rtcm_bytes=3882
+2025-09-18 18:44:53,267 [INFO] PVT fixType=67108752 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86163600 lon=-113.99789780 h=964.895m hAcc=0.014m vAcc=0.010m rtcm_msgs=40 rtcm_bytes=4358
+2025-09-18 18:44:53,267 [INFO] PVT fixType=67108752 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86163600 lon=-113.99789780 h=964.895m hAcc=0.014m vAcc=0.010m rtcm_msgs=40 rtcm_bytes=4358
+2025-09-18 18:44:56,264 [WARNING] No position data this second | rtcm_msgs=44 bytes=4834
+2025-09-18 18:44:56,264 [WARNING] No position data this second | rtcm_msgs=44 bytes=4834
+2025-09-18 18:44:57,272 [INFO] PVT fixType=67108745 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86163530 lon=-113.99786900 h=964.914m hAcc=0.014m vAcc=0.010m rtcm_msgs=48 rtcm_bytes=5310
+2025-09-18 18:44:57,272 [INFO] PVT fixType=67108745 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86163530 lon=-113.99786900 h=964.914m hAcc=0.014m vAcc=0.010m rtcm_msgs=48 rtcm_bytes=5310
+2025-09-18 18:44:58,380 [INFO] RTCM types (running counts): 1006:2, 1074:12, 1084:12, 1094:12, 1124:12, 1230:2 | total msgs=52, bytes=5786
+2025-09-18 18:44:58,380 [INFO] RTCM types (running counts): 1006:2, 1074:12, 1084:12, 1094:12, 1124:12, 1230:2 | total msgs=52, bytes=5786
+2025-09-18 18:44:59,268 [INFO] PVT fixType=67108742 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86164160 lon=-113.99785700 h=964.921m hAcc=0.014m vAcc=0.010m rtcm_msgs=52 rtcm_bytes=5786
+2025-09-18 18:44:59,268 [INFO] PVT fixType=67108742 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86164160 lon=-113.99785700 h=964.921m hAcc=0.014m vAcc=0.010m rtcm_msgs=52 rtcm_bytes=5786
+2025-09-18 18:45:01,268 [INFO] PVT fixType=67108738 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86165110 lon=-113.99784940 h=964.934m hAcc=0.014m vAcc=0.010m rtcm_msgs=58 rtcm_bytes=6299
+2025-09-18 18:45:01,268 [INFO] PVT fixType=67108738 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86165110 lon=-113.99784940 h=964.934m hAcc=0.014m vAcc=0.010m rtcm_msgs=58 rtcm_bytes=6299
+2025-09-18 18:45:01,269 [INFO] RTCM type histogram: 1006:3, 1074:13, 1084:13, 1094:13, 1124:13, 1230:3
+2025-09-18 18:45:01,269 [INFO] RTCM type histogram: 1006:3, 1074:13, 1084:13, 1094:13, 1124:13, 1230:3
+2025-09-18 18:45:03,269 [INFO] PVT fixType=67108735 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86166230 lon=-113.99784910 h=964.916m hAcc=0.014m vAcc=0.010m rtcm_msgs=62 rtcm_bytes=6775
+2025-09-18 18:45:03,269 [INFO] PVT fixType=67108735 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86166230 lon=-113.99784910 h=964.916m hAcc=0.014m vAcc=0.010m rtcm_msgs=62 rtcm_bytes=6775
+2025-09-18 18:45:05,268 [INFO] PVT fixType=67108732 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167210 lon=-113.99786220 h=964.873m hAcc=0.014m vAcc=0.010m rtcm_msgs=66 rtcm_bytes=7251
+2025-09-18 18:45:05,268 [INFO] PVT fixType=67108732 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167210 lon=-113.99786220 h=964.873m hAcc=0.014m vAcc=0.010m rtcm_msgs=66 rtcm_bytes=7251
+2025-09-18 18:45:07,267 [INFO] PVT fixType=67108728 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167930 lon=-113.99787680 h=964.819m hAcc=0.014m vAcc=0.010m rtcm_msgs=70 rtcm_bytes=7727
+2025-09-18 18:45:07,267 [INFO] PVT fixType=67108728 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167930 lon=-113.99787680 h=964.819m hAcc=0.014m vAcc=0.010m rtcm_msgs=70 rtcm_bytes=7727
+2025-09-18 18:45:08,982 [INFO] RTCM types (running counts): 1006:3, 1074:17, 1084:17, 1094:17, 1124:17, 1230:3 | total msgs=74, bytes=8203
+2025-09-18 18:45:08,982 [INFO] RTCM types (running counts): 1006:3, 1074:17, 1084:17, 1094:17, 1124:17, 1230:3 | total msgs=74, bytes=8203
+2025-09-18 18:45:09,266 [INFO] PVT fixType=67108725 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167990 lon=-113.99789200 h=964.802m hAcc=0.014m vAcc=0.010m rtcm_msgs=74 rtcm_bytes=8203
+2025-09-18 18:45:09,266 [INFO] PVT fixType=67108725 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167990 lon=-113.99789200 h=964.802m hAcc=0.014m vAcc=0.010m rtcm_msgs=74 rtcm_bytes=8203
+2025-09-18 18:45:11,267 [INFO] PVT fixType=67108722 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790040 h=964.823m hAcc=0.014m vAcc=0.010m rtcm_msgs=80 rtcm_bytes=8716
+2025-09-18 18:45:11,267 [INFO] PVT fixType=67108722 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790040 h=964.823m hAcc=0.014m vAcc=0.010m rtcm_msgs=80 rtcm_bytes=8716
+2025-09-18 18:45:13,261 [INFO] PVT fixType=67108718 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790010 h=964.816m hAcc=0.014m vAcc=0.010m rtcm_msgs=84 rtcm_bytes=9192
+2025-09-18 18:45:13,261 [INFO] PVT fixType=67108718 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790010 h=964.816m hAcc=0.014m vAcc=0.010m rtcm_msgs=84 rtcm_bytes=9192
+2025-09-18 18:45:13,262 [INFO] RTCM type histogram: 1006:4, 1074:19, 1084:19, 1094:19, 1124:19, 1230:4
+2025-09-18 18:45:13,262 [INFO] RTCM type histogram: 1006:4, 1074:19, 1084:19, 1094:19, 1124:19, 1230:4
+2025-09-18 18:45:15,267 [INFO] PVT fixType=67108715 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790010 h=964.811m hAcc=0.014m vAcc=0.010m rtcm_msgs=88 rtcm_bytes=9668
+2025-09-18 18:45:15,267 [INFO] PVT fixType=67108715 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790010 h=964.811m hAcc=0.014m vAcc=0.010m rtcm_msgs=88 rtcm_bytes=9668
+2025-09-18 18:45:17,267 [INFO] PVT fixType=67108712 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790010 h=964.813m hAcc=0.014m vAcc=0.010m rtcm_msgs=92 rtcm_bytes=10144
+2025-09-18 18:45:17,267 [INFO] PVT fixType=67108712 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790010 h=964.813m hAcc=0.014m vAcc=0.010m rtcm_msgs=92 rtcm_bytes=10144
+2025-09-18 18:45:19,268 [INFO] PVT fixType=67108708 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.807m hAcc=0.014m vAcc=0.010m rtcm_msgs=96 rtcm_bytes=10620
+2025-09-18 18:45:19,268 [INFO] PVT fixType=67108708 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.807m hAcc=0.014m vAcc=0.010m rtcm_msgs=96 rtcm_bytes=10620
+2025-09-18 18:45:19,291 [INFO] RTCM types (running counts): 1006:5, 1074:22, 1084:22, 1094:22, 1124:22, 1230:5 | total msgs=98, bytes=10657
+2025-09-18 18:45:19,291 [INFO] RTCM types (running counts): 1006:5, 1074:22, 1084:22, 1094:22, 1124:22, 1230:5 | total msgs=98, bytes=10657
+2025-09-18 18:45:21,267 [INFO] PVT fixType=67108705 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.813m hAcc=0.014m vAcc=0.010m rtcm_msgs=102 rtcm_bytes=11133
+2025-09-18 18:45:21,267 [INFO] PVT fixType=67108705 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.813m hAcc=0.014m vAcc=0.010m rtcm_msgs=102 rtcm_bytes=11133
+2025-09-18 18:45:23,270 [INFO] PVT fixType=67108702 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.809m hAcc=0.014m vAcc=0.010m rtcm_msgs=106 rtcm_bytes=11609
+2025-09-18 18:45:23,270 [INFO] PVT fixType=67108702 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.809m hAcc=0.014m vAcc=0.010m rtcm_msgs=106 rtcm_bytes=11609
+2025-09-18 18:45:23,271 [INFO] RTCM type histogram: 1006:5, 1074:24, 1084:24, 1094:24, 1124:24, 1230:5
+2025-09-18 18:45:23,271 [INFO] RTCM type histogram: 1006:5, 1074:24, 1084:24, 1094:24, 1124:24, 1230:5
+2025-09-18 18:45:25,267 [INFO] PVT fixType=67108698 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.804m hAcc=0.014m vAcc=0.010m rtcm_msgs=110 rtcm_bytes=12085
+2025-09-18 18:45:25,267 [INFO] PVT fixType=67108698 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.804m hAcc=0.014m vAcc=0.010m rtcm_msgs=110 rtcm_bytes=12085
+2025-09-18 18:45:27,266 [INFO] PVT fixType=67108695 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.812m hAcc=0.014m vAcc=0.010m rtcm_msgs=114 rtcm_bytes=12561
+2025-09-18 18:45:27,266 [INFO] PVT fixType=67108695 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.812m hAcc=0.014m vAcc=0.010m rtcm_msgs=114 rtcm_bytes=12561
+2025-09-18 18:45:29,268 [INFO] PVT fixType=67108692 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790010 h=964.810m hAcc=0.014m vAcc=0.010m rtcm_msgs=118 rtcm_bytes=13037
+2025-09-18 18:45:29,268 [INFO] PVT fixType=67108692 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790010 h=964.810m hAcc=0.014m vAcc=0.010m rtcm_msgs=118 rtcm_bytes=13037
+2025-09-18 18:45:29,703 [INFO] RTCM types (running counts): 1006:6, 1074:27, 1084:27, 1094:27, 1124:27, 1230:6 | total msgs=120, bytes=13074
+2025-09-18 18:45:29,703 [INFO] RTCM types (running counts): 1006:6, 1074:27, 1084:27, 1094:27, 1124:27, 1230:6 | total msgs=120, bytes=13074
+2025-09-18 18:45:31,261 [INFO] PVT fixType=67108688 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.804m hAcc=0.014m vAcc=0.010m rtcm_msgs=124 rtcm_bytes=13550
+2025-09-18 18:45:31,261 [INFO] PVT fixType=67108688 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.804m hAcc=0.014m vAcc=0.010m rtcm_msgs=124 rtcm_bytes=13550
+2025-09-18 18:45:33,266 [INFO] PVT fixType=67108685 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.808m hAcc=0.014m vAcc=0.010m rtcm_msgs=128 rtcm_bytes=14026
+2025-09-18 18:45:33,266 [INFO] PVT fixType=67108685 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.808m hAcc=0.014m vAcc=0.010m rtcm_msgs=128 rtcm_bytes=14026
+2025-09-18 18:45:35,268 [INFO] PVT fixType=67108682 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.809m hAcc=0.014m vAcc=0.010m rtcm_msgs=132 rtcm_bytes=14502
+2025-09-18 18:45:35,268 [INFO] PVT fixType=67108682 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.809m hAcc=0.014m vAcc=0.010m rtcm_msgs=132 rtcm_bytes=14502
+2025-09-18 18:45:35,268 [INFO] RTCM type histogram: 1006:6, 1074:30, 1084:30, 1094:30, 1124:30, 1230:6
+2025-09-18 18:45:35,268 [INFO] RTCM type histogram: 1006:6, 1074:30, 1084:30, 1094:30, 1124:30, 1230:6
+2025-09-18 18:45:37,266 [INFO] PVT fixType=67108678 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.800m hAcc=0.014m vAcc=0.010m rtcm_msgs=136 rtcm_bytes=14978
+2025-09-18 18:45:37,266 [INFO] PVT fixType=67108678 carrSoln=fixed diffSoln=1 numSV=24 lat=46.86167890 lon=-113.99790000 h=964.800m hAcc=0.014m vAcc=0.010m rtcm_msgs=136 rtcm_bytes=14978
+2025-09-18 18:45:39,267 [INFO] PVT fixType=67108675 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167940 lon=-113.99789970 h=964.803m hAcc=0.014m vAcc=0.010m rtcm_msgs=140 rtcm_bytes=15454
+2025-09-18 18:45:39,267 [INFO] PVT fixType=67108675 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167940 lon=-113.99789970 h=964.803m hAcc=0.014m vAcc=0.010m rtcm_msgs=140 rtcm_bytes=15454
+2025-09-18 18:45:40,417 [INFO] RTCM types (running counts): 1006:7, 1074:33, 1084:33, 1094:33, 1124:33, 1230:7 | total msgs=146, bytes=15967
+2025-09-18 18:45:40,417 [INFO] RTCM types (running counts): 1006:7, 1074:33, 1084:33, 1094:33, 1124:33, 1230:7 | total msgs=146, bytes=15967
+2025-09-18 18:45:41,266 [INFO] PVT fixType=67108672 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167970 lon=-113.99789930 h=964.793m hAcc=0.014m vAcc=0.010m rtcm_msgs=146 rtcm_bytes=15967
+2025-09-18 18:45:41,266 [INFO] PVT fixType=67108672 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167970 lon=-113.99789930 h=964.793m hAcc=0.014m vAcc=0.010m rtcm_msgs=146 rtcm_bytes=15967
+2025-09-18 18:45:43,267 [INFO] PVT fixType=67108668 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167960 lon=-113.99789910 h=964.795m hAcc=0.014m vAcc=0.010m rtcm_msgs=150 rtcm_bytes=16443
+2025-09-18 18:45:43,267 [INFO] PVT fixType=67108668 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167960 lon=-113.99789910 h=964.795m hAcc=0.014m vAcc=0.010m rtcm_msgs=150 rtcm_bytes=16443
+2025-09-18 18:45:45,264 [INFO] PVT fixType=67108665 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167960 lon=-113.99789910 h=964.793m hAcc=0.014m vAcc=0.010m rtcm_msgs=154 rtcm_bytes=16919
+2025-09-18 18:45:45,264 [INFO] PVT fixType=67108665 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167960 lon=-113.99789910 h=964.793m hAcc=0.014m vAcc=0.010m rtcm_msgs=154 rtcm_bytes=16919
+2025-09-18 18:45:47,267 [INFO] PVT fixType=67108662 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.818m hAcc=0.014m vAcc=0.010m rtcm_msgs=158 rtcm_bytes=17395
+2025-09-18 18:45:47,267 [INFO] PVT fixType=67108662 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.818m hAcc=0.014m vAcc=0.010m rtcm_msgs=158 rtcm_bytes=17395
+2025-09-18 18:45:47,267 [INFO] RTCM type histogram: 1006:7, 1074:36, 1084:36, 1094:36, 1124:36, 1230:7
+2025-09-18 18:45:47,267 [INFO] RTCM type histogram: 1006:7, 1074:36, 1084:36, 1094:36, 1124:36, 1230:7
+2025-09-18 18:45:49,259 [INFO] PVT fixType=67108658 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.813m hAcc=0.014m vAcc=0.010m rtcm_msgs=162 rtcm_bytes=17871
+2025-09-18 18:45:49,259 [INFO] PVT fixType=67108658 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.813m hAcc=0.014m vAcc=0.010m rtcm_msgs=162 rtcm_bytes=17871
+2025-09-18 18:45:51,265 [INFO] PVT fixType=67108655 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.814m hAcc=0.014m vAcc=0.010m rtcm_msgs=168 rtcm_bytes=18384
+2025-09-18 18:45:51,265 [INFO] PVT fixType=67108655 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.814m hAcc=0.014m vAcc=0.010m rtcm_msgs=168 rtcm_bytes=18384
+2025-09-18 18:45:52,392 [INFO] RTCM types (running counts): 1006:8, 1074:39, 1084:39, 1094:39, 1124:39, 1230:8 | total msgs=172, bytes=18860
+2025-09-18 18:45:52,392 [INFO] RTCM types (running counts): 1006:8, 1074:39, 1084:39, 1094:39, 1124:39, 1230:8 | total msgs=172, bytes=18860
+2025-09-18 18:45:53,268 [INFO] PVT fixType=67108652 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.814m hAcc=0.014m vAcc=0.010m rtcm_msgs=172 rtcm_bytes=18860
+2025-09-18 18:45:53,268 [INFO] PVT fixType=67108652 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.814m hAcc=0.014m vAcc=0.010m rtcm_msgs=172 rtcm_bytes=18860
+2025-09-18 18:45:55,265 [INFO] PVT fixType=67108649 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.815m hAcc=0.014m vAcc=0.010m rtcm_msgs=176 rtcm_bytes=19336
+2025-09-18 18:45:55,265 [INFO] PVT fixType=67108649 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.815m hAcc=0.014m vAcc=0.010m rtcm_msgs=176 rtcm_bytes=19336
+2025-09-18 18:45:57,266 [INFO] PVT fixType=67108645 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.811m hAcc=0.014m vAcc=0.010m rtcm_msgs=180 rtcm_bytes=19812
+2025-09-18 18:45:57,266 [INFO] PVT fixType=67108645 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.811m hAcc=0.014m vAcc=0.010m rtcm_msgs=180 rtcm_bytes=19812
+2025-09-18 18:45:59,268 [INFO] PVT fixType=67108642 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789980 h=964.808m hAcc=0.014m vAcc=0.010m rtcm_msgs=184 rtcm_bytes=20288
+2025-09-18 18:45:59,268 [INFO] PVT fixType=67108642 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789980 h=964.808m hAcc=0.014m vAcc=0.010m rtcm_msgs=184 rtcm_bytes=20288
+2025-09-18 18:45:59,268 [INFO] RTCM type histogram: 1006:8, 1074:42, 1084:42, 1094:42, 1124:42, 1230:8
+2025-09-18 18:45:59,268 [INFO] RTCM type histogram: 1006:8, 1074:42, 1084:42, 1094:42, 1124:42, 1230:8
+2025-09-18 18:46:01,265 [INFO] PVT fixType=67108639 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.802m hAcc=0.014m vAcc=0.010m rtcm_msgs=190 rtcm_bytes=20801
+2025-09-18 18:46:01,265 [INFO] PVT fixType=67108639 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.802m hAcc=0.014m vAcc=0.010m rtcm_msgs=190 rtcm_bytes=20801
+2025-09-18 18:46:02,426 [INFO] RTCM types (running counts): 1006:9, 1074:44, 1084:44, 1094:44, 1124:44, 1230:9 | total msgs=194, bytes=21277
+2025-09-18 18:46:02,426 [INFO] RTCM types (running counts): 1006:9, 1074:44, 1084:44, 1094:44, 1124:44, 1230:9 | total msgs=194, bytes=21277
+2025-09-18 18:46:03,265 [INFO] PVT fixType=67108635 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167910 lon=-113.99789990 h=964.808m hAcc=0.014m vAcc=0.010m rtcm_msgs=194 rtcm_bytes=21277
+2025-09-18 18:46:03,265 [INFO] PVT fixType=67108635 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167910 lon=-113.99789990 h=964.808m hAcc=0.014m vAcc=0.010m rtcm_msgs=194 rtcm_bytes=21277
+2025-09-18 18:46:05,267 [INFO] PVT fixType=67108632 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789980 h=964.801m hAcc=0.014m vAcc=0.010m rtcm_msgs=198 rtcm_bytes=21753
+2025-09-18 18:46:05,267 [INFO] PVT fixType=67108632 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789980 h=964.801m hAcc=0.014m vAcc=0.010m rtcm_msgs=198 rtcm_bytes=21753
+2025-09-18 18:46:07,260 [INFO] PVT fixType=67108629 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.810m hAcc=0.014m vAcc=0.010m rtcm_msgs=202 rtcm_bytes=22229
+2025-09-18 18:46:07,260 [INFO] PVT fixType=67108629 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.810m hAcc=0.014m vAcc=0.010m rtcm_msgs=202 rtcm_bytes=22229
+2025-09-18 18:46:09,265 [INFO] PVT fixType=67108625 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.812m hAcc=0.014m vAcc=0.010m rtcm_msgs=206 rtcm_bytes=22705
+2025-09-18 18:46:09,265 [INFO] PVT fixType=67108625 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789990 h=964.812m hAcc=0.014m vAcc=0.010m rtcm_msgs=206 rtcm_bytes=22705
+2025-09-18 18:46:11,266 [INFO] PVT fixType=67108622 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789970 h=964.802m hAcc=0.014m vAcc=0.010m rtcm_msgs=212 rtcm_bytes=23218
+2025-09-18 18:46:11,266 [INFO] PVT fixType=67108622 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789970 h=964.802m hAcc=0.014m vAcc=0.010m rtcm_msgs=212 rtcm_bytes=23218
+2025-09-18 18:46:11,267 [INFO] RTCM type histogram: 1006:10, 1074:48, 1084:48, 1094:48, 1124:48, 1230:10
+2025-09-18 18:46:11,267 [INFO] RTCM type histogram: 1006:10, 1074:48, 1084:48, 1094:48, 1124:48, 1230:10
+2025-09-18 18:46:13,265 [INFO] PVT fixType=67108619 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167910 lon=-113.99789980 h=964.803m hAcc=0.014m vAcc=0.010m rtcm_msgs=216 rtcm_bytes=23694
+2025-09-18 18:46:13,265 [INFO] PVT fixType=67108619 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167910 lon=-113.99789980 h=964.803m hAcc=0.014m vAcc=0.010m rtcm_msgs=216 rtcm_bytes=23694
+2025-09-18 18:46:14,390 [INFO] RTCM types (running counts): 1006:10, 1074:50, 1084:50, 1094:50, 1124:50, 1230:10 | total msgs=220, bytes=24170
+2025-09-18 18:46:14,390 [INFO] RTCM types (running counts): 1006:10, 1074:50, 1084:50, 1094:50, 1124:50, 1230:10 | total msgs=220, bytes=24170
+2025-09-18 18:46:15,265 [INFO] PVT fixType=67108615 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167910 lon=-113.99789980 h=964.809m hAcc=0.014m vAcc=0.010m rtcm_msgs=220 rtcm_bytes=24170
+2025-09-18 18:46:15,265 [INFO] PVT fixType=67108615 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167910 lon=-113.99789980 h=964.809m hAcc=0.014m vAcc=0.010m rtcm_msgs=220 rtcm_bytes=24170
+2025-09-18 18:46:17,268 [INFO] PVT fixType=67108612 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789970 h=964.798m hAcc=0.014m vAcc=0.010m rtcm_msgs=224 rtcm_bytes=24646
+2025-09-18 18:46:17,268 [INFO] PVT fixType=67108612 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789970 h=964.798m hAcc=0.014m vAcc=0.010m rtcm_msgs=224 rtcm_bytes=24646
+2025-09-18 18:46:19,264 [INFO] PVT fixType=67108609 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789980 h=964.796m hAcc=0.014m vAcc=0.010m rtcm_msgs=228 rtcm_bytes=25122
+2025-09-18 18:46:19,264 [INFO] PVT fixType=67108609 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789980 h=964.796m hAcc=0.014m vAcc=0.010m rtcm_msgs=228 rtcm_bytes=25122
+2025-09-18 18:46:21,264 [INFO] PVT fixType=67108606 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167910 lon=-113.99789980 h=964.809m hAcc=0.014m vAcc=0.010m rtcm_msgs=234 rtcm_bytes=25635
+2025-09-18 18:46:21,264 [INFO] PVT fixType=67108606 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167910 lon=-113.99789980 h=964.809m hAcc=0.014m vAcc=0.010m rtcm_msgs=234 rtcm_bytes=25635
+2025-09-18 18:46:23,266 [INFO] PVT fixType=67108602 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789970 h=964.796m hAcc=0.014m vAcc=0.010m rtcm_msgs=238 rtcm_bytes=26111
+2025-09-18 18:46:23,266 [INFO] PVT fixType=67108602 carrSoln=fixed diffSoln=1 numSV=25 lat=46.86167900 lon=-113.99789970 h=964.796m hAcc=0.014m vAcc=0.010m rtcm_msgs=238 rtcm_bytes=26111
+2025-09-18 18:46:23,267 [INFO] RTCM type histogram: 1006:11, 1074:54, 1084:54, 1094:54, 1124:54, 1230:11
+2025-09-18 18:46:23,267 [INFO] RTCM type histogram: 1006:11, 1074:54, 1084:54, 1094:54, 1124:54, 1230:11
+2025-09-18 18:46:24,410 [INFO] RTCM types (running counts): 1006:11, 1074:55, 1084:55, 1094:55, 1124:55, 1230:11 | total msgs=242, bytes=26587
+2025-09-18 18:46:24,410 [INFO] RTCM types (running counts): 1006:11, 1074:55, 1084:55, 1094:55, 1124:55, 1230:11 | total msgs=242, bytes=26587
+2025-09-18 18:46:24,622 [INFO] KeyboardInterrupt: stopping
+2025-09-18 18:46:24,622 [INFO] KeyboardInterrupt: stopping
+2025-09-18 18:46:26,624 [INFO] Disconnected from Emlid NTRIP caster. Forwarded 242 messages (26587 bytes).
+2025-09-18 18:46:26,624 [ERROR] Error in correction worker: [Errno 9] Bad file descriptor
+2025-09-18 18:46:26,624 [ERROR] Error in correction worker: [Errno 9] Bad file descriptor
+2025-09-18 18:46:26,625 [INFO] RTCM correction worker stopped
+2025-09-18 18:46:26,625 [INFO] RTCM correction worker stopped
+2025-09-18 18:46:26,624 [INFO] Disconnected from Emlid NTRIP caster. Forwarded 242 messages (26587 bytes).
+2025-09-18 18:46:26,628 [INFO] GPS connection closed
+2025-09-18 18:46:26,628 [INFO] GPS connection closed
+2025-09-18 18:46:26,628 [INFO] Session end
+2025-09-18 18:46:26,628 [INFO] Session end
