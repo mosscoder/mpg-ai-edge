@@ -16,7 +16,7 @@ March field tests showed 250mm horizontal accuracy instead of the 14mm achieved 
 **NTRIP defaults (7 Python files, 2 docs):**
 - Mountpoint: `MP1979` → `MP15774` (all scripts and docs)
 - Username: `""` / `"your_username"` → `"u65352"` (all scripts)
-- Password: `""` / `"your_password"` → `"338ca"` (all scripts)
+- Password: `""` / `"your_password"` → `"338zca"` (all scripts)
 - Host (`caster.emlid.com`) and port (`2101`) unchanged
 
 **`autonomous_nav/reference/go2_walk_5m.py`:**

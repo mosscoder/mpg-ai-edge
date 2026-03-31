@@ -36,7 +36,9 @@
       "Bash(find /Users/kdoherty/mpg-ai-edge -type f -name *.log)",
       "Bash(git fetch:*)",
       "Bash(ls:*)",
-      "Bash(chmod:*)"
+      "Bash(chmod:*)",
+      "WebFetch(domain:community.emlid.com)",
+      "WebFetch(domain:www.use-snip.com)"
     ],
     "deny": []
   }

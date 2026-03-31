@@ -542,7 +542,7 @@ def main():
         port=2101,                         # Standard NTRIP port
         mountpoint="MP15774",              # Your base station mountpoint
         username="u65352",                 # Emlid NTRIP username
-        password="338ca"                   # Emlid NTRIP password
+        password="338zca"                   # Emlid NTRIP password
     )
     
     # Allow override from environment variables
@@ -645,7 +645,7 @@ Environment Variables (optional):
 
 Example:
   export EMLID_USERNAME="u65352"
-  export EMLID_PASSWORD="338ca"
+  export EMLID_PASSWORD="338zca"
   export EMLID_MOUNTPOINT="your_base_station"
   python 02_pull_RTK_coordinates.py
 

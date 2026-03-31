@@ -22,7 +22,7 @@ export CONNECTION_MODE="LocalSTA"
 export GPS_PORT="/dev/ttyACM0"
 export GPS_BAUD="38400"
 export EMLID_USERNAME="u65352"
-export EMLID_PASSWORD="338ca"
+export EMLID_PASSWORD="338zca"
 export EMLID_MOUNTPOINT="MP15774"
 
 echo "Environment ready. ROBOT_IP=$ROBOT_IP"
