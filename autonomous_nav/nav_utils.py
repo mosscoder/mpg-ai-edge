@@ -826,6 +826,7 @@ class WaypointNavigator:
         max_hacc: float = 1.0,
         gps_timeout: float = 300.0,
         calibration_timeout: float = 30.0,
+        calibration_hacc: float = 0.1,
     ):
         self.gps = gps
         self.robot = robot
@@ -836,6 +837,7 @@ class WaypointNavigator:
         self.max_hacc = max_hacc
         self.gps_timeout = gps_timeout
         self.calibration_timeout = calibration_timeout
+        self.calibration_hacc = calibration_hacc
 
         self._running = False
         self._paused = False
@@ -966,6 +968,20 @@ class WaypointNavigator:
                     await self.robot.balance_stand()
                     await asyncio.sleep(1.0)
 
+            # Continuously recalibrate IMU using GPS course-over-ground
+            if (
+                self._imu_north_offset is not None
+                and imu_yaw is not None
+                and pos.course_over_ground is not None
+                and pos.accuracy_horizontal <= self.calibration_hacc
+            ):
+                new_offset = normalize_angle(pos.course_over_ground - imu_yaw)
+                old_offset = self._imu_north_offset
+                # Smooth update to avoid jumps from noisy COG
+                alpha = 0.05
+                delta = normalize_angle(new_offset - old_offset)
+                self._imu_north_offset = normalize_angle(old_offset + alpha * delta)
+
             # Get calibrated heading
             current_heading = self.get_calibrated_heading()
 
@@ -1024,11 +1040,17 @@ class WaypointNavigator:
             True when calibration is complete
         """
         if self._calibration_start_pos is None:
+            # Wait for GPS accuracy before capturing start position
+            if pos.accuracy_horizontal > self.calibration_hacc:
+                return False
             # Start calibration
             self._calibration_start_pos = pos
             self._calibration_start_time = time.time()
             self._calibration_last_progress = time.time()
-            logger.info("IMU calibration started - walking forward to calibrate...")
+            logger.info(
+                f"IMU calibration started (hAcc: {pos.accuracy_horizontal:.3f}m) "
+                f"- walking forward to calibrate..."
+            )
             _log_banner("IMU CALIBRATION STARTED", char="-")
             return False
 
@@ -1056,10 +1078,13 @@ class WaypointNavigator:
         # Periodic progress
         now = time.time()
         if self._calibration_last_progress is not None and now - self._calibration_last_progress >= 5.0:
-            logger.info(f"IMU calibrating... displacement: {displacement:.2f}m / 1.50m needed ({elapsed:.0f}s)")
+            logger.info(
+                f"IMU calibrating... displacement: {displacement:.2f}m / 1.50m needed "
+                f"hAcc: {pos.accuracy_horizontal:.3f}m ({elapsed:.0f}s)"
+            )
             self._calibration_last_progress = now
 
-        if displacement >= 1.5:  # Enough movement for reliable GPS bearing
+        if displacement >= 1.5 and pos.accuracy_horizontal <= self.calibration_hacc:
             gps_bearing = calculate_bearing(
                 self._calibration_start_pos.latitude,
                 self._calibration_start_pos.longitude,
@@ -1070,7 +1095,8 @@ class WaypointNavigator:
             self._imu_north_offset = normalize_angle(gps_bearing - imu_yaw)
             logger.info(
                 f"IMU calibrated! Offset: {self._imu_north_offset:.1f}° "
-                f"(GPS bearing: {gps_bearing:.1f}°, IMU yaw: {imu_yaw:.1f}°)"
+                f"(GPS bearing: {gps_bearing:.1f}°, IMU yaw: {imu_yaw:.1f}°, "
+                f"hAcc: {pos.accuracy_horizontal:.3f}m, disp: {displacement:.2f}m)"
             )
             _log_banner(f"IMU CALIBRATED | Offset: {self._imu_north_offset:.1f} deg")
             return True

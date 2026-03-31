@@ -51,6 +51,22 @@ First mission_02 field test: robot calibrated IMU successfully, then needed to r
 - `nav_utils.py`: `navigate_to()` now calls `stop()` + `balance_stand()` + 1s sleep immediately after `_calibrate_imu()` returns True
 - `mission_00.py`, `mission_01.py`, `mission_02.py`: `ROTATION_RATE` 0.3 → 0.8 rad/s
 
+### IMU Calibration: Require hAcc < 10cm
+
+Second mission_02 field test: NTRIP working (14mm hAcc), robot turned and walked confidently — but in the wrong direction (~65° off). The IMU calibration offset was computed while hAcc was still 72-78mm (NTRIP converging). At 78mm error over a 1.5m calibration walk, the GPS bearing can be off by several degrees — and the start position captured at even worse accuracy compounds the error.
+
+**Fix:** `_calibrate_imu()` now gates on `pos.accuracy_horizontal <= 0.1m` in two places:
+1. Won't capture the calibration start position until hAcc < 10cm
+2. Won't complete calibration (compute offset) until hAcc < 10cm
+
+Also added hAcc to calibration progress and completion log messages for visibility.
+
+### Continuous IMU Recalibration via GPS COG
+
+The IMU offset was computed once during the calibration walk and never updated. Any IMU drift accumulated as permanent heading error for the rest of the mission.
+
+**Fix:** After initial calibration, `navigate_to()` continuously recalibrates the IMU offset using GPS course-over-ground (`headMot` from NAV-PVT, available when ground speed > 0.1 m/s). Updates only when hAcc < 10cm. Uses exponential smoothing (alpha=0.05) to blend new COG measurements into the offset without jumps from noisy single readings. At 5Hz nav rate, the effective time constant is ~4 seconds — fast enough to track drift, slow enough to filter noise.
+
 ### New: Mission 02
 
 - `mission_02.py`: Two hardcoded waypoints (46.86164631, -113.99780057) → (46.86154957, -113.99796955)
