@@ -33,7 +33,8 @@
       "Bash(du:*)",
       "WebFetch(domain:www.sparkfun.com)",
       "WebFetch(domain:cdn.sparkfun.com)",
-      "Bash(find /Users/kdoherty/mpg-ai-edge -type f -name *.log)"
+      "Bash(find /Users/kdoherty/mpg-ai-edge -type f -name *.log)",
+      "Bash(git fetch:*)"
     ],
     "deny": []
   }

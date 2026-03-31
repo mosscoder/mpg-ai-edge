@@ -1,5 +1,41 @@
 # Navigation Changelog
 
+## 2026-03-31: Hardcode NTRIP Credentials, Fix Walk Script, Add Robot Discovery
+
+### Problem
+
+March field tests showed 250mm horizontal accuracy instead of the 14mm achieved in September 2025 and February 2026. Investigation revealed:
+
+1. **Dead mountpoint** — the default NTRIP mountpoint `MP1979` was never the working base station. The actual station (`MP15774`, Emlid Reach RS3 near Florence, MT) was always set via env var `EMLID_MOUNTPOINT=MP15774` and never committed to code. When the env var wasn't set (March tests), scripts fell back to `MP1979`, which connected but forwarded zero RTCM corrections.
+2. **Walk script ignored env vars** — `go2_walk_5m.py` had hardcoded `CONNECTION_MODE="LocalAP"` and `ROBOT_IP="192.168.1.105"`, ignoring the env vars exported by `run_walk.sh`.
+3. **No logging in walk script** — failures left no diagnostic trace.
+4. **Robot discovery script missing from main** — `find_robot_ip.sh` (nmap-based Go2 discovery) existed only on the jetson branch.
+
+### Changes
+
+**NTRIP defaults (7 Python files, 2 docs):**
+- Mountpoint: `MP1979` → `MP15774` (all scripts and docs)
+- Username: `""` / `"your_username"` → `"u65352"` (all scripts)
+- Password: `""` / `"your_password"` → `"338ca"` (all scripts)
+- Host (`caster.emlid.com`) and port (`2101`) unchanged
+
+**`autonomous_nav/reference/go2_walk_5m.py`:**
+- `CONNECTION_MODE`, `ROBOT_IP`, `ROBOT_SERIAL` now read from `os.getenv()` (respects `run_walk.sh` exports)
+- Logs to `autonomous_nav/reference/logs/go2_walk_<timestamp>.log` at DEBUG level
+- Logs resolved config (connection mode, IP, serial) at startup
+
+**`find_robot_ip.sh`:**
+- Ported from jetson branch to main
+- Scans local network for Go2 WebRTC ports (8081, 9991) via nmap
+
+### Verification
+
+- `grep -r "MP1979" --include="*.py" --include="*.md"` returns no matches
+- `python -m py_compile` passes on all modified Python files
+- MP15774 confirmed live on Emlid caster: RTCM 3.3, 4-constellation, Emlid Reach RS3 at (46.67, -114.02)
+
+---
+
 ## 2026-03-19: SparkFun F9R Sensor-Fused Heading (headVeh) Support
 
 ### Discovery

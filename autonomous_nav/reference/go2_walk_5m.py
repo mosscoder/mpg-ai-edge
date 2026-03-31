@@ -29,7 +29,7 @@ FINDING THE ROBOT'S IP (for LocalSTA mode)
 
 Option 1 - nmap scan (replace with your subnet):
     
-    nmap -sn 192.168.1.0/24 | grep -i -B2 "unitree\|go2"
+    nmap -sn 192.168.1.0/24 | grep -i -B2 "unitree|go2"
     
 Option 2 - arp scan:
 
@@ -69,32 +69,51 @@ TROUBLESHOOTING
 import asyncio
 import json
 import logging
+import os
 import sys
 import time
 
 from unitree_webrtc_connect.webrtc_driver import UnitreeWebRTCConnection, WebRTCConnectionMethod
 from unitree_webrtc_connect.constants import RTC_TOPIC, SPORT_CMD
 
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
+
+# ==============================================================================
+# LOGGING SETUP
+# ==============================================================================
+
+def setup_logging():
+    log_dir = os.path.join(os.path.dirname(__file__), "logs")
+    os.makedirs(log_dir, exist_ok=True)
+    timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+    logfile = os.path.join(log_dir, f"go2_walk_{timestamp}.log")
+
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+        handlers=[
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler(logfile),
+        ],
+    )
+    return logfile
+
+logfile = setup_logging()
 logger = logging.getLogger(__name__)
 
 
 # ==============================================================================
-# CONFIGURATION - EDIT THESE
+# CONFIGURATION - respects environment variables from run_walk.sh
 # ==============================================================================
 
 # Connection mode: "LocalAP" or "LocalSTA"
-CONNECTION_MODE = "LocalAP"
+CONNECTION_MODE = os.getenv("CONNECTION_MODE", "LocalAP")
 
 # For LocalSTA only - robot's IP on your network
-ROBOT_IP = "192.168.1.105"
+ROBOT_IP = os.getenv("ROBOT_IP", "192.168.1.105")
 
 # For LocalSTA only - alternative: use serial number (driver will find IP)
 # Set to None to use ROBOT_IP instead
-ROBOT_SERIAL = None  # e.g., "B42D2000XXXXXXXX"
+ROBOT_SERIAL = os.getenv("ROBOT_SERIAL", None)
 
 # Movement
 DISTANCE_METERS = 5.0
@@ -258,6 +277,8 @@ def create_connection():
 async def main():
     logger.info("=" * 60)
     logger.info("Go2 Walk Forward")
+    logger.info(f"Logging to: {logfile}")
+    logger.info(f"CONNECTION_MODE={CONNECTION_MODE} ROBOT_IP={ROBOT_IP} ROBOT_SERIAL={ROBOT_SERIAL}")
     logger.info(f"Distance: {DISTANCE_METERS}m | Velocity: {VELOCITY_MPS}m/s")
     logger.info("=" * 60)
     
