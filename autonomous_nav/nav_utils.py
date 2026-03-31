@@ -988,7 +988,7 @@ class WaypointNavigator:
                             self._recal_pos.latitude, self._recal_pos.longitude,
                             pos.latitude, pos.longitude,
                         )
-                        new_offset = normalize_angle(pos_bearing - imu_yaw)
+                        new_offset = normalize_angle(pos_bearing + imu_yaw)
                         old_offset = self._imu_north_offset
                         alpha = 0.3
                         delta = normalize_angle(new_offset - old_offset)
@@ -1104,8 +1104,8 @@ class WaypointNavigator:
                 pos.latitude,
                 pos.longitude,
             )
-            # Offset = GPS bearing - absolute IMU yaw (converts IMU yaw to true heading)
-            self._imu_north_offset = normalize_angle(gps_bearing - imu_yaw)
+            # Negate imu_yaw: Go2 IMU is CCW-positive, GPS bearing is CW-positive
+            self._imu_north_offset = normalize_angle(gps_bearing + imu_yaw)
             logger.info(
                 f"IMU calibrated! Offset: {self._imu_north_offset:.1f}° "
                 f"(GPS bearing: {gps_bearing:.1f}°, IMU yaw: {imu_yaw:.1f}°, "
@@ -1126,7 +1126,7 @@ class WaypointNavigator:
         imu_yaw = self.robot.get_yaw_degrees()
         if imu_yaw is None or self._imu_north_offset is None:
             return None
-        return (imu_yaw + self._imu_north_offset) % 360
+        return (-imu_yaw + self._imu_north_offset) % 360
 
     def _compute_velocity(
         self, distance: float, heading_error: float

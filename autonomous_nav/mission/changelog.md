@@ -34,6 +34,39 @@ March field tests showed 250mm horizontal accuracy instead of the 14mm achieved 
 - `python -m py_compile` passes on all modified Python files
 - MP15774 confirmed live on Emlid caster: RTCM 3.3, 4-constellation, Emlid Reach RS3 at (46.67, -114.02)
 
+### Fix IMU Yaw Sign Convention (CW vs CCW)
+
+#### Problem
+
+Every field test since January showed the robot walking in the wrong direction after IMU calibration. The heading error varied between runs (57°, 120°, 165°, 180°), making it appear to be a calibration accuracy problem. Multiple fixes were attempted: offset formula bug (Mar 18), hAcc gating, balance_stand re-priming, continuous recalibration — none solved the core issue.
+
+#### Root Cause
+
+**Coordinate system mismatch between GPS bearing and Go2 IMU yaw:**
+- GPS bearing is **CW-positive** (navigational): 0°=North, 90°=East, increases clockwise
+- Go2 IMU yaw is **CCW-positive** (right-hand rule): turning left increases yaw, turning right decreases yaw
+
+The calibration formula `offset = gps_bearing - imu_yaw` produces the correct heading at the moment of calibration (tautology), but after any turn the heading drifts by exactly 2× the turn angle. This is because a CW physical turn decreases IMU yaw, but should increase compass heading — the formula moves both in the same direction instead of opposite.
+
+**Mathematical proof:** After turning CW by angle θ from calibration:
+- IMU yaw decreases by θ: `new_yaw = yaw_cal - θ`
+- Reported heading: `(yaw_cal - θ) + (gps_bearing - yaw_cal) = gps_bearing - θ` (WRONG — should be +θ)
+- True heading: `gps_bearing + θ`
+- Error: `2θ`, proportional to turn angle from calibration
+
+**Verification across all historical runs:**
+- Mar 31 11:56 (sign bug only): predicted true heading 132°, actual walk 120.6° — 11° error (GPS noise at 0.33m hAcc)
+- Mar 18 (sign bug + delta bug): 103° residual matches `start_yaw ≈ 103.5°` from the delta bug exactly
+- Mar 31 mission_02 runs: variable error (57°, 169°, 180°) all explained by different turn angles from calibration
+
+#### Fix
+
+Negate `imu_yaw` in three places in `nav_utils.py`:
+
+1. **`_calibrate_imu()`:** `offset = normalize_angle(gps_bearing + imu_yaw)` (was `- imu_yaw`)
+2. **`get_calibrated_heading()`:** `return (-imu_yaw + offset) % 360` (was `imu_yaw + offset`)
+3. **Continuous recalibration:** `new_offset = normalize_angle(pos_bearing + imu_yaw)` (was `- imu_yaw`)
+
 ### NTRIP Password Fix
 
 Initial NTRIP tests returned `HTTP/1.1 400 BAD REQUEST "Protocol parsing error"` with password `338ca`. Every authenticated request to any mountpoint got 400; wrong credentials got 401. The password was a typo — correct password is `338zca`. With the fix, caster returns `ICY 200 OK` and hAcc drops to **14mm** within seconds.
