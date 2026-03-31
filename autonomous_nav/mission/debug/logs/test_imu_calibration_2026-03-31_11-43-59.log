@@ -1,0 +1,6 @@
+2026-03-31 11:43:59,255 [INFO] autonomous_nav.nav_utils: ============================================================
+2026-03-31 11:43:59,256 [INFO] autonomous_nav.nav_utils: ====================== PHASE 1: SETUP ======================
+2026-03-31 11:43:59,256 [INFO] autonomous_nav.nav_utils: ============================================================
+2026-03-31 11:43:59,256 [ERROR] autonomous_nav.nav_utils: Failed to connect to GPS: [Errno 13] could not open port /dev/ttyACM0: [Errno 13] Permission denied: '/dev/ttyACM0'
+2026-03-31 11:43:59,257 [INFO] autonomous_nav.nav_utils: Stopping robot
+2026-03-31 11:43:59,257 [INFO] autonomous_nav.nav_utils: Disconnected from NTRIP. Forwarded 0 messages.

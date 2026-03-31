@@ -1,0 +1,31 @@
+2026-03-31 11:48:16,940 [INFO] autonomous_nav.nav_utils: ============================================================
+2026-03-31 11:48:16,941 [INFO] autonomous_nav.nav_utils: ====================== PHASE 1: SETUP ======================
+2026-03-31 11:48:16,942 [INFO] autonomous_nav.nav_utils: ============================================================
+2026-03-31 11:48:16,946 [INFO] autonomous_nav.nav_utils: Connected to GPS on /dev/ttyACM0 @ 38400 baud
+2026-03-31 11:48:16,946 [INFO] autonomous_nav.nav_utils: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-03-31 11:48:17,903 [ERROR] autonomous_nav.nav_utils: NTRIP connection failed: HTTP/1.1 400 BAD REQUEST
+Content-Type: text/html; charset=utf-8
+Content-Length: 113
+
+<!doctype html>
+<html lang=en>
+<title>400 Bad Request</title>
+<h1>Bad Request</h1>
+<p>Protocol parsing error</p>
+2026-03-31 11:48:17,904 [WARNING] autonomous_nav.nav_utils: NTRIP not available, using GNSS-only mode
+2026-03-31 11:48:17,904 [INFO] autonomous_nav.nav_utils: Waiting for GPS fix (min type 4)...
+2026-03-31 11:48:18,957 [INFO] autonomous_nav.nav_utils: RTK Fixed achieved! Lat: 46.86176950, Lon: -113.99800340, hAcc: 3.162m
+2026-03-31 11:48:18,957 [INFO] autonomous_nav.nav_utils: ============================================================
+2026-03-31 11:48:18,957 [INFO] autonomous_nav.nav_utils: ========== GPS RTK Fixed ACHIEVED | hAcc: 3.162m ===========
+2026-03-31 11:48:18,958 [INFO] autonomous_nav.nav_utils: ============================================================
+2026-03-31 11:48:19,091 [INFO] autonomous_nav.nav_utils: Connecting via LocalSTA (IP: )
+2026-03-31 11:48:19,245 [INFO] root: Creating offer...
+2026-03-31 11:48:19,272 [INFO] root: Trying to send SDP using the old method...
+2026-03-31 11:48:19,279 [ERROR] root: An error occurred: Invalid URL 'http://:8081/offer': No host supplied
+2026-03-31 11:48:19,280 [ERROR] root: An error occurred with the old method: Failed to receive SDP Answer: No response
+2026-03-31 11:48:19,280 [INFO] root: Falling back to the new method...
+2026-03-31 11:48:19,281 [ERROR] root: An error occurred: Invalid URL 'http://:9991/con_notify': No host supplied
+2026-03-31 11:48:19,281 [ERROR] root: An error occurred with the new method: Failed to receive initial public key response.
+2026-03-31 11:48:19,281 [INFO] autonomous_nav.nav_utils: Stopping robot
+2026-03-31 11:48:19,282 [INFO] autonomous_nav.nav_utils: Disconnected from NTRIP. Forwarded 0 messages.
+2026-03-31 11:48:19,285 [INFO] autonomous_nav.nav_utils: GPS connection closed

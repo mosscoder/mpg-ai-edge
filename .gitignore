@@ -1,6 +1,4 @@
 # Logs
-logs/
-*.log
 *.swp
 
 # Output runs
@@ -14,5 +12,6 @@ runs/
 # Other temp artifacts
 results/
 mapping.txt
+
 
 __pycache__/
