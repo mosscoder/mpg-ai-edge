@@ -1179,7 +1179,7 @@ class WaypointNavigator:
         """
         # Slow down as we approach target
         vx = min(self.max_velocity, distance * 0.5)
-        vx = max(0.1, vx)
+        vx = max(0.2, vx)
 
         # Proportional heading correction (negated: positive error = target is right = turn CW)
         vz = heading_error * -0.015

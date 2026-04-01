@@ -34,6 +34,16 @@ March field tests showed 250mm horizontal accuracy instead of the 14mm achieved 
 - `python -m py_compile` passes on all modified Python files
 - MP15774 confirmed live on Emlid caster: RTCM 3.3, 4-constellation, Emlid Reach RS3 at (46.67, -114.02)
 
+### Tune Arrival Tolerance and Walk Speed
+
+First successful waypoint approach: robot walked 8m to within 0.36m of waypoint 1 with 14mm hAcc, steady heading (~34-45°), and 1-3° steering error. But it plateaued at 0.36m — the 0.2m arrival tolerance was tighter than the robot could achieve at minimum commanded velocity. The robot hovered just outside the threshold for 90s until killed.
+
+**Changes:**
+- `mission_02.py`: `ARRIVAL_TOLERANCE` 0.2m → 0.5m, `MAX_VELOCITY` 0.3 → 0.5 m/s
+- `nav_utils.py`: Minimum forward speed in `_compute_velocity()` raised from 0.1 → 0.2 m/s
+
+---
+
 ### Fix Steering Direction After Sign Convention Change
 
 The IMU yaw sign fix (negating `imu_yaw` in heading calculation) also flipped the meaning of positive heading error. Previously, `error > 0` meant "target is to the left, turn left (CCW)." After the fix, `error > 0` means "target is to the right, turn right (CW)" — but the steering commands weren't updated, causing the robot to steer away from the waypoint in a positive feedback loop (heading spins while walking).
