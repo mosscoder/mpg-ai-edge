@@ -1,0 +1,38 @@
+2026-03-31 13:59:57,101 [INFO] Session start: log=logs/rtk_2026-03-31_13-59-57.log
+2026-03-31 13:59:57,101 [INFO] Session start: log=logs/rtk_2026-03-31_13-59-57.log
+2026-03-31 13:59:57,101 [INFO] NTRIP host=caster.emlid.com port=2101 mount=MP15774 user=u65352
+2026-03-31 13:59:57,101 [INFO] NTRIP host=caster.emlid.com port=2101 mount=MP15774 user=u65352
+2026-03-31 13:59:57,105 [INFO] Connected to GPS module on /dev/ttyACM0 @ 38400 baud
+2026-03-31 13:59:57,105 [INFO] Connected to GPS module on /dev/ttyACM0 @ 38400 baud
+2026-03-31 13:59:57,105 [INFO] Connecting to Emlid NTRIP caster at caster.emlid.com:2101
+2026-03-31 13:59:57,105 [INFO] Connecting to Emlid NTRIP caster at caster.emlid.com:2101
+2026-03-31 13:59:57,603 [ERROR] NTRIP connection failed: HTTP/1.1 400 BAD REQUEST
+Content-Type: text/html; charset=utf-8
+Content-Length: 113
+
+<!doctype html>
+<html lang=en>
+<title>400 Bad Request</title>
+<h1>Bad Request</h1>
+<p>Protocol parsing error</p>
+2026-03-31 13:59:57,603 [ERROR] NTRIP connection failed: HTTP/1.1 400 BAD REQUEST
+Content-Type: text/html; charset=utf-8
+Content-Length: 113
+
+<!doctype html>
+<html lang=en>
+<title>400 Bad Request</title>
+<h1>Bad Request</h1>
+<p>Protocol parsing error</p>
+2026-03-31 13:59:57,604 [WARNING] NTRIP not connected; proceeding GNSS-only
+2026-03-31 13:59:57,604 [WARNING] NTRIP not connected; proceeding GNSS-only
+2026-03-31 13:59:57,604 [INFO] Waiting for GPS fix via NMEA $GNGGA...
+2026-03-31 13:59:57,604 [INFO] Waiting for GPS fix via NMEA $GNGGA...
+2026-03-31 14:04:32,281 [INFO] KeyboardInterrupt: stopping
+2026-03-31 14:04:32,281 [INFO] KeyboardInterrupt: stopping
+2026-03-31 14:04:32,283 [INFO] Disconnected from Emlid NTRIP caster. Forwarded 0 messages (0 bytes).
+2026-03-31 14:04:32,283 [INFO] Disconnected from Emlid NTRIP caster. Forwarded 0 messages (0 bytes).
+2026-03-31 14:04:32,285 [INFO] GPS connection closed
+2026-03-31 14:04:32,285 [INFO] GPS connection closed
+2026-03-31 14:04:32,286 [INFO] Session end
+2026-03-31 14:04:32,286 [INFO] Session end

@@ -1,0 +1,32 @@
+2026-03-31 14:19:04,037 [INFO] Session start: log=logs/rtk_2026-03-31_14-19-04.log
+2026-03-31 14:19:04,037 [INFO] Session start: log=logs/rtk_2026-03-31_14-19-04.log
+2026-03-31 14:19:04,038 [INFO] NTRIP host=caster.emlid.com port=2101 mount=MP15774 user=u65352
+2026-03-31 14:19:04,038 [INFO] NTRIP host=caster.emlid.com port=2101 mount=MP15774 user=u65352
+2026-03-31 14:19:04,039 [INFO] Connected to GPS module on /dev/ttyACM0 @ 38400 baud
+2026-03-31 14:19:04,039 [INFO] Connected to GPS module on /dev/ttyACM0 @ 38400 baud
+2026-03-31 14:19:04,040 [INFO] Connecting to Emlid NTRIP caster at caster.emlid.com:2101
+2026-03-31 14:19:04,040 [INFO] Connecting to Emlid NTRIP caster at caster.emlid.com:2101
+2026-03-31 14:19:04,841 [INFO] Connected to NTRIP mountpoint: MP15774
+2026-03-31 14:19:04,841 [INFO] Connected to NTRIP mountpoint: MP15774
+2026-03-31 14:19:04,844 [INFO] Started RTCM correction stream from Emlid NTRIP caster
+2026-03-31 14:19:04,844 [INFO] Started RTCM correction stream from Emlid NTRIP caster
+2026-03-31 14:19:04,845 [INFO] Receiving RTCM corrections
+2026-03-31 14:19:04,845 [INFO] Receiving RTCM corrections
+2026-03-31 14:19:04,845 [INFO] Waiting for GPS fix via NMEA $GNGGA...
+2026-03-31 14:19:04,845 [INFO] Waiting for GPS fix via NMEA $GNGGA...
+2026-03-31 14:19:15,540 [INFO] RTCM types (running counts): 1006:2, 1074:5, 1084:5, 1094:5, 1124:5, 1230:2 | total msgs=24, bytes=2379
+2026-03-31 14:19:15,540 [INFO] RTCM types (running counts): 1006:2, 1074:5, 1084:5, 1094:5, 1124:5, 1230:2 | total msgs=24, bytes=2379
+2026-03-31 14:19:25,845 [INFO] RTCM types (running counts): 1006:3, 1074:10, 1084:10, 1094:10, 1124:10, 1230:3 | total msgs=46, bytes=4721
+2026-03-31 14:19:25,845 [INFO] RTCM types (running counts): 1006:3, 1074:10, 1084:10, 1094:10, 1124:10, 1230:3 | total msgs=46, bytes=4721
+2026-03-31 14:19:36,498 [INFO] RTCM types (running counts): 1006:4, 1074:16, 1084:16, 1094:16, 1124:16, 1230:4 | total msgs=72, bytes=7524
+2026-03-31 14:19:36,498 [INFO] RTCM types (running counts): 1006:4, 1074:16, 1084:16, 1094:16, 1124:16, 1230:4 | total msgs=72, bytes=7524
+2026-03-31 14:19:40,346 [INFO] KeyboardInterrupt: stopping
+2026-03-31 14:19:40,346 [INFO] KeyboardInterrupt: stopping
+2026-03-31 14:19:40,364 [INFO] RTCM correction worker stopped
+2026-03-31 14:19:40,364 [INFO] RTCM correction worker stopped
+2026-03-31 14:19:40,365 [INFO] Disconnected from Emlid NTRIP caster. Forwarded 80 messages (8446 bytes).
+2026-03-31 14:19:40,365 [INFO] Disconnected from Emlid NTRIP caster. Forwarded 80 messages (8446 bytes).
+2026-03-31 14:19:40,367 [INFO] GPS connection closed
+2026-03-31 14:19:40,367 [INFO] GPS connection closed
+2026-03-31 14:19:40,367 [INFO] Session end
+2026-03-31 14:19:40,367 [INFO] Session end
