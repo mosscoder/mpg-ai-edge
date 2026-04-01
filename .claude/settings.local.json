@@ -38,7 +38,12 @@
       "Bash(ls:*)",
       "Bash(chmod:*)",
       "WebFetch(domain:community.emlid.com)",
-      "WebFetch(domain:www.use-snip.com)"
+      "WebFetch(domain:www.use-snip.com)",
+      "Bash(find /Users/kdoherty/mpg-ai-edge -name *unitree* -type d)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:www.darknavy.org)",
+      "Bash(find /Users/kdoherty/mpg-ai-edge -type d -name *unitree* -o -name *webrtc*)",
+      "Bash(pip install:*)"
     ],
     "deny": []
   }

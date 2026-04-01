@@ -34,6 +34,19 @@ March field tests showed 250mm horizontal accuracy instead of the 14mm achieved 
 - `python -m py_compile` passes on all modified Python files
 - MP15774 confirmed live on Emlid caster: RTCM 3.3, 4-constellation, Emlid Reach RS3 at (46.67, -114.02)
 
+### Fix ±180° Rotation Oscillation (Hysteresis Lock-in)
+
+After the sign convention fix, the robot correctly identifies the waypoint bearing but often starts pointed nearly opposite it (~180° error). At the ±180° boundary, `normalize_angle` flips the error sign every iteration, causing the robot to alternate between "turn left" and "turn right" at 5Hz — wiggling in place indefinitely without ever walking forward.
+
+**Fix:** Blended approach combining shortest-path rotation (Option 1) with hysteresis (Option 3). When `abs_error > 165°` and the robot was already turning (`_prev_vz != 0`), keep turning the same direction regardless of the error sign flip. Below 165°, normal shortest-path logic applies. The robot commits to one direction and smoothly completes the ~180° turn.
+
+The 165° threshold catches the oscillation zone (logs showed chatter between 169-179°) without interfering with normal large-angle turns where the shortest path is unambiguous.
+
+**Changes:**
+- `nav_utils.py`: Added `_prev_vz` state to `WaypointNavigator.__init__()`, hysteresis check in `_compute_velocity()` when `abs_error > 165°`
+
+---
+
 ### Fix IMU Yaw Sign Convention (CW vs CCW)
 
 #### Problem

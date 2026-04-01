@@ -852,6 +852,7 @@ class WaypointNavigator:
         self._calibration_start_time: Optional[float] = None
         self._calibration_last_progress: Optional[float] = None
         self._recal_pos: Optional[RTKPosition] = None  # Last position used for COG recalibration
+        self._prev_vz: float = 0.0  # Previous rotation command for hysteresis
 
     async def navigate_to(self, waypoint: Waypoint, timeout: float = 300.0) -> bool:
         """
@@ -1142,7 +1143,12 @@ class WaypointNavigator:
         if abs_error > 30:
             # Large heading error - rotate in place
             vx = 0.0
-            vz = (1 if heading_error > 0 else -1) * self.rotation_rate
+            if abs_error > 165 and self._prev_vz != 0:
+                # Hysteresis near ±180° boundary — keep turning same direction
+                vz = (1 if self._prev_vz > 0 else -1) * self.rotation_rate
+            else:
+                # Normal shortest-path turn
+                vz = (1 if heading_error > 0 else -1) * self.rotation_rate
         else:
             # Move forward while correcting heading
             # Slow down as we approach target
@@ -1153,6 +1159,7 @@ class WaypointNavigator:
             vz = heading_error * 0.015
             vz = max(-self.rotation_rate, min(self.rotation_rate, vz))
 
+        self._prev_vz = vz
         return vx, vz
 
     def stop(self):
