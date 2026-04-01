@@ -856,7 +856,10 @@ class WaypointNavigator:
 
     async def navigate_to(self, waypoint: Waypoint, timeout: float = 300.0) -> bool:
         """
-        Navigate to a single waypoint.
+        Navigate to a single waypoint using a state machine:
+        1. Calibrate IMU (walk forward until offset computed)
+        2. Turn to face waypoint (committed direction, no oscillation)
+        3. Walk to waypoint (proportional steering)
 
         Args:
             waypoint: Target waypoint
@@ -880,6 +883,93 @@ class WaypointNavigator:
         await self.robot.balance_stand()
         await asyncio.sleep(1.0)
 
+        # ---- Phase 1: Calibrate IMU (if not already calibrated) ----
+        if self._imu_north_offset is None:
+            _log_banner("CALIBRATING IMU", char="-")
+            while self._running:
+                if time.time() - nav_start > timeout:
+                    logger.error(f"Timeout during IMU calibration for {waypoint.name}")
+                    _log_banner(f"CALIBRATION TIMEOUT | {waypoint.name}", level="error", char="!")
+                    await self.robot.stop()
+                    return False
+
+                pos = self.gps.get_position()
+                if not pos:
+                    await asyncio.sleep(0.2)
+                    continue
+
+                imu_yaw = self.robot.get_yaw_degrees()
+                if imu_yaw is not None:
+                    if self._calibrate_imu(pos, imu_yaw):
+                        await self.robot.stop()
+                        await self.robot.balance_stand()
+                        await asyncio.sleep(1.0)
+                        break
+
+                # Walk forward during calibration
+                await self.robot.send_velocity(x=self.max_velocity)
+                await asyncio.sleep(0.2)
+
+        # ---- Phase 2: Turn to face waypoint ----
+        pos = self.gps.get_position()
+        if pos:
+            bearing = calculate_bearing(
+                pos.latitude, pos.longitude, waypoint.latitude, waypoint.longitude
+            )
+            current_heading = self.get_calibrated_heading()
+            if current_heading is not None:
+                error = normalize_angle(bearing - current_heading)
+                if abs(error) > 30:
+                    _log_banner("TURNING TO WAYPOINT", char="-")
+                    # Pick shortest direction once and commit
+                    direction = 1.0 if error > 0 else -1.0
+                    logger.info(
+                        f"Turn direction: {'CCW' if direction > 0 else 'CW'} "
+                        f"(heading={current_heading:.1f}° bearing={bearing:.1f}° error={error:.1f}°)"
+                    )
+                    await self.robot.balance_stand()
+                    await asyncio.sleep(1.0)
+
+                    turn_start = time.time()
+                    turn_last_log = 0.0
+                    while self._running:
+                        if time.time() - nav_start > timeout:
+                            logger.error(f"Timeout during turn for {waypoint.name}")
+                            await self.robot.stop()
+                            return False
+
+                        current_heading = self.get_calibrated_heading()
+                        if current_heading is None:
+                            await asyncio.sleep(0.1)
+                            continue
+
+                        pos = self.gps.get_position()
+                        bearing = calculate_bearing(
+                            pos.latitude, pos.longitude,
+                            waypoint.latitude, waypoint.longitude
+                        ) if pos else bearing
+                        error = normalize_angle(bearing - current_heading)
+
+                        now = time.time()
+                        if now - turn_last_log >= 2.0:
+                            logger.info(
+                                f"[turn] hdg={current_heading:.1f}° brg={bearing:.1f}° "
+                                f"err={error:.1f}°"
+                            )
+                            turn_last_log = now
+
+                        if abs(error) < 30:
+                            await self.robot.stop()
+                            logger.info(f"Aligned to waypoint — heading: {current_heading:.1f}° (error: {error:.1f}°)")
+                            await self.robot.balance_stand()
+                            await asyncio.sleep(1.0)
+                            break
+
+                        await self.robot.send_velocity(z=direction * self.rotation_rate)
+                        await asyncio.sleep(0.1)
+
+        # ---- Phase 3: Walk to waypoint ----
+        _log_banner("WALKING TO WAYPOINT", char="-")
         while self._running:
             if time.time() - nav_start > timeout:
                 pos_check = self.gps.get_position()
@@ -894,7 +984,6 @@ class WaypointNavigator:
                 await self.robot.stop()
                 return False
 
-            # Get current position
             pos = self.gps.get_position()
 
             # Check for GPS loss or fix degradation
@@ -928,7 +1017,6 @@ class WaypointNavigator:
                 await asyncio.sleep(0.5)
                 continue
 
-            # Fix restored - resume if we were paused
             if self._paused:
                 pause_duration = time.time() - self._pause_start
                 logger.info(f"GPS fix restored (type {pos.fix_type}), resuming navigation")
@@ -936,12 +1024,9 @@ class WaypointNavigator:
                 self._paused = False
                 self._pause_start = None
                 self._pause_last_progress = None
-                # IMU heading survives GPS outages - no need to reset calibration
-                # Re-prime gait controller after pause
                 await self.robot.balance_stand()
                 await asyncio.sleep(1.0)
 
-            # Calculate distance and bearing to target
             distance = haversine_distance(
                 pos.latitude, pos.longitude, waypoint.latitude, waypoint.longitude
             )
@@ -949,7 +1034,6 @@ class WaypointNavigator:
                 pos.latitude, pos.longitude, waypoint.latitude, waypoint.longitude
             )
 
-            # Check arrival
             if distance < self.arrival_tolerance:
                 elapsed = time.time() - nav_start
                 logger.info(
@@ -959,61 +1043,15 @@ class WaypointNavigator:
                 await self.robot.stop()
                 return True
 
-            # Get IMU yaw (if available)
-            imu_yaw = self.robot.get_yaw_degrees()
-
-            # Calibrate IMU if needed (during first forward motion)
-            if self._imu_north_offset is None and imu_yaw is not None:
-                if self._calibrate_imu(pos, imu_yaw):
-                    self._recal_pos = pos  # Start recalibration tracking from here
-                    # Re-prime gait controller after calibration walk
-                    await self.robot.stop()
-                    await self.robot.balance_stand()
-                    await asyncio.sleep(1.0)
-
-            # Get calibrated heading and calculate error FIRST
             current_heading = self.get_calibrated_heading()
-
             if current_heading is not None:
                 heading_error = normalize_angle(bearing - current_heading)
             else:
-                if self._imu_north_offset is not None:
-                    logger.warning("IMU heading stale - falling back to forward motion")
                 heading_error = 0
 
-            # Continuously recalibrate IMU ONLY when walking straight
-            if (
-                self._imu_north_offset is not None
-                and imu_yaw is not None
-                and pos.accuracy_horizontal <= self.calibration_hacc
-                and abs(heading_error) < 20
-            ):
-                if self._recal_pos is None:
-                    self._recal_pos = pos
-                else:
-                    recal_disp = haversine_distance(
-                        self._recal_pos.latitude, self._recal_pos.longitude,
-                        pos.latitude, pos.longitude,
-                    )
-                    if recal_disp >= 0.5:
-                        pos_bearing = calculate_bearing(
-                            self._recal_pos.latitude, self._recal_pos.longitude,
-                            pos.latitude, pos.longitude,
-                        )
-                        new_offset = normalize_angle(pos_bearing + imu_yaw)
-                        old_offset = self._imu_north_offset
-                        alpha = 0.3
-                        delta = normalize_angle(new_offset - old_offset)
-                        self._imu_north_offset = normalize_angle(old_offset + alpha * delta)
-                        self._recal_pos = pos
-
-            # Compute velocity commands
             vx, vz = self._compute_velocity(distance, heading_error)
-
-            # Send command
             await self.robot.send_velocity(x=vx, z=vz)
 
-            # Log status
             calibrated = "yes" if self._imu_north_offset is not None else "no"
             logger.debug(
                 f"Pos: ({pos.latitude:.8f}, {pos.longitude:.8f}) | "
@@ -1022,7 +1060,6 @@ class WaypointNavigator:
                 f"Error: {heading_error:.1f}° | Vel: x={vx:.2f}, z={vz:.2f} | IMU cal: {calibrated}"
             )
 
-            # Periodic INFO-level nav status every 5s
             now = time.time()
             if self._nav_last_status is None or now - self._nav_last_status >= 5.0:
                 heading_str = f"{current_heading:.1f}°" if current_heading is not None else "?"
@@ -1033,7 +1070,7 @@ class WaypointNavigator:
                 )
                 self._nav_last_status = now
 
-            await asyncio.sleep(0.2)  # 5Hz navigation loop
+            await asyncio.sleep(0.2)
 
         await self.robot.stop()
         return False
@@ -1133,34 +1170,21 @@ class WaypointNavigator:
         self, distance: float, heading_error: float
     ) -> Tuple[float, float]:
         """
-        Compute velocity commands based on distance and heading error.
+        Compute velocity commands for the walk phase.
+        Large heading corrections are handled by the turn phase,
+        so heading_error here is typically < 30°.
 
         Returns:
             (forward_velocity, rotation_velocity)
         """
-        abs_error = abs(heading_error)
+        # Slow down as we approach target
+        vx = min(self.max_velocity, distance * 0.5)
+        vx = max(0.1, vx)
 
-        if abs_error > 60:
-            # Large heading error - rotate in place
-            vx = 0.0
-            if abs_error > 165 and self._prev_vz != 0:
-                # Hysteresis near ±180° boundary — keep turning same direction
-                vz = (1 if self._prev_vz > 0 else -1) * self.rotation_rate
-            else:
-                # Normal shortest-path turn
-                vz = (1 if heading_error > 0 else -1) * self.rotation_rate
-        else:
-            # Move forward while correcting heading
-            # Smoothly blend forward velocity based on alignment
-            alignment = max(0.0, math.cos(math.radians(heading_error)))
-            base_vx = min(self.max_velocity, distance * 0.5)
-            vx = max(0.1, base_vx * alignment)
+        # Proportional heading correction
+        vz = heading_error * 0.015
+        vz = max(-self.rotation_rate, min(self.rotation_rate, vz))
 
-            # Proportional heading correction
-            vz = heading_error * 0.015
-            vz = max(-self.rotation_rate, min(self.rotation_rate, vz))
-
-        self._prev_vz = vz
         return vx, vz
 
     def stop(self):

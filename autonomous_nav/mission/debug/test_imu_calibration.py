@@ -237,6 +237,16 @@ async def run():
         aligned = False
         turn_start = time.time()
         turn_last_log = 0.0
+
+        # Pick shortest turn direction once and commit
+        heading = navigator.get_calibrated_heading()
+        while heading is None:
+            await asyncio.sleep(0.1)
+            heading = navigator.get_calibrated_heading()
+        error = normalize_angle(0 - heading)
+        direction = 1.0 if error > 0 else -1.0
+        logger.info(f"Turn direction: {'CCW' if direction > 0 else 'CW'} (heading={heading:.1f}° error={error:.1f}°)")
+
         while not aligned:
             # Check turn timeout
             if time.time() - turn_start > TURN_TIMEOUT:
@@ -253,7 +263,6 @@ async def run():
                 await asyncio.sleep(0.1)
                 continue
 
-            # Error to 0° (north)
             error = normalize_angle(0 - heading)
 
             # Periodic logging during rotation
@@ -276,8 +285,7 @@ async def run():
                 logger.info(f"Aligned to north — heading: {heading:.1f}° (error: {error:.1f}°)")
                 break
 
-            # Rotate toward north
-            direction = 1.0 if error > 0 else -1.0
+            # Rotate committed direction
             await robot.send_velocity(z=direction * TURN_RATE)
             await asyncio.sleep(0.1)
 

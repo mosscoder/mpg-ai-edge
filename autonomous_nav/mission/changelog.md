@@ -34,6 +34,32 @@ March field tests showed 250mm horizontal accuracy instead of the 14mm achieved 
 - `python -m py_compile` passes on all modified Python files
 - MP15774 confirmed live on Emlid caster: RTCM 3.3, 4-constellation, Emlid Reach RS3 at (46.67, -114.02)
 
+### State Machine Navigation: Calibrate → Turn → Walk
+
+#### Problem
+
+The `navigate_to()` loop interleaved calibration, turning, walking, and continuous recalibration in a single loop. This caused multiple interacting failure modes:
+
+1. **±180° turn oscillation** — when the robot needed to turn ~180° to face a waypoint, the direction recalculated every iteration, flipping at the ±180° boundary
+2. **Recalibration corruption** — GPS jitter during in-place rotation created phantom displacement vectors with random bearings, corrupting the IMU offset via the EMA
+3. **Stutter at velocity threshold** — the hard 30° walk/rotate boundary caused the robot to oscillate between forward and rotating
+
+#### Fix
+
+Replaced the monolithic nav loop with a three-phase state machine:
+
+1. **Calibrate** — walk forward, compute IMU offset (hAcc < 10cm gate), `balance_stand()` after
+2. **Turn** — compute shortest turn direction once, commit, rotate until error < 30°, `balance_stand()` after
+3. **Walk** — forward motion with proportional steering only, no in-place rotation
+
+Removed continuous recalibration entirely. The one-shot calibration at 14mm hAcc is accurate, and recalibration during navigation introduced more instability than it solved.
+
+Simplified `_compute_velocity()` to proportional steering only — the turn phase handles large heading corrections, so the walk phase only sees small errors.
+
+Applied the same committed-direction turn fix to `test_imu_calibration.py` and `test_sparkfun_imu.py` Phase 3 turn loops.
+
+---
+
 ### Fence Recalibration + Smooth Velocity Controller
 
 #### Problem 1: Unfenced continuous recalibration

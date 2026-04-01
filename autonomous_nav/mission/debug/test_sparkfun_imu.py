@@ -346,6 +346,16 @@ async def run():
         aligned = False
         turn_start = time.time()
         turn_last_log = 0.0
+
+        # Pick shortest turn direction once and commit
+        pos = gps.get_position()
+        while pos is None or pos.head_vehicle is None:
+            await asyncio.sleep(0.1)
+            pos = gps.get_position()
+        error = normalize_angle(0 - pos.head_vehicle)
+        direction = 1.0 if error > 0 else -1.0
+        logger.info(f"Turn direction: {'CCW' if direction > 0 else 'CW'} (f9r_hdg={pos.head_vehicle:.1f}° error={error:.1f}°)")
+
         while not aligned:
             if time.time() - turn_start > TURN_TIMEOUT:
                 pos = gps.get_position()
@@ -384,7 +394,7 @@ async def run():
                 logger.info(f"Aligned to north — F9R heading: {heading:.1f}° (error: {error:.1f}°)")
                 break
 
-            direction = 1.0 if error > 0 else -1.0
+            # Rotate committed direction
             await robot.send_velocity(z=direction * TURN_RATE)
             await asyncio.sleep(0.1)
 
