@@ -1,5 +1,37 @@
 # Navigation Changelog
 
+## 2026-04-01: First Successful Autonomous Two-Waypoint Mission
+
+### Result
+
+Mission 02 completed: robot navigated from start position to waypoint 1 (8.4m, 30s), then waypoint 2 (15.5m, 41s). Total mission ~71 seconds. Both arrivals within 0.5m. Heading error during cruise settled to 1-3°. hAcc steady at 14mm throughout.
+
+### What it took to get here
+
+The path from "robot walks confidently in the wrong direction" to "robot navigates two waypoints" required fixing a chain of interdependent bugs discovered over March 31 and April 1 field tests:
+
+**1. NTRIP password typo** — `338ca` → `338zca`. The Emlid caster returned `400 BAD REQUEST` on every authenticated request. Without corrections, hAcc was 250-470mm instead of 14mm, making GPS bearing unreliable for IMU calibration.
+
+**2. IMU yaw sign convention (CW vs CCW)** — The Go2 IMU yaw is CCW-positive (right-hand rule), but GPS bearing is CW-positive (navigational). The original formula `offset = gps_bearing - imu_yaw` produced correct heading at calibration but drifted by 2× the turn angle afterward. Fix: negate imu_yaw in offset computation and heading calculation.
+
+**3. Steering direction inversion** — The sign fix on heading also flipped what "positive error" means. Positive error changed from "target is left, turn left" to "target is right, turn right," but the proportional controller and turn logic weren't updated. The robot steered away from the waypoint in a positive feedback loop. Fix: negate the proportional gain and turn direction.
+
+**4. ±180° turn oscillation** — After correcting the sign, the robot often started pointed ~180° from the waypoint. The nav loop recalculated turn direction every 200ms, flipping at the ±180° boundary. Fix: restructured `navigate_to()` as a state machine (calibrate → turn → walk) where the turn phase picks direction once and commits.
+
+**5. Recalibration corruption** — Continuous IMU recalibration using position-derived bearing was corrupted by GPS jitter during in-place rotation, feeding random bearings into the offset. Fix: removed continuous recalibration. One-shot calibration at 14mm hAcc is accurate enough.
+
+**6. Arrival tolerance and walk speed** — Robot reached 0.36m from waypoint but couldn't close the last 16cm at minimum commanded velocity. Fix: tolerance 0.2→0.5m, walk speed 0.3→0.5 m/s, minimum forward speed 0.1→0.2 m/s.
+
+### Architecture
+
+The working navigation is a three-phase state machine per waypoint:
+
+1. **Calibrate** — walk forward, compute IMU offset when hAcc < 10cm and displacement ≥ 1.5m. Offset = `gps_bearing + imu_yaw` (sign-corrected). `balance_stand()` after. Runs once per mission; preserved between waypoints.
+2. **Turn** — compute shortest turn direction once, commit, rotate at 0.8 rad/s until error < 30°. `balance_stand()` after. No direction recalculation, no oscillation possible.
+3. **Walk** — forward motion with proportional steering (`vz = error * -0.015`). GPS pause/resume on fix degradation. Arrive when within 0.5m.
+
+---
+
 ## 2026-03-31: Hardcode NTRIP Credentials, Fix Walk Script, Add Robot Discovery
 
 ### Problem
