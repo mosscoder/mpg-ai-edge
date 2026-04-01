@@ -34,6 +34,17 @@ March field tests showed 250mm horizontal accuracy instead of the 14mm achieved 
 - `python -m py_compile` passes on all modified Python files
 - MP15774 confirmed live on Emlid caster: RTCM 3.3, 4-constellation, Emlid Reach RS3 at (46.67, -114.02)
 
+### Fix Steering Direction After Sign Convention Change
+
+The IMU yaw sign fix (negating `imu_yaw` in heading calculation) also flipped the meaning of positive heading error. Previously, `error > 0` meant "target is to the left, turn left (CCW)." After the fix, `error > 0` means "target is to the right, turn right (CW)" — but the steering commands weren't updated, causing the robot to steer away from the waypoint in a positive feedback loop (heading spins while walking).
+
+**Fix:** Negated steering in three places:
+- `_compute_velocity()`: `vz = heading_error * -0.015` (was `0.015`)
+- `navigate_to()` turn phase: `direction = -1.0 if error > 0 else 1.0` (was `1.0 if error > 0`)
+- `test_imu_calibration.py` and `test_sparkfun_imu.py` turn loops: same direction flip
+
+---
+
 ### State Machine Navigation: Calibrate → Turn → Walk
 
 #### Problem

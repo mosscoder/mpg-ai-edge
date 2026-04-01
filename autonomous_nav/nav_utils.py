@@ -922,7 +922,7 @@ class WaypointNavigator:
                 if abs(error) > 30:
                     _log_banner("TURNING TO WAYPOINT", char="-")
                     # Pick shortest direction once and commit
-                    direction = 1.0 if error > 0 else -1.0
+                    direction = -1.0 if error > 0 else 1.0
                     logger.info(
                         f"Turn direction: {'CCW' if direction > 0 else 'CW'} "
                         f"(heading={current_heading:.1f}° bearing={bearing:.1f}° error={error:.1f}°)"
@@ -1181,8 +1181,8 @@ class WaypointNavigator:
         vx = min(self.max_velocity, distance * 0.5)
         vx = max(0.1, vx)
 
-        # Proportional heading correction
-        vz = heading_error * 0.015
+        # Proportional heading correction (negated: positive error = target is right = turn CW)
+        vz = heading_error * -0.015
         vz = max(-self.rotation_rate, min(self.rotation_rate, vz))
 
         return vx, vz

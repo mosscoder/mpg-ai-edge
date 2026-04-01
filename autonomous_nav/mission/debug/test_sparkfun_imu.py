@@ -353,7 +353,7 @@ async def run():
             await asyncio.sleep(0.1)
             pos = gps.get_position()
         error = normalize_angle(0 - pos.head_vehicle)
-        direction = 1.0 if error > 0 else -1.0
+        direction = -1.0 if error > 0 else 1.0
         logger.info(f"Turn direction: {'CCW' if direction > 0 else 'CW'} (f9r_hdg={pos.head_vehicle:.1f}° error={error:.1f}°)")
 
         while not aligned:
