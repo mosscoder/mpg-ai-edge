@@ -971,11 +971,22 @@ class WaypointNavigator:
                     await self.robot.balance_stand()
                     await asyncio.sleep(1.0)
 
-            # Continuously recalibrate IMU using position-derived bearing
+            # Get calibrated heading and calculate error FIRST
+            current_heading = self.get_calibrated_heading()
+
+            if current_heading is not None:
+                heading_error = normalize_angle(bearing - current_heading)
+            else:
+                if self._imu_north_offset is not None:
+                    logger.warning("IMU heading stale - falling back to forward motion")
+                heading_error = 0
+
+            # Continuously recalibrate IMU ONLY when walking straight
             if (
                 self._imu_north_offset is not None
                 and imu_yaw is not None
                 and pos.accuracy_horizontal <= self.calibration_hacc
+                and abs(heading_error) < 20
             ):
                 if self._recal_pos is None:
                     self._recal_pos = pos
@@ -995,17 +1006,6 @@ class WaypointNavigator:
                         delta = normalize_angle(new_offset - old_offset)
                         self._imu_north_offset = normalize_angle(old_offset + alpha * delta)
                         self._recal_pos = pos
-
-            # Get calibrated heading
-            current_heading = self.get_calibrated_heading()
-
-            # Calculate heading error
-            if current_heading is not None:
-                heading_error = normalize_angle(bearing - current_heading)
-            else:
-                if self._imu_north_offset is not None:
-                    logger.warning("IMU heading stale - falling back to forward motion")
-                heading_error = 0
 
             # Compute velocity commands
             vx, vz = self._compute_velocity(distance, heading_error)
@@ -1140,7 +1140,7 @@ class WaypointNavigator:
         """
         abs_error = abs(heading_error)
 
-        if abs_error > 30:
+        if abs_error > 60:
             # Large heading error - rotate in place
             vx = 0.0
             if abs_error > 165 and self._prev_vz != 0:
@@ -1151,9 +1151,10 @@ class WaypointNavigator:
                 vz = (1 if heading_error > 0 else -1) * self.rotation_rate
         else:
             # Move forward while correcting heading
-            # Slow down as we approach target
-            vx = min(self.max_velocity, distance * 0.5)
-            vx = max(0.1, vx)  # Minimum forward speed
+            # Smoothly blend forward velocity based on alignment
+            alignment = max(0.0, math.cos(math.radians(heading_error)))
+            base_vx = min(self.max_velocity, distance * 0.5)
+            vx = max(0.1, base_vx * alignment)
 
             # Proportional heading correction
             vz = heading_error * 0.015

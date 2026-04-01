@@ -34,6 +34,28 @@ March field tests showed 250mm horizontal accuracy instead of the 14mm achieved 
 - `python -m py_compile` passes on all modified Python files
 - MP15774 confirmed live on Emlid caster: RTCM 3.3, 4-constellation, Emlid Reach RS3 at (46.67, -114.02)
 
+### Fence Recalibration + Smooth Velocity Controller
+
+#### Problem 1: Unfenced continuous recalibration
+
+The position-based recalibration triggered whenever GPS displacement exceeded 0.5m — including while the robot was rotating in place. RTK GPS jitters by centimeters during rotation, and over several seconds of spinning these jitters accumulate to 0.5m of phantom displacement with a random bearing. This random bearing was fed into the IMU offset via the EMA, corrupting the robot's sense of north and causing violent direction reversals.
+
+**Fix:** Moved heading error computation before the recalibration block and added `abs(heading_error) < 20` gate. Recalibration now only fires when the robot is walking roughly straight toward the waypoint — exactly when position-derived bearing is meaningful.
+
+#### Problem 2: Hard 30° velocity threshold
+
+The `_compute_velocity` method used a hard `if abs_error > 30: vx = 0.0` threshold. At 31° error the robot stopped and rotated; at 29° it lurched forward. This created stutter-step oscillation around the boundary.
+
+**Fix:** Raised the rotate-in-place threshold from 30° to 60° and replaced the hard cutoff with a smooth `cos()` velocity blend. Between 0-60° error, forward speed scales by `cos(heading_error)` — full speed when aligned, half speed at 60°, with a smooth transition. The 165° hysteresis for the ±180° boundary is retained.
+
+| Error range | Behavior |
+|-------------|----------|
+| 0-60° | Walk forward with cos()-blended speed + proportional steering |
+| 60-165° | Rotate in place (shortest path) |
+| 165-180° | Rotate in place (hysteresis — hold previous direction) |
+
+---
+
 ### Fix ±180° Rotation Oscillation (Hysteresis Lock-in)
 
 After the sign convention fix, the robot correctly identifies the waypoint bearing but often starts pointed nearly opposite it (~180° error). At the ±180° boundary, `normalize_angle` flips the error sign every iteration, causing the robot to alternate between "turn left" and "turn right" at 5Hz — wiggling in place indefinitely without ever walking forward.
