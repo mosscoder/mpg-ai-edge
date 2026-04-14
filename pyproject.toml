@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "go2-survey"
+version = "0.1.0"
+description = "Autonomous waypoint navigation for the Unitree Go2 with RTK GPS positioning"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pyserial",
+    "pynmea2",
+    "numpy",
+    "Pillow",
+    "unitree_webrtc_connect @ git+https://github.com/legion1581/unitree_webrtc_connect",
+]
+
+[project.scripts]
+go2-survey = "go2_survey.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
