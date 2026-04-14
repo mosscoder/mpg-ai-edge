@@ -139,7 +139,6 @@ mpg-ai-edge/
 │   ├── archive/           # retired scripts and historical logs
 │   └── webrtc_docs/       # Go2 WebRTC protocol notes
 ├── setup/                 # install walkthrough + Jetson platform notes
-├── scripts/               # find_robot_ip.sh (thin wrapper over discover-ip)
 ├── pyproject.toml         # single source of truth for deps + entry point
 └── README.md
 ```

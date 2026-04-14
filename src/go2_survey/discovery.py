@@ -1,11 +1,8 @@
 """Discover Unitree Go2 robots on the local network by WebRTC port scan.
 
-Python wrapper around the same `nmap` + `ip route` commands that
-scripts/find_robot_ip.sh has been running since the Jetson branch — not
-a pure-Python reimplementation. Same binary dependency (nmap), same
-Linux-only `ip` command for CIDR auto-detection, same parsing, same
-exit codes. "No breaking changes" means the behavior is byte-equivalent
-to the shell script it replaces.
+Subprocess wrapper around `nmap` + `ip route` — not a pure-Python
+reimplementation. Requires `nmap` on PATH, and auto-detection of the
+local CIDR is Linux-only (depends on the `ip` command).
 """
 
 from __future__ import annotations
@@ -22,7 +19,7 @@ GO2_WEBRTC_PORTS = (8081, 9991)
 def detect_local_cidr() -> Optional[str]:
     """Return the IPv4 CIDR of the default-route interface, or None.
 
-    Mirrors the shell script's detect_cidr():
+    Equivalent to:
         ip route show default  | awk '/default/ {print $5; exit}'
         ip -o -4 addr show dev <iface> scope global | awk '{print $4; exit}'
     """
@@ -68,7 +65,7 @@ def detect_local_cidr() -> Optional[str]:
 def find_robot_ips(cidr: Optional[str] = None) -> List[str]:
     """Scan a CIDR for hosts with port 8081 or 9991 open.
 
-    Runs the exact same nmap invocation as scripts/find_robot_ip.sh:
+    Runs:
         nmap -n -sT -p 8081,9991 --open -Pn <CIDR>
 
     Args:
@@ -108,7 +105,7 @@ def find_robot_ips(cidr: Optional[str] = None) -> List[str]:
 def _parse_nmap_output(output: str) -> List[str]:
     """Extract IPs from nmap output where 8081/tcp or 9991/tcp is open.
 
-    Equivalent to the awk block in scripts/find_robot_ip.sh:
+    Equivalent to this awk block:
         /Nmap scan report for/ { ip=$NF; next }
         ($1=="8081/tcp" || $1=="9991/tcp") && $2=="open" { hasPort[ip]=1 }
     """

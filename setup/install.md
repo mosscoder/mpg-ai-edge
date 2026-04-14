@@ -111,8 +111,7 @@ go2-survey discover-ip --cidr 10.0.0.0/24   # or pass an explicit CIDR
 
 Then set `robot.ip` in the mission config to the first IP printed. The
 implementation lives in `src/go2_survey/discovery.py` as a subprocess wrapper
-around `nmap -n -sT -p 8081,9991 --open -Pn <CIDR>`. The legacy
-`./scripts/find_robot_ip.sh` still works — it now execs the CLI subcommand.
+around `nmap -n -sT -p 8081,9991 --open -Pn <CIDR>`.
 
 ## Troubleshooting
 
@@ -186,9 +185,6 @@ Scan the local network for a Unitree Go2 by probing TCP ports 8081 and
   This path is Linux-only.
 - Prints the first candidate IP to stdout, diagnostics to stderr.
 - Exits 1 if no candidate is found.
-
-The legacy `./scripts/find_robot_ip.sh` is now a one-line wrapper that
-execs this subcommand, so existing callers keep working unchanged.
 
 ## Jetson-specific notes
 
