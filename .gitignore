@@ -21,5 +21,8 @@ runs/
 results/
 mapping.txt
 
+# Claude Code per-project metadata (settings.local.json mutates every session)
+.claude/
+
 # NOTE: mission logs under dev/missions/*/logs/ and dev/archive/logs/ are
 # intentionally tracked — they are historical run data, not build output.
