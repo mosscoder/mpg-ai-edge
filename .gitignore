@@ -1,18 +1,25 @@
-# Logs
+# Python build & install artifacts
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+dist/
+.venv/
+venv/
+
+# Editor & OS cruft
 *.swp
+.DS_Store
 
-# Output runs
-runs/
-
-# Model files
+# Large binary model files
 *.pt
 *.pth
 *.whl
 
-# Other temp artifacts
+# Legacy artifacts from the pre-refactor repo
+runs/
 results/
 mapping.txt
 
-
-__pycache__/
-*.pyc
+# NOTE: mission logs under dev/missions/*/logs/ and dev/archive/logs/ are
+# intentionally tracked — they are historical run data, not build output.
