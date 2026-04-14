@@ -1,9 +1,0 @@
-{
-"type": "FeatureCollection",
-"name": "mission_02_waypoints",
-"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
-"features": [
-{ "type": "Feature", "properties": { "name": "waypoint_1" }, "geometry": { "type": "Point", "coordinates": [ -113.9978005741553, 46.86164630854327 ] } },
-{ "type": "Feature", "properties": { "name": "waypoint_2" }, "geometry": { "type": "Point", "coordinates": [ -113.99796955331239, 46.86154956529314 ] } }
-]
-}

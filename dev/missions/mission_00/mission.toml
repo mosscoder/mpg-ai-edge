@@ -1,5 +1,5 @@
 name        = "mission_00"
-description = "Single-waypoint navigation test (tennis court, point 1 only)"
+description = "Parking lot two-waypoint circuit (first successful autonomous run, 2026-04-01)"
 
 [gps]
 port = "/dev/ttyACM0"
@@ -16,8 +16,8 @@ password   = "338zca"
 connection_mode = "LocalSTA"
 
 [navigation]
-arrival_tolerance = 0.2
-max_velocity      = 0.3
+arrival_tolerance = 0.5
+max_velocity      = 0.5
 rotation_rate     = 0.8
 min_fix_type      = 4
 max_hacc          = 0.10
