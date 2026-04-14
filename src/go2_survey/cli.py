@@ -130,6 +130,33 @@ def cmd_list(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_discover_ip(args: argparse.Namespace) -> int:
+    from go2_survey.discovery import find_robot_ips
+
+    try:
+        ips = find_robot_ips(cidr=args.cidr)
+    except RuntimeError as e:
+        print(f"error: {e}", file=sys.stderr)
+        return 1
+
+    if not ips:
+        print(
+            "No host found with 8081 or 9991 open. "
+            "Ensure the robot is on this network and in LocalSTA mode.",
+            file=sys.stderr,
+        )
+        return 1
+
+    if len(ips) > 1:
+        print(
+            f"Warning: multiple candidates found: {ips}; using first",
+            file=sys.stderr,
+        )
+
+    print(ips[0])
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="go2-survey",
@@ -159,6 +186,16 @@ def build_parser() -> argparse.ArgumentParser:
 
     list_parser = subparsers.add_parser("list", help="list available missions")
     list_parser.set_defaults(func=cmd_list)
+
+    discover_parser = subparsers.add_parser(
+        "discover-ip",
+        help="scan local network for a Go2 via WebRTC ports 8081/9991",
+    )
+    discover_parser.add_argument(
+        "--cidr",
+        help="network CIDR to scan (default: auto-detect via `ip route`)",
+    )
+    discover_parser.set_defaults(func=cmd_discover_ip)
 
     return parser
 

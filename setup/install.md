@@ -8,7 +8,7 @@ End-to-end setup for the `go2-survey` CLI and its first mission run.
 - A SparkFun ZED-F9P/F9R RTK GPS connected over USB (typically `/dev/ttyACM0`)
 - A Unitree Go2 reachable on the local network (LocalSTA mode)
 - NTRIP credentials for an Emlid caster (defaults in `dev/missions/_template/mission.toml` match the house base station)
-- `nmap` on PATH if you want robot IP auto-discovery via `scripts/find_robot_ip.sh`
+- `nmap` on PATH if you want robot IP auto-discovery via `go2-survey discover-ip`
 
 ## Install the package
 
@@ -102,10 +102,14 @@ If the Go2's IP is not hardcoded in `mission.toml` and `unitree_webrtc_connect`
 can't find it, run:
 
 ```bash
-./scripts/find_robot_ip.sh        # nmap scan for ports 8081/9991 on local subnet
+go2-survey discover-ip                  # auto-detect CIDR from default route
+go2-survey discover-ip --cidr 10.0.0.0/24   # or pass an explicit CIDR
 ```
 
-Then set `robot.ip` in the mission config to the result.
+Then set `robot.ip` in the mission config to the first IP printed. The
+implementation lives in `src/go2_survey/discovery.py` as a subprocess wrapper
+around `nmap -n -sT -p 8081,9991 --open -Pn <CIDR>`. The legacy
+`./scripts/find_robot_ip.sh` still works — it now execs the CLI subcommand.
 
 ## Troubleshooting
 
