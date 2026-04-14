@@ -1,4 +1,4 @@
-![logo](logo.png)
+![logo](go2_survey_logo.png)
 
 # go2_survey
 
@@ -152,6 +152,8 @@ mpg-ai-edge/
 - **Verify Python 3.8 deployment on Jetson** — the package declares
   `requires-python = ">=3.8"` and pulls the `tomli` backport on <3.11, but the
   full install + live run has only been exercised on Python 3.12 so far.
+- **Test Python versions > 3.8** — earlier Jetson images required Python 3.8,
+  but upcoming CV work (frame capture, inference) will likely need newer.
 
 ## Project history
 

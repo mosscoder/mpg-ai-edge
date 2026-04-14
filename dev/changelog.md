@@ -1,5 +1,107 @@
 # Navigation Changelog
 
+## 2026-04-14: Repo Refactor — `src/go2_survey/` Package, Data-Driven Missions, Jetson 3.8 Compatibility
+
+### Scope
+
+Rework the repo from a flat collection of scripts under `autonomous_nav/` into an installable Python package (`src/go2_survey/`) with a single `go2-survey` CLI entry point. Missions become **data**, not code — each mission is a directory containing a `mission.toml` config and a `waypoints.geojson`, run via `go2-survey run <name|path>`. The shell-script wrappers (`run_mission_*.sh`, `find_robot_ip.sh`, per-mission `run.sh` files) are retired; all invocations go through the CLI. The Python version pin walked back from 3.11 to 3.8 so the package installs on the current Jetson Orin Nano image.
+
+This is a structural refactor, not a behavioral change. The navigator state machine (calibrate → turn → walk), the GPS/NTRIP/IMU logic, and the sign-corrected heading math from the April 1 successful run all carry over unchanged. Same nmap invocation, same RTCM handling, same three-phase navigation.
+
+### New package layout
+
+```
+mpg-ai-edge/
+├── src/go2_survey/          # installable package
+│   ├── ntrip.py             # NTRIPConfig, EmlidNTRIPClient
+│   ├── gps.py               # RTKPosition, UBloxRTKGPS, GPSManager
+│   ├── robot.py             # Go2Robot (WebRTC + IMU + motion commands)
+│   ├── navigator.py         # WaypointNavigator state machine
+│   ├── waypoints.py         # Waypoint, load_waypoints (GeoJSON)
+│   ├── geometry.py          # haversine, bearing, normalize_angle
+│   ├── discovery.py         # find_robot_ips subprocess wrapper over nmap
+│   ├── mission_runner.py    # shared run_mission() + MissionRunner + hooks
+│   ├── cli.py               # argparse, run/list/discover-ip
+│   ├── config.py            # mission.toml loader + dataclasses
+│   ├── logging_utils.py     # log_banner
+│   └── vision/              # TODO: frames.py + geotag.py placeholders
+├── dev/
+│   ├── missions/
+│   │   ├── _template/       # copy-as-starting-point
+│   │   ├── mission_00/      # parking lot circuit (first successful run)
+│   │   └── mission_01/      # tennis court circuit
+│   ├── changelog.md         # (this file)
+│   ├── archive/             # retired debug scripts + historical logs
+│   └── webrtc_docs/
+├── setup/                   # install.md + Jetson platform notes
+├── pyproject.toml           # single source of truth for deps
+└── README.md
+```
+
+The 1192-line `autonomous_nav/nav_utils.py` monolith split into 8 focused modules. The entire `autonomous_nav/` tree was deleted along with every top-level inference-pipeline script and legacy data directory.
+
+### `go2-survey` CLI
+
+Three subcommands, all documented in `setup/install.md` under the CLI reference section:
+
+- **`go2-survey run <mission>`** — load config + waypoints, connect GPS, wait for RTK fix, **auto-discover the robot IP** via nmap if `[robot] ip` is unset in mission.toml, connect the robot, iterate waypoints through the state machine. `<mission>` accepts a bare name (resolved under `<repo>/dev/missions/<name>`) or any path to a directory containing `mission.toml` + `waypoints.geojson`. Repo root is auto-detected from `pyproject.toml` so invocation works from any directory inside the repo. Flags: `--dry-run`, `-v`/`--verbose`, `--capture-images` (placeholder).
+- **`go2-survey list`** — recursively walks `<repo>/dev/missions/` and prints each mission folder as its relative path (e.g. `mission_00`, `tennis_court/wp_set_a`). Stops recursing at a `mission.toml` (missions are leaves, not containers for nested missions). Any directory whose name starts with `_` is skipped, including its subtree, so `_template/` stays hidden and whole experimental subtrees can be hidden by prefixing a parent with `_`.
+- **`go2-survey discover-ip [--cidr CIDR]`** — standalone diagnostic that shells out to `nmap -n -sT -p 8081,9991 --open -Pn <CIDR>`. The same function (`go2_survey.discovery.find_robot_ips`) powers `run`'s auto-discovery path.
+
+### Data-driven missions
+
+Each mission is a folder with two load-bearing files:
+
+```
+dev/missions/mission_00/
+├── mission.toml         # gps/ntrip/robot/navigation settings
+├── waypoints.geojson    # FeatureCollection of Point features
+└── logs/                # co-located per-mission run history
+```
+
+`mission.toml` carries `[gps]`, `[ntrip]`, `[robot]`, and `[navigation]` sections plus top-level `name` and `description`. Config precedence is **dataclass defaults → mission.toml → env vars** (via `_apply_env_overrides` in `config.py`). Python 3.11+ uses stdlib `tomllib`; 3.8–3.10 uses the `tomli` backport, pulled in via a conditional PEP 508 marker in `pyproject.toml` (`tomli >= 1.1.0 ; python_version < '3.11'`).
+
+Creating a new mission is one `cp -r` away:
+
+```bash
+cp -r dev/missions/_template dev/missions/my_new_mission
+# edit mission.toml (name, description) and replace waypoints.geojson
+go2-survey run my_new_mission
+```
+
+Mission lineup after restructure:
+
+- **`mission_00`** (parking lot) — promoted from the old `mission_02`, which was the mission that produced the first successful autonomous run on 2026-04-01. Tuned settings: `arrival_tolerance=0.5`, `max_velocity=0.5`, `rotation_rate=0.8`.
+- **`mission_01`** (tennis court) — same two-waypoint layout as before, now running with the same tuned values (was `0.2`/`0.3`/`0.8` pre-tuning). Mission content and waypoints unchanged.
+- The old single-waypoint tennis-court `mission_00` was retired; its 5 historical logs moved to `dev/archive/logs/retired_mission_00/`.
+
+### Mission runner + extension points
+
+`src/go2_survey/mission_runner.py` owns the shared execution flow: load config, connect GPS, (auto-discover robot IP if needed,) connect robot, iterate waypoints. The `MissionRunner` dataclass exposes two hook slots — `on_waypoint_reached(waypoint, position)` and `on_gps_update(position)` — so future features like frame capture and live geotagging can plug in without touching any mission folder or the runner's core loop.
+
+### Robot IP discovery
+
+`find_robot_ip.sh` (the old nmap-based shell script) ported to `src/go2_survey/discovery.py` as a **subprocess wrapper**, not a pure-Python reimplementation. Same binary dependency (`nmap`), same Linux-only `ip route` + `ip addr` CIDR detection, same parsing, same exit codes. Wired into `mission_runner.run_mission()` so that any `go2-survey run` with `robot.ip` unset and `robot.serial` unset and `connection_mode == "LocalSTA"` automatically runs discovery before constructing `Go2Robot`. Fails fast with an actionable error message if nmap is missing or returns nothing.
+
+### Deletions / archival
+
+- **`autonomous_nav/`** — entire tree retired. `nav_utils.py` is now the 8 split modules; `mission/mission_*.py` and `mission/run_mission_*.sh` are replaced by data-driven folders; `rtk/rtk_with_logs.py` (a duplicate of `GPSManager`) was deleted; `reference/` moved to `dev/archive/reference/`.
+- **Top-level `00_`–`04_.py`** — unused Jetson inference pipeline stubs, deleted.
+- **`data/`, `subject/`, `results/`, `notes/`** — root-level dumping grounds cleaned out. `notes/` content moved to `setup/` with snake_cased filenames. The one load-bearing geojson (`tennis_court_points.geojson`) was extracted into `mission_01/waypoints.geojson` before deleting `data/`.
+- **`environment.yml`, `environment-jetson.yml`, `requirements-jetson.txt`** — superseded by `pyproject.toml`.
+- **`scripts/find_robot_ip.sh`** — deleted. The Python port is now the only implementation; anything that used to call the shell script either uses `go2-survey discover-ip` directly or goes through `go2-survey run`'s auto-discovery path.
+- **Per-mission `run.sh` wrappers** — byte-identical one-liners execing the CLI, retired to remove the shell/CLI duality. All invocation now goes through `go2-survey run <name|path>`.
+- **`.claude/settings.local.json`** — was tracked and mutated every session, cluttering `git status`. Untracked and added to `.gitignore`.
+- **Debug test harnesses** (`test_imu_calibration.py`, `test_sparkfun_imu.py`) — moved unchanged to `dev/archive/debug_tests/`. They import from the old `autonomous_nav.nav_utils` path and will not run against the new package; kept for historical reference only.
+
+### Follow-ups before merging to `main`
+
+- **Python 3.8 install on Jetson.** The package declares `requires-python = ">=3.8"` and the `tomli` backport should be pulled in via the PEP 508 marker on 3.8–3.10, but the full `pip install -e .` + live run has only been exercised on Python 3.12 locally.
+- **Auto-discovery on real hardware.** The nmap subprocess wrapper was unit-checked via `_parse_nmap_output` against synthetic output, and the shell original was production-proven, but a live end-to-end `go2-survey run mission_00` against a real Go2 has not been run since the port.
+- **Newer Python versions.** 3.8 is the lower bound, not a preference. Upcoming CV work (frame capture, inference) will likely need 3.10+; should verify the full stack still installs and runs on 3.10/3.11/3.12 before committing to a wider version range.
+
+---
+
 ## 2026-04-01: First Successful Autonomous Two-Waypoint Mission
 
 ### Result
