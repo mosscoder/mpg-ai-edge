@@ -1,0 +1,48 @@
+"""Waypoint dataclass and GeoJSON loader."""
+
+from __future__ import annotations
+
+import json
+import logging
+from dataclasses import dataclass
+from pathlib import Path
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Waypoint:
+    """A navigation target point."""
+
+    latitude: float
+    longitude: float
+    name: str | None = None
+
+
+def load_waypoints(geojson_path: str | Path) -> list[Waypoint]:
+    """Load Point/MultiPoint features from a GeoJSON FeatureCollection.
+
+    GeoJSON stores coordinates as [longitude, latitude].
+    """
+    path = Path(geojson_path)
+    with path.open() as f:
+        data = json.load(f)
+
+    waypoints: list[Waypoint] = []
+    for i, feature in enumerate(data.get("features", [])):
+        geom = feature.get("geometry", {})
+        props = feature.get("properties", {})
+        name = props.get("name", f"waypoint_{i}")
+
+        geom_type = geom.get("type")
+        if geom_type == "Point":
+            lon, lat = geom["coordinates"][0], geom["coordinates"][1]
+            waypoints.append(Waypoint(latitude=lat, longitude=lon, name=name))
+        elif geom_type == "MultiPoint":
+            for j, coords in enumerate(geom["coordinates"]):
+                waypoints.append(
+                    Waypoint(latitude=coords[1], longitude=coords[0], name=f"{name}_{j}")
+                )
+
+    logger.info(f"Loaded {len(waypoints)} waypoints from {path}")
+    return waypoints
