@@ -101,17 +101,22 @@ will pick it up automatically the next time you run `go2-survey list`.
 
 ## Robot IP discovery
 
-If the Go2's IP is not hardcoded in `mission.toml` and `unitree_webrtc_connect`
-can't find it, run:
+`go2-survey run <mission>` **auto-discovers** the Go2 when `[robot] ip` is
+unset in `mission.toml` (and `ROBOT_IP` is unset in the environment). It
+shells out to `nmap -n -sT -p 8081,9991 --open -Pn <CIDR>` against the local
+subnet and uses the first host with either WebRTC port open. You don't
+normally need to do anything manually — leave `robot.ip` commented out in
+mission.toml and the runner handles it before connecting to the robot.
+
+If you want to run the scan standalone — e.g. to diagnose a failure, or to
+find the IP before editing a mission config:
 
 ```bash
 go2-survey discover-ip                  # auto-detect CIDR from default route
 go2-survey discover-ip --cidr 10.0.0.0/24   # or pass an explicit CIDR
 ```
 
-Then set `robot.ip` in the mission config to the first IP printed. The
-implementation lives in `src/go2_survey/discovery.py` as a subprocess wrapper
-around `nmap -n -sT -p 8081,9991 --open -Pn <CIDR>`.
+Both paths go through the same `src/go2_survey/discovery.py` module.
 
 ## Troubleshooting
 
@@ -138,9 +143,10 @@ entry point — there are no per-mission shell wrappers.
 
 ### `go2-survey run <mission> [flags]`
 
-Run a mission end-to-end: connect GPS, wait for RTK fix, connect to the
-robot, iterate waypoints through the `calibrate → turn → walk` state
-machine.
+Run a mission end-to-end: connect GPS, wait for RTK fix, auto-discover the
+Go2's IP if `[robot] ip` is unset (Linux-only; via `nmap` scan for WebRTC
+ports 8081/9991 in `LocalSTA` mode), connect to the robot, and iterate
+waypoints through the `calibrate → turn → walk` state machine.
 
 **Mission resolution.** `<mission>` can be:
 

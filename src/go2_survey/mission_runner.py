@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Awaitable, Callable, Optional
 
 from go2_survey.config import load_mission_config
+from go2_survey.discovery import find_robot_ips
 from go2_survey.gps import GPSManager, RTKPosition
 from go2_survey.logging_utils import log_banner
 from go2_survey.navigator import WaypointNavigator
@@ -96,9 +97,45 @@ async def run_mission(runner: MissionRunner) -> bool:
         baudrate=settings.gps.baud,
         ntrip_config=ntrip_cfg,
     )
+
+    robot_ip = settings.robot.ip
+    if (
+        robot_ip is None
+        and settings.robot.serial is None
+        and settings.robot.connection_mode == "LocalSTA"
+    ):
+        log_banner("AUTO-DISCOVERING ROBOT IP", char="-", logger=logger)
+        logger.info(
+            "robot.ip not set in mission.toml and ROBOT_IP env var not set; "
+            "scanning local network for a Go2 (nmap ports 8081/9991)..."
+        )
+        try:
+            ips = find_robot_ips()
+        except RuntimeError as e:
+            logger.error(f"Robot IP auto-discovery failed: {e}")
+            logger.error(
+                "Set [robot] ip in mission.toml, set ROBOT_IP in the "
+                "environment, or run `go2-survey discover-ip` to diagnose."
+            )
+            return False
+        if not ips:
+            logger.error(
+                "Robot IP auto-discovery found no Go2 on the local network. "
+                "Set [robot] ip in mission.toml, set ROBOT_IP in the "
+                "environment, or run `go2-survey discover-ip` to diagnose."
+            )
+            return False
+        robot_ip = ips[0]
+        if len(ips) > 1:
+            logger.warning(
+                f"Multiple candidates found; using {robot_ip} (others: {ips[1:]})"
+            )
+        else:
+            logger.info(f"Auto-discovered Go2 at {robot_ip}")
+
     robot = Go2Robot(
         connection_mode=settings.robot.connection_mode,
-        robot_ip=settings.robot.ip,
+        robot_ip=robot_ip,
         robot_serial=settings.robot.serial,
     )
     navigator = WaypointNavigator(
