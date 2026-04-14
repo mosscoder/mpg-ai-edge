@@ -2,10 +2,10 @@
 
 Usage:
     go2-survey list                   # list available missions
-    go2-survey run mission_02         # run a mission by name under dev/missions/
+    go2-survey run mission_00         # run a mission by name under dev/missions/
     go2-survey run path/to/mission    # ... or by path
-    go2-survey run mission_02 --dry-run
-    go2-survey run mission_02 -v      # debug logging
+    go2-survey run mission_00 --dry-run
+    go2-survey run mission_00 -v      # debug logging
 """
 
 from __future__ import annotations
@@ -16,7 +16,7 @@ import logging
 import sys
 import time
 from pathlib import Path
-from typing import Optional
+from typing import Iterator, Optional
 
 from go2_survey.mission_runner import MissionRunner, run_mission
 
@@ -108,25 +108,40 @@ def cmd_run(args: argparse.Namespace) -> int:
         return 1
 
 
+def _walk_missions(root: Path) -> Iterator[Path]:
+    """Yield every mission folder under `root`, recursively.
+
+    A directory is a mission folder if it contains `mission.toml`; once
+    found, we stop descending into it (missions are leaves, not
+    containers for other missions). Any directory whose name starts
+    with `_` is skipped entirely, including its subtree — so
+    `_template/` stays hidden and a user can hide a whole experimental
+    subtree by prefixing the parent directory with `_`.
+    """
+    for entry in sorted(root.iterdir()):
+        if not entry.is_dir():
+            continue
+        if entry.name.startswith("_"):
+            continue
+        if (entry / "mission.toml").exists():
+            yield entry
+        else:
+            yield from _walk_missions(entry)
+
+
 def cmd_list(args: argparse.Namespace) -> int:
     root = _missions_root()
     if not root.exists():
         print(f"no missions directory found at {root}")
         return 0
 
-    missions = sorted(
-        d
-        for d in root.iterdir()
-        if d.is_dir()
-        and (d / "mission.toml").exists()
-        and not d.name.startswith("_")
-    )
+    missions = sorted(_walk_missions(root))
     if not missions:
         print(f"no missions found in {root}")
         return 0
 
     for m in missions:
-        print(m.name)
+        print(m.relative_to(root))
     return 0
 
 

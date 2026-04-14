@@ -174,11 +174,22 @@ Logs always go to both the console and
 
 ### `go2-survey list`
 
-Enumerate every mission directory under `<repo-root>/dev/missions/` that
-contains a `mission.toml` and whose name does not start with `_` (so the
-`_template` directory is hidden). Exits 0 even when no missions exist.
-Missions at arbitrary filesystem paths outside `dev/missions/` do not
-appear in `list` — you invoke those by full path.
+Walks `<repo-root>/dev/missions/` **recursively** and lists every mission
+folder it finds. A mission folder is any directory that contains a
+`mission.toml`; once found, the walker does not descend into it (missions
+are leaves, not containers). Any directory whose name starts with `_` is
+skipped entirely, including its subtree — so `_template/` stays hidden
+from `list`, and you can hide a whole experimental subtree by prefixing
+the parent with `_`.
+
+Output is the **relative path from `dev/missions/`**, so whatever `list`
+prints can be pasted directly back into `go2-survey run`. A flat layout
+prints `mission_00`, `mission_01`, etc.; a nested layout prints
+`tennis_court/wp_set_a`, `parking_lot/circuit_02`, etc.
+
+Exits 0 even when no missions exist. Missions at arbitrary filesystem
+paths outside `dev/missions/` still do not appear in `list` — you invoke
+those with their full path.
 
 ### `go2-survey discover-ip [--cidr CIDR]`
 
