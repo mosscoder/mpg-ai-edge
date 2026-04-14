@@ -32,26 +32,29 @@ go2-survey list          # shows the missions under dev/missions/
 
 ## Running a mission
 
-Each mission is a folder containing `mission.toml` + `waypoints.geojson` +
-`run.sh`. The `go2-survey` CLI resolves missions by name (searched under
-`dev/missions/`) or by path.
+Each mission is a folder containing `mission.toml` + `waypoints.geojson`.
+The `go2-survey` CLI resolves missions by name (searched under
+`dev/missions/`) or by any path to a directory containing those two files.
 
 **Dry run** — loads config and waypoints, prints the plan, and exits without
 touching hardware:
 
 ```bash
-go2-survey run mission_02 --dry-run
+go2-survey run mission_00 --dry-run
 ```
 
 **Live run:**
 
 ```bash
-go2-survey run mission_02          # by name
-./dev/missions/mission_02/run.sh   # by co-located script
+go2-survey run mission_00                          # by name under dev/missions/
+go2-survey run dev/missions/mission_00             # or by path
+go2-survey run /absolute/path/to/my_survey_dir     # or by an arbitrary path
+go2-survey run mission_00 -v                       # with debug logging
 ```
 
-Pass `-v` for debug-level logging. Logs stream to the console and a timestamped
-file under `dev/missions/<mission>/logs/`.
+Logs stream to the console and to
+`<mission>/logs/<name>_<timestamp>.log` (where `<name>` comes from the
+mission.toml `name` field), alongside the mission config.
 
 ## Configuring a mission
 
@@ -84,7 +87,7 @@ gps_fix_timeout   = 300
 ```
 
 Any field can be overridden at runtime by setting an env var — e.g.
-`GPS_PORT=/dev/ttyUSB0 go2-survey run mission_02`.
+`GPS_PORT=/dev/ttyUSB0 go2-survey run mission_00`.
 
 ## Creating a new mission
 
@@ -128,6 +131,64 @@ robot.
 **No RTK Fixed** — you'll see RTK Float first while the solution converges.
 Wait 30–120 s under open sky. The fix is considered achieved at `min_fix_type`
 or higher (4 = GNSS+DR, 5 = RTK Float, 6 = RTK Fixed).
+
+## CLI reference
+
+`go2-survey` exposes three subcommands. All are invoked through the installed
+entry point — there are no per-mission shell wrappers.
+
+### `go2-survey run <mission> [flags]`
+
+Run a mission end-to-end: connect GPS, wait for RTK fix, connect to the
+robot, iterate waypoints through the `calibrate → turn → walk` state
+machine.
+
+**Mission resolution.** `<mission>` can be:
+
+- A **bare name** (e.g. `mission_00`), resolved under
+  `<repo-root>/dev/missions/<name>`. Repo root is auto-detected by walking
+  up from `cwd` looking for `pyproject.toml`, so this form works from any
+  directory inside the repo.
+- An **absolute or cwd-relative path** to any directory containing
+  `mission.toml` and `waypoints.geojson`. The folder can live anywhere on
+  the filesystem and be named anything — `mission_` is just a convention,
+  not a requirement.
+
+**Flags:**
+
+- `--dry-run` — load config and waypoints, log the plan, exit without
+  touching hardware. Use this to sanity-check a config change before a
+  live run.
+- `-v` / `--verbose` — debug-level logging (default is INFO).
+- `--capture-images` — placeholder. Parses cleanly and prints a warning;
+  no-op until the `src/go2_survey/vision/frames.py` hook lands.
+
+Logs always go to both the console and
+`<mission>/logs/<name>_<timestamp>.log`, where `<name>` comes from the
+`name` field of `mission.toml`.
+
+### `go2-survey list`
+
+Enumerate every mission directory under `<repo-root>/dev/missions/` that
+contains a `mission.toml` and whose name does not start with `_` (so the
+`_template` directory is hidden). Exits 0 even when no missions exist.
+Missions at arbitrary filesystem paths outside `dev/missions/` do not
+appear in `list` — you invoke those by full path.
+
+### `go2-survey discover-ip [--cidr CIDR]`
+
+Scan the local network for a Unitree Go2 by probing TCP ports 8081 and
+9991 (the Go2's WebRTC listener). Shells out to
+`nmap -n -sT -p 8081,9991 --open -Pn <CIDR>` and parses its output.
+
+- If `--cidr` is omitted, the CIDR is auto-detected from the default route
+  via `ip route show default` + `ip -o -4 addr show dev <iface> scope global`.
+  This path is Linux-only.
+- Prints the first candidate IP to stdout, diagnostics to stderr.
+- Exits 1 if no candidate is found.
+
+The legacy `./scripts/find_robot_ip.sh` is now a one-line wrapper that
+execs this subcommand, so existing callers keep working unchanged.
 
 ## Jetson-specific notes
 
