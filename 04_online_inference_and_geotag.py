@@ -1,1 +1,0 @@
-# This script demonstrates how to synchronize online inference with image geotagging.

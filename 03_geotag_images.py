@@ -1,1 +1,0 @@
-# This script is used to syncronize image capture with RTK readings.
