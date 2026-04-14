@@ -22,6 +22,10 @@ The path from "robot walks confidently in the wrong direction" to "robot navigat
 
 **6. Arrival tolerance and walk speed** — Robot reached 0.36m from waypoint but couldn't close the last 16cm at minimum commanded velocity. Fix: tolerance 0.2→0.5m, walk speed 0.3→0.5 m/s, minimum forward speed 0.1→0.2 m/s.
 
+### GNSS Antenna Stabilization
+
+Moved GNSS antenna to a more stable mounting position on the robot's back. Repeated mission 02 to compare. hAcc remained at 14mm for both runs — RTK Fixed accuracy is dominated by the base station corrections, not antenna placement. Heading stability during cruise was comparable (1-6° error). The primary benefit is mechanical reliability: a stable mount reduces the risk of antenna shift during rough terrain traversal, which would corrupt the calibration bearing. No code changes.
+
 ### Architecture
 
 The working navigation is a three-phase state machine per waypoint:
