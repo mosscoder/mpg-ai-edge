@@ -13,9 +13,13 @@ Precedence (lowest to highest):
 from __future__ import annotations
 
 import os
-import tomllib
 from dataclasses import dataclass, field, fields
 from pathlib import Path
+
+try:
+    import tomllib  # Python 3.11+ stdlib
+except ModuleNotFoundError:  # Python 3.8-3.10 backport
+    import tomli as tomllib
 
 
 @dataclass

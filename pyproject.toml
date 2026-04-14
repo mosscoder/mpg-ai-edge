@@ -7,12 +7,13 @@ name = "go2-survey"
 version = "0.1.0"
 description = "Autonomous waypoint navigation for the Unitree Go2 with RTK GPS positioning"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.8"
 dependencies = [
     "pyserial",
     "pynmea2",
     "numpy",
     "Pillow",
+    "tomli >= 1.1.0 ; python_version < '3.11'",
     "unitree_webrtc_connect @ git+https://github.com/legion1581/unitree_webrtc_connect",
 ]
 

@@ -4,7 +4,7 @@ End-to-end setup for the `go2-survey` CLI and its first mission run.
 
 ## Prerequisites
 
-- Python **3.11+** (`tomllib` is a stdlib dependency)
+- Python **3.8+** (on 3.8–3.10 the `tomli` backport is pulled in automatically; on 3.11+ the stdlib `tomllib` is used)
 - A SparkFun ZED-F9P/F9R RTK GPS connected over USB (typically `/dev/ttyACM0`)
 - A Unitree Go2 reachable on the local network (LocalSTA mode)
 - NTRIP credentials for an Emlid caster (defaults in `dev/missions/_template/mission.toml` match the house base station)
