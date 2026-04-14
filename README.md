@@ -23,10 +23,11 @@ each mission is a folder under `dev/missions/` containing a `mission.toml`, a
 ## Quick start
 
 ```bash
-pip install -e .                          # installs go2-survey + deps
-go2-survey list                           # mission_00, mission_01, mission_02
-go2-survey run mission_02 --dry-run       # load config + waypoints, skip hardware
-go2-survey run mission_02                 # live navigation
+pip install -e .                          # installs go2-survey + deps (Python 3.8+)
+go2-survey list                           # mission_00, mission_01
+go2-survey run mission_00 --dry-run       # load config + waypoints, skip hardware
+go2-survey run mission_00                 # live navigation (parking lot circuit)
+go2-survey discover-ip                    # find the Go2's IP on the local network
 ```
 
 Full walkthrough — including GPS wiring, NTRIP credentials, robot discovery,
@@ -47,19 +48,18 @@ go2-survey run mission_NAME
 mpg-ai-edge/
 ├── src/go2_survey/        # the installable package (ntrip, gps, robot,
 │   │                      #   navigator, waypoints, geometry, config,
-│   │                      #   mission_runner, cli, logging_utils)
+│   │                      #   mission_runner, cli, discovery, logging_utils)
 │   └── vision/            # TODO: frame capture + geotagging
 ├── dev/
 │   ├── missions/          # one folder per mission (data-driven)
 │   │   ├── _template/
-│   │   ├── mission_00/    # mission.toml + waypoints.geojson + run.sh + logs/
-│   │   ├── mission_01/
-│   │   └── mission_02/
+│   │   ├── mission_00/    # parking lot circuit (2 waypoints, tuned settings)
+│   │   └── mission_01/    # tennis court circuit (2 waypoints, tuned settings)
 │   ├── changelog.md       # dated log of what changed and why
 │   ├── archive/           # retired scripts and historical logs
 │   └── webrtc_docs/       # Go2 WebRTC protocol notes
 ├── setup/                 # install walkthrough + Jetson platform notes
-├── scripts/               # find_robot_ip.sh and other operator helpers
+├── scripts/               # find_robot_ip.sh (thin wrapper over discover-ip)
 ├── pyproject.toml         # single source of truth for deps + entry point
 └── README.md
 ```
@@ -70,12 +70,9 @@ mpg-ai-edge/
   each waypoint (`src/go2_survey/vision/frames.py`, currently a TODO)
 - **Geotagging** — stamp captured frames with RTK position + calibrated heading
   for downstream inference pipelines (`vision/geotag.py`, also TODO)
-- **Robot IP discovery as a Python module** — the current `scripts/find_robot_ip.sh`
-  is an nmap-based shell scan; a portable Python port will live alongside the
-  rest of the package
-- **Tuned parameters per mission** — mission_00 and mission_01 still carry the
-  pre-tuning defaults (0.2m tolerance, 0.3 m/s); they should migrate to the
-  working mission_02 values (0.5m, 0.5 m/s) once retested in the field
+- **Verify Python 3.8 deployment on Jetson** — the package declares
+  `requires-python = ">=3.8"` and pulls the `tomli` backport on <3.11, but the
+  full install + live run has only been exercised on Python 3.12 so far.
 
 ## Project history
 
