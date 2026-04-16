@@ -1,4 +1,4 @@
-name        = "mission_00"
+name        = "00_parking_lot"
 description = "Parking lot two-waypoint circuit (first successful autonomous run, 2026-04-01)"
 
 [gps]

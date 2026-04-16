@@ -19,16 +19,16 @@ module under `src/go2_survey/`:
 A single `go2-survey` CLI drives everything. Missions are **data**, not code:
 each mission is a folder containing a `mission.toml` and a `waypoints.geojson`.
 Run any mission with `go2-survey run <name|path>` — by name
-(`go2-survey run mission_00`) if the folder lives under `dev/missions/`, or
+(`go2-survey run 00_parking_lot`) if the folder lives under `dev/missions/`, or
 by path (`go2-survey run /any/directory/with/a/mission.toml`) if it doesn't.
 
 ## Quick start
 
 ```bash
 pip install -e .                          # installs go2-survey + deps (Python 3.8+)
-go2-survey list                           # mission_00, mission_01
-go2-survey run mission_00 --dry-run       # load config + waypoints, skip hardware
-go2-survey run mission_00                 # live navigation (parking lot circuit)
+go2-survey list                           # 00_parking_lot, 01_tennis_court
+go2-survey run 00_parking_lot --dry-run   # load config + waypoints, skip hardware
+go2-survey run 00_parking_lot             # live navigation (parking lot circuit)
 go2-survey discover-ip                    # find the Go2's IP on the local network
 ```
 
@@ -54,7 +54,7 @@ your choice; the file names are load-bearing.
 TOML config. Two top-level fields plus four sections:
 
 ```toml
-name        = "mission_00"                       # used as log filename prefix
+name        = "00_parking_lot"                   # used as log filename prefix
 description = "Parking lot two-waypoint circuit" # human-readable
 
 [gps]
@@ -133,8 +133,8 @@ mpg-ai-edge/
 ├── dev/
 │   ├── missions/          # one folder per mission (data-driven)
 │   │   ├── _template/
-│   │   ├── mission_00/    # parking lot circuit (2 waypoints, tuned settings)
-│   │   └── mission_01/    # tennis court circuit (2 waypoints, tuned settings)
+│   │   ├── 00_parking_lot/  # parking lot circuit (2 waypoints, tuned settings)
+│   │   └── 01_tennis_court/ # tennis court circuit (2 waypoints, tuned settings)
 │   ├── changelog.md       # dated log of what changed and why
 │   ├── archive/           # retired scripts and historical logs
 │   └── webrtc_docs/       # Go2 WebRTC protocol notes

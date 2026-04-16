@@ -2,10 +2,10 @@
 
 Usage:
     go2-survey list                   # list available missions
-    go2-survey run mission_00         # run a mission by name under dev/missions/
+    go2-survey run 00_parking_lot     # run a mission by name under dev/missions/
     go2-survey run path/to/mission    # ... or by path
-    go2-survey run mission_00 --dry-run
-    go2-survey run mission_00 -v      # debug logging
+    go2-survey run 00_parking_lot --dry-run
+    go2-survey run 00_parking_lot -v  # debug logging
 """
 
 from __future__ import annotations

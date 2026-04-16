@@ -1,4 +1,4 @@
-name        = "mission_01"
+name        = "01_tennis_court"
 description = "Tennis court two-waypoint circuit (tuned settings: tol=0.5m, vmax=0.5m/s)"
 
 [gps]

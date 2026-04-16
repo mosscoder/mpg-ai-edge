@@ -40,16 +40,16 @@ The `go2-survey` CLI resolves missions by name (searched under
 touching hardware:
 
 ```bash
-go2-survey run mission_00 --dry-run
+go2-survey run 00_parking_lot --dry-run
 ```
 
 **Live run:**
 
 ```bash
-go2-survey run mission_00                          # by name under dev/missions/
-go2-survey run dev/missions/mission_00             # or by path
+go2-survey run 00_parking_lot                      # by name under dev/missions/
+go2-survey run dev/missions/00_parking_lot         # or by path
 go2-survey run /absolute/path/to/my_survey_dir     # or by an arbitrary path
-go2-survey run mission_00 -v                       # with debug logging
+go2-survey run 00_parking_lot -v                   # with debug logging
 ```
 
 Logs stream to the console and to
@@ -87,7 +87,7 @@ gps_fix_timeout   = 300
 ```
 
 Any field can be overridden at runtime by setting an env var — e.g.
-`GPS_PORT=/dev/ttyUSB0 go2-survey run mission_00`.
+`GPS_PORT=/dev/ttyUSB0 go2-survey run 00_parking_lot`.
 
 ## Creating a new mission
 
@@ -150,7 +150,7 @@ waypoints through the `calibrate → turn → walk` state machine.
 
 **Mission resolution.** `<mission>` can be:
 
-- A **bare name** (e.g. `mission_00`), resolved under
+- A **bare name** (e.g. `00_parking_lot`), resolved under
   `<repo-root>/dev/missions/<name>`. Repo root is auto-detected by walking
   up from `cwd` looking for `pyproject.toml`, so this form works from any
   directory inside the repo.
@@ -184,7 +184,7 @@ the parent with `_`.
 
 Output is the **relative path from `dev/missions/`**, so whatever `list`
 prints can be pasted directly back into `go2-survey run`. A flat layout
-prints `mission_00`, `mission_01`, etc.; a nested layout prints
+prints `00_parking_lot`, `01_tennis_court`, etc.; a nested layout prints
 `tennis_court/wp_set_a`, `parking_lot/circuit_02`, etc.
 
 Exits 0 even when no missions exist. Missions at arbitrary filesystem
