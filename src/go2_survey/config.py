@@ -55,13 +55,24 @@ class NavigationSettings:
 
 
 @dataclass
+class ProbeSettings:
+    """Settings for mode = "probe_gps" diagnostic missions."""
+
+    duration_sec: float = 120.0
+    sample_rate_hz: float = 5.0
+    wait_for_fix: bool = True
+
+
+@dataclass
 class MissionSettings:
     name: str = ""
     description: str = ""
+    mode: str = "nav"  # "nav" | "static_camera" | "static_geotag" | "probe_gps"
     gps: GPSSettings = field(default_factory=GPSSettings)
     ntrip: NTRIPSettings = field(default_factory=NTRIPSettings)
     robot: RobotSettings = field(default_factory=RobotSettings)
     navigation: NavigationSettings = field(default_factory=NavigationSettings)
+    probe: ProbeSettings = field(default_factory=ProbeSettings)
 
 
 def _apply_section(target: object, section: dict) -> None:
@@ -104,9 +115,11 @@ def load_mission_config(mission_dir: Path) -> MissionSettings:
     cfg = MissionSettings()
     cfg.name = data.get("name", mission_dir.name)
     cfg.description = data.get("description", "")
+    cfg.mode = data.get("mode", "nav")
     _apply_section(cfg.gps, data.get("gps", {}))
     _apply_section(cfg.ntrip, data.get("ntrip", {}))
     _apply_section(cfg.robot, data.get("robot", {}))
     _apply_section(cfg.navigation, data.get("navigation", {}))
+    _apply_section(cfg.probe, data.get("probe", {}))
     _apply_env_overrides(cfg)
     return cfg

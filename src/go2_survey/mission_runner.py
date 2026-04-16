@@ -13,12 +13,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Awaitable, Callable, Optional
 
-from go2_survey.config import load_mission_config
+from go2_survey.config import MissionSettings, load_mission_config
 from go2_survey.discovery import find_robot_ips
 from go2_survey.gps import GPSManager, RTKPosition
 from go2_survey.logging_utils import log_banner
 from go2_survey.navigator import WaypointNavigator
 from go2_survey.ntrip import NTRIPConfig
+from go2_survey.probes import run_f9r_probe
 from go2_survey.robot import Go2Robot
 from go2_survey.waypoints import Waypoint, load_waypoints
 
@@ -51,6 +52,10 @@ async def run_mission(runner: MissionRunner) -> bool:
     log_banner(f"MISSION: {settings.name or mission_dir.name}", logger=logger)
     if settings.description:
         logger.info(settings.description)
+    log_banner(f"MODE: {settings.mode}", char="-", logger=logger)
+
+    if settings.mode == "probe_gps":
+        return await _run_probe_gps(runner, settings)
 
     waypoints_path = mission_dir / "waypoints.geojson"
     if not waypoints_path.exists():
@@ -218,3 +223,73 @@ async def run_mission(runner: MissionRunner) -> bool:
         except Exception:
             pass
         logger.info("Connections closed")
+
+
+async def _run_probe_gps(runner: MissionRunner, settings: MissionSettings) -> bool:
+    """GPS-only diagnostic probe. No robot, no navigation, no waypoints."""
+    mission_dir = runner.mission_dir
+
+    logger.info(
+        f"GPS: {settings.gps.port} @ {settings.gps.baud} | "
+        f"NTRIP: {settings.ntrip.host}:{settings.ntrip.port}/{settings.ntrip.mountpoint}"
+    )
+    logger.info(
+        f"Probe: duration={settings.probe.duration_sec:.0f}s "
+        f"rate={settings.probe.sample_rate_hz:.1f}Hz "
+        f"wait_for_fix={settings.probe.wait_for_fix}"
+    )
+
+    if runner.dry_run:
+        log_banner("DRY RUN — not connecting to hardware", logger=logger)
+        return True
+
+    ntrip_cfg = NTRIPConfig(
+        host=settings.ntrip.host,
+        port=settings.ntrip.port,
+        mountpoint=settings.ntrip.mountpoint,
+        username=settings.ntrip.username,
+        password=settings.ntrip.password,
+    )
+    gps = GPSManager(
+        port=settings.gps.port,
+        baudrate=settings.gps.baud,
+        ntrip_config=ntrip_cfg,
+    )
+
+    try:
+        log_banner("PHASE 1: GPS", char="-", logger=logger)
+        if not gps.connect(use_ntrip=bool(settings.ntrip.username)):
+            logger.error("Failed to connect to GPS")
+            return False
+
+        if settings.probe.wait_for_fix:
+            if not gps.wait_for_fix(
+                timeout=settings.navigation.gps_fix_timeout,
+                min_fix_type=settings.navigation.min_fix_type,
+            ):
+                logger.warning(
+                    "Did not reach desired fix before timeout; "
+                    "probing anyway to capture degraded-state diagnostics"
+                )
+
+        await run_f9r_probe(
+            gps=gps,
+            out_dir=mission_dir,
+            duration_sec=settings.probe.duration_sec,
+            sample_rate_hz=settings.probe.sample_rate_hz,
+        )
+        log_banner("PROBE COMPLETE", logger=logger)
+        return True
+
+    except KeyboardInterrupt:
+        logger.warning("Probe interrupted by user")
+        return False
+    except Exception as e:
+        logger.error(f"Probe error: {e}", exc_info=True)
+        return False
+    finally:
+        try:
+            gps.disconnect()
+        except Exception:
+            pass
+        logger.info("GPS disconnected")
