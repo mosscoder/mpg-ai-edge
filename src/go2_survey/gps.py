@@ -277,6 +277,196 @@ class UBloxRTKGPS:
             logger.error(f"Error parsing ESF-STATUS: {e}")
             return None
 
+    def poll_nav_hpposllh(self) -> Optional[Dict]:
+        """Poll UBX-NAV-HPPOSLLH for high-precision position.
+
+        Returns sub-cm lat/lon/height by adding a small "Hp" byte
+        to each standard value. Standard scaling is 1e-7 deg (lat/lon)
+        and mm (height); Hp extensions add 1e-9 deg and 0.1 mm.
+        """
+        self._send_ubx_message(self.UBX_NAV_CLASS, 0x14, b"")
+        msg = self._read_ubx_message(timeout=0.5)
+        if not msg:
+            return None
+        msg_class, msg_id, payload = msg
+        if msg_class != self.UBX_NAV_CLASS or msg_id != 0x14 or len(payload) < 36:
+            return None
+        try:
+            version = payload[0]
+            flags = payload[3]
+            iTOW = struct.unpack("<I", payload[4:8])[0]
+            lon, lat, height, hMSL = struct.unpack("<iiii", payload[8:24])
+            lonHp, latHp, heightHp, hMSLHp = struct.unpack("<bbbb", payload[24:28])
+            hAcc, vAcc = struct.unpack("<II", payload[28:36])
+            invalidLlh = bool(flags & 0x01)
+            lat_deg = lat * 1e-7 + latHp * 1e-9
+            lon_deg = lon * 1e-7 + lonHp * 1e-9
+            height_m = height * 1e-3 + heightHp * 1e-4
+            hMSL_m = hMSL * 1e-3 + hMSLHp * 1e-4
+            return {
+                "version": version,
+                "invalidLlh": invalidLlh,
+                "iTOW": iTOW,
+                "lat": lat_deg,
+                "lon": lon_deg,
+                "height": height_m,
+                "hMSL": hMSL_m,
+                "lat_raw": lat,
+                "lon_raw": lon,
+                "latHp": latHp,
+                "lonHp": lonHp,
+                "hAcc": hAcc * 1e-4,  # HPPOSLLH hAcc is in 0.1 mm
+                "vAcc": vAcc * 1e-4,
+            }
+        except Exception as e:
+            logger.error(f"Error parsing NAV-HPPOSLLH: {e}")
+            return None
+
+    def poll_nav_dop(self) -> Optional[Dict]:
+        """Poll UBX-NAV-DOP for dilution-of-precision breakdown."""
+        self._send_ubx_message(self.UBX_NAV_CLASS, 0x04, b"")
+        msg = self._read_ubx_message(timeout=0.5)
+        if not msg:
+            return None
+        msg_class, msg_id, payload = msg
+        if msg_class != self.UBX_NAV_CLASS or msg_id != 0x04 or len(payload) < 18:
+            return None
+        try:
+            iTOW = struct.unpack("<I", payload[0:4])[0]
+            gDOP, pDOP, tDOP, vDOP, hDOP, nDOP, eDOP = struct.unpack(
+                "<HHHHHHH", payload[4:18]
+            )
+            return {
+                "iTOW": iTOW,
+                "gDOP": gDOP * 0.01,
+                "pDOP": pDOP * 0.01,
+                "tDOP": tDOP * 0.01,
+                "vDOP": vDOP * 0.01,
+                "hDOP": hDOP * 0.01,
+                "nDOP": nDOP * 0.01,
+                "eDOP": eDOP * 0.01,
+            }
+        except Exception as e:
+            logger.error(f"Error parsing NAV-DOP: {e}")
+            return None
+
+    def poll_nav_sat(self) -> Optional[Dict]:
+        """Poll UBX-NAV-SAT for per-satellite info (variable length).
+
+        Each 12-byte SV record yields gnssId, svId, cno, elev, azim,
+        prRes, flags (including used-in-solution bit).
+        """
+        self._send_ubx_message(self.UBX_NAV_CLASS, 0x35, b"")
+        msg = self._read_ubx_message(timeout=1.0)
+        if not msg:
+            return None
+        msg_class, msg_id, payload = msg
+        if msg_class != self.UBX_NAV_CLASS or msg_id != 0x35 or len(payload) < 8:
+            return None
+        try:
+            iTOW = struct.unpack("<I", payload[0:4])[0]
+            version = payload[4]
+            numSvs = payload[5]
+            gnss_labels = {
+                0: "GPS", 1: "SBAS", 2: "Galileo", 3: "BeiDou",
+                4: "IMES", 5: "QZSS", 6: "GLONASS", 7: "NavIC",
+            }
+            sats = []
+            for i in range(numSvs):
+                off = 8 + i * 12
+                if off + 12 > len(payload):
+                    break
+                gnssId, svId, cno, elev = struct.unpack("<BBBb", payload[off:off + 4])
+                azim, prRes = struct.unpack("<hh", payload[off + 4:off + 8])
+                flags = struct.unpack("<I", payload[off + 8:off + 12])[0]
+                sats.append({
+                    "gnssId": gnssId,
+                    "gnss": gnss_labels.get(gnssId, f"unknown_{gnssId}"),
+                    "svId": svId,
+                    "cno": cno,
+                    "elev": elev,
+                    "azim": azim,
+                    "prRes": prRes * 0.1,
+                    "used": bool(flags & 0x08),
+                    "qualityInd": flags & 0x07,
+                    "health": (flags >> 4) & 0x03,
+                })
+            return {"iTOW": iTOW, "version": version, "numSvs": numSvs, "sats": sats}
+        except Exception as e:
+            logger.error(f"Error parsing NAV-SAT: {e}")
+            return None
+
+    def poll_nav_status(self) -> Optional[Dict]:
+        """Poll UBX-NAV-STATUS for differential age and timing flags.
+
+        `msss` is milliseconds since startup; pair with `ttff` (time
+        to first fix) and `flags2` differential-correction-applied bits
+        to get correction age.
+        """
+        self._send_ubx_message(self.UBX_NAV_CLASS, 0x03, b"")
+        msg = self._read_ubx_message(timeout=0.5)
+        if not msg:
+            return None
+        msg_class, msg_id, payload = msg
+        if msg_class != self.UBX_NAV_CLASS or msg_id != 0x03 or len(payload) < 16:
+            return None
+        try:
+            iTOW = struct.unpack("<I", payload[0:4])[0]
+            gpsFix = payload[4]
+            flags = payload[5]
+            fixStat = payload[6]
+            flags2 = payload[7]
+            ttff = struct.unpack("<I", payload[8:12])[0]
+            msss = struct.unpack("<I", payload[12:16])[0]
+            return {
+                "iTOW": iTOW,
+                "gpsFix": gpsFix,
+                "gpsFixOk": bool(flags & 0x01),
+                "diffSoln": bool(flags & 0x02),
+                "wknSet": bool(flags & 0x04),
+                "towSet": bool(flags & 0x08),
+                "fixStat": fixStat,
+                "psmState": flags2 & 0x03,
+                "spoofDetState": (flags2 >> 3) & 0x03,
+                "carrSolnStatus": (flags2 >> 6) & 0x03,
+                "ttff_ms": ttff,
+                "msss_ms": msss,
+            }
+        except Exception as e:
+            logger.error(f"Error parsing NAV-STATUS: {e}")
+            return None
+
+    def poll_mon_ver(self) -> Optional[Dict]:
+        """Poll UBX-MON-VER for firmware/hardware version strings.
+
+        Variable length: 40 bytes of sw/hw version plus zero or more
+        30-byte extension strings (e.g. protocol version, GNSS
+        capabilities, firmware build ID).
+        """
+        self._send_ubx_message(0x0A, 0x04, b"")
+        msg = self._read_ubx_message(timeout=0.5)
+        if not msg:
+            return None
+        msg_class, msg_id, payload = msg
+        if msg_class != 0x0A or msg_id != 0x04 or len(payload) < 40:
+            return None
+        try:
+            sw = payload[0:30].rstrip(b"\x00").decode("ascii", errors="replace")
+            hw = payload[30:40].rstrip(b"\x00").decode("ascii", errors="replace")
+            extensions = []
+            off = 40
+            while off + 30 <= len(payload):
+                ext = payload[off:off + 30].rstrip(b"\x00").decode(
+                    "ascii", errors="replace"
+                )
+                if ext:
+                    extensions.append(ext)
+                off += 30
+            return {"sw": sw, "hw": hw, "extensions": extensions}
+        except Exception as e:
+            logger.error(f"Error parsing MON-VER: {e}")
+            return None
+
     def get_position(self) -> Optional[RTKPosition]:
         """Get current position as RTKPosition."""
         pvt = self.poll_nav_pvt()
