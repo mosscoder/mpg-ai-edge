@@ -1,0 +1,34 @@
+name        = "05_tennis_single_quadrat"
+description = "Walk to tennis court waypoint 1, pivot through 4 cardinal bearings, capture each. First real rotating quadrat test on hardware."
+mode        = "nav"
+
+[gps]
+port = "/dev/ttyACM0"
+baud = 38400
+
+[ntrip]
+host       = "caster.emlid.com"
+port       = 2101
+mountpoint = "MP15774"
+username   = "u65352"
+password   = "338zca"
+
+[robot]
+connection_mode = "LocalSTA"
+
+[navigation]
+arrival_tolerance = 0.5
+max_velocity      = 0.5
+rotation_rate     = 0.8
+min_fix_type      = 4
+max_hacc          = 0.10
+gps_fix_timeout   = 300
+
+[capture]
+strategy           = "rotating_quadrat"
+settle_time        = 2.0
+gps_avg_sec        = 3.0
+bearings           = [0.0, 90.0, 180.0, 270.0]   # N, E, S, W (true north)
+output_subdir      = "captures"
+turn_tolerance_deg = 5.0
+turn_timeout_sec   = 20.0

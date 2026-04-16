@@ -1,0 +1,31 @@
+name        = "04_tennis_single_forward"
+description = "Walk to tennis court waypoint 1, stop, capture one forward-facing geotagged frame, exit. First integration of nav + capture."
+mode        = "nav"
+
+[gps]
+port = "/dev/ttyACM0"
+baud = 38400
+
+[ntrip]
+host       = "caster.emlid.com"
+port       = 2101
+mountpoint = "MP15774"
+username   = "u65352"
+password   = "338zca"
+
+[robot]
+connection_mode = "LocalSTA"
+
+[navigation]
+arrival_tolerance = 0.5
+max_velocity      = 0.5
+rotation_rate     = 0.8
+min_fix_type      = 4
+max_hacc          = 0.10
+gps_fix_timeout   = 300
+
+[capture]
+strategy      = "waypoint_forward"
+settle_time   = 2.0
+gps_avg_sec   = 3.0
+output_subdir = "captures"

@@ -1,0 +1,15 @@
+name        = "02_camera_test"
+description = "Static WebRTC video smoke test. No GPS, no navigation. Lab-bench confirmation that the camera pipeline works on the Go2."
+mode        = "static_camera"
+
+[robot]
+connection_mode = "LocalSTA"
+# ip     = "192.168.1.105"   # optional; otherwise auto-discover
+
+[capture]
+strategy           = "waypoint_forward"   # one forward shot; no rotation
+settle_time        = 1.0
+gps_avg_sec        = 0.0                  # ignored in static_camera mode
+output_subdir      = "captures"
+frame_max_age      = 2.0                  # first-frame latency may be higher
+frame_wait_timeout = 10.0                 # keyframe wait can be slow on cold start

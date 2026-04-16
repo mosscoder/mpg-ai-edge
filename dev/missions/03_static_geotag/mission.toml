@@ -1,0 +1,32 @@
+name        = "03_static_geotag"
+description = "Static RTK + capture + sidecar pipeline test. Robot pivots in place at one point; 4 cardinal captures; full EXIF + sidecar."
+mode        = "static_geotag"
+
+[gps]
+port = "/dev/ttyACM0"
+baud = 38400
+
+[ntrip]
+host       = "caster.emlid.com"
+port       = 2101
+mountpoint = "MP15774"
+username   = "u65352"
+password   = "338zca"
+
+[robot]
+connection_mode = "LocalSTA"
+
+[navigation]
+# Only gps_fix_timeout + min_fix_type are consulted in static_geotag mode.
+min_fix_type    = 6       # require RTK Fixed for the pipeline test
+max_hacc        = 0.05    # tighter than nav — this tests geotag fidelity
+gps_fix_timeout = 300
+
+[capture]
+# Single forward capture with full EXIF + sidecar. Rotation isn't
+# tested here (static mode has no navigator / no calibrated heading
+# from a prior nav leg); rotation first exercised in 05.
+strategy      = "waypoint_forward"
+settle_time   = 2.0
+gps_avg_sec   = 3.0
+output_subdir = "captures"
