@@ -1,5 +1,5 @@
 name        = "03_static_geotag"
-description = "Static RTK + capture + sidecar pipeline test. Robot pivots in place at one point; 4 cardinal captures; full EXIF + sidecar."
+description = "Static RTK + capture + sidecar pipeline test. Robot stands in place; one forward capture; full EXIF + sidecar. Rotation debuts in 05."
 mode        = "static_geotag"
 
 [gps]
