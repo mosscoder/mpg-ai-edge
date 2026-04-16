@@ -214,6 +214,122 @@ Next real run (post-fix) will log genuine `carrSoln` values for the
 first time. Expect "RTK Fixed" banner lines to correspond to actual
 carrSoln=2 rather than rubber-stamp nearly-always-true old behavior.
 
+### Phase C: Capture infrastructure + five new missions
+
+Same day, separate track of work: built the end-to-end plumbing for
+camera capture + geotagging, plus five new missions that exercise it
+in a layered hardware bring-up sequence. All landed in two commits
+(`9dcfaee` infrastructure, `2a07212` missions) on top of the F9R
+parser fix.
+
+**Bearing-source decision baked into capture code.** After the F9R
+deep-read made clear that HPS calibration is expensive and the speed
+regime may not converge at 1.8 km/h, the `RotatingQuadratStrategy`
+uses the Go2's own body IMU plus the navigator's GPS-derived
+calibration offset (field-proven to 1-6° per the 2026-03-19 entry).
+F9R `headVeh` and `headAcc` are recorded in sidecar metadata only —
+never drive control flow. No F9R config is required for any of the
+camera missions. The configuration appendix in `dev/gps_docs/README.md`
+remains a future upgrade path if sub-degree heading ever becomes a
+blocker.
+
+**Infrastructure (`9dcfaee`):**
+
+- `src/go2_survey/robot.py` — `Go2Robot.enable_video()` subscribes
+  the robot's WebRTC video track via `unitree_webrtc_connect` (see
+  `dev/webrtc_docs/video_frame_captures.md` for the library quirks).
+  A long-running consumer task pulls `av.VideoFrame` instances with
+  `track.recv()`, converts to numpy BGR with `to_ndarray("bgr24")`,
+  and caches the latest frame + timestamp. `get_latest_frame(max_age)`
+  mirrors the existing IMU-caching API.
+- `src/go2_survey/vision/frames.py` — replaces stub. `FrameResult`
+  dataclass + async `capture_frame(robot, max_age, wait_timeout)`
+  that polls the robot's cache until a fresh frame arrives and
+  returns a defensive copy.
+- `src/go2_survey/vision/geotag.py` — replaces stub.
+  `write_geotagged_jpeg()` encodes BGR→RGB→JPEG via Pillow and writes
+  EXIF GPSInfo (lat/lon DMS, hMSL as GPSAltitude per EXIF convention,
+  hAcc as GPSHPositioningError, bearing as GPSImgDirection 'T' for
+  true north, UTC timestamp, WGS-84 datum). A sidecar JSON next to
+  the JPEG carries everything EXIF can't cleanly represent: full
+  `RTKPosition` dict (ellipsoidal height, pDOP, numSV,
+  correction_age_bin, fix_type), heading source label, mission
+  context, frame metadata. Smoke-tested end-to-end — EXIF round-trips
+  through PIL without loss.
+- `src/go2_survey/gps.py` — `GPSManager.average_position(duration,
+  min_samples)` polls samples over a window and returns a
+  synthetic `RTKPosition` with mean lat/lon/alt/hMSL and worst-case
+  hAcc/vAcc/pDOP. Used by capture strategies at waypoint stops to
+  beat down short-term RTK noise before stamping the frame.
+- `src/go2_survey/navigator.py` — new
+  `WaypointNavigator.turn_to_bearing(target, tolerance, timeout)`.
+  Reuses the existing calibrated-heading machinery (robot IMU +
+  GPS-derived offset from the approach leg) to pivot in place to an
+  absolute true-north bearing. Required for rotating quadrat.
+- `src/go2_survey/capture.py` (new) — `CaptureStrategy` base +
+  concrete `NoOpStrategy`, `WaypointForwardStrategy`,
+  `RotatingQuadratStrategy`. Registry dict `STRATEGIES` +
+  `build_strategy(settings)` factory. The rotating quadrat uses
+  absolute-bearing semantics (each rotation to an absolute target
+  via `turn_to_bearing`, not relative to the previous capture) so a
+  single bad rotation doesn't poison subsequent ones.
+- `src/go2_survey/config.py` — `CaptureSettings` dataclass
+  (strategy, settle_time, gps_avg_sec, bearings list, output_subdir,
+  frame_max_age, frame_wait_timeout, turn_tolerance_deg,
+  turn_timeout_sec). Wired through the TOML loader. Defaults
+  (`strategy = "none"`) preserve pre-capture behavior for existing
+  nav missions.
+- `src/go2_survey/mission_runner.py` — nav mode now enables video
+  when `capture.strategy != "none"` and invokes the strategy between
+  `navigate_to()` and the existing `on_waypoint_reached` hook. Two
+  new modes land alongside `probe_gps`:
+    - `static_camera` — robot only, no GPS, no navigation. Plain
+      JPEG captures for lab-bench camera smoke tests.
+    - `static_geotag` — GPS + RTK + camera, robot in place. Full
+      EXIF + sidecar pipeline test without navigation.
+
+**New missions (`2a07212`):**
+
+| Mission | Mode | Strategy | Requires | Produces |
+|---|---|---|---|---|
+| `02_camera_test` | `static_camera` | `waypoint_forward` | robot | 1 JPEG |
+| `03_static_geotag` | `static_geotag` | `waypoint_forward` | robot + RTK + NTRIP | 1 JPEG + 1 sidecar |
+| `04_tennis_single_forward` | `nav` | `waypoint_forward` | robot + RTK + nav | 1 JPEG + 1 sidecar |
+| `05_tennis_single_quadrat` | `nav` | `rotating_quadrat` | robot + RTK + nav | 4 JPEGs + 4 sidecars |
+| `06_tennis_quadrat_pair` | `nav` | `rotating_quadrat` | robot + RTK + nav | 8 JPEGs + 8 sidecars |
+
+Missions 04-06 use tennis-court waypoints from `01_tennis_court`
+(wp1 only for 04/05, both waypoints for 06). Missions 02 and 03
+are static and need no `waypoints.geojson` — the runner's static
+dispatch skips that load.
+
+Each mission isolates one new capability on top of the previous:
+camera path (02) → metadata pipeline (03) → nav+capture composition
+(04) → rotation + multi-capture (05) → multi-waypoint survey
+shape (06). A failure at any level localizes to that commit.
+
+**Artifact layout per mission:**
+
+```
+dev/missions/<name>/
+├── mission.toml
+├── waypoints.geojson              # nav modes only
+├── logs/<name>_<ts>.log           # existing convention, unchanged
+└── captures/                      # new — created on first capture
+    ├── <waypoint>_b<bearing>_<ts>.jpg
+    └── <waypoint>_b<bearing>_<ts>.json    # sidecar
+```
+
+Verification: all seven missions show in `go2-survey list` and
+dry-run clean. Live hardware runs deferred to a real bring-up
+session — the bottom-up mission ladder (02 → 03 → 04 → 05 → 06) is
+designed for exactly that.
+
+**Botanical field site missions remain deferred** — `06` is the
+furthest-right mission in this phase per the plan. Site-specific
+surveys are a later increment once the pipeline is shaken out on
+the tennis court.
+
 ---
 
 ## 2026-04-14: Repo Refactor — `src/go2_survey/` Package, Data-Driven Missions, Jetson 3.8 Compatibility
