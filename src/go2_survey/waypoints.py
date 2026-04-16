@@ -1,7 +1,5 @@
 """Waypoint dataclass and GeoJSON loader."""
 
-from __future__ import annotations
-
 import json
 import logging
 from dataclasses import dataclass

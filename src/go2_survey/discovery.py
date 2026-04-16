@@ -5,18 +5,15 @@ reimplementation. Requires `nmap` on PATH, and auto-detection of the
 local CIDR is Linux-only (depends on the `ip` command).
 """
 
-from __future__ import annotations
-
 import logging
 import subprocess
-from typing import List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
 GO2_WEBRTC_PORTS = (8081, 9991)
 
 
-def detect_local_cidr() -> Optional[str]:
+def detect_local_cidr() -> str | None:
     """Return the IPv4 CIDR of the default-route interface, or None.
 
     Equivalent to:
@@ -33,7 +30,7 @@ def detect_local_cidr() -> Optional[str]:
     except FileNotFoundError:
         return None
 
-    iface: Optional[str] = None
+    iface: str | None = None
     for line in route.splitlines():
         parts = line.split()
         if parts and parts[0] == "default" and "dev" in parts:
@@ -62,7 +59,7 @@ def detect_local_cidr() -> Optional[str]:
     return None
 
 
-def find_robot_ips(cidr: Optional[str] = None) -> List[str]:
+def find_robot_ips(cidr: str | None = None) -> list[str]:
     """Scan a CIDR for hosts with port 8081 or 9991 open.
 
     Runs:
@@ -102,15 +99,15 @@ def find_robot_ips(cidr: Optional[str] = None) -> List[str]:
     return sorted(_parse_nmap_output(result.stdout))
 
 
-def _parse_nmap_output(output: str) -> List[str]:
+def _parse_nmap_output(output: str) -> list[str]:
     """Extract IPs from nmap output where 8081/tcp or 9991/tcp is open.
 
     Equivalent to this awk block:
         /Nmap scan report for/ { ip=$NF; next }
         ($1=="8081/tcp" || $1=="9991/tcp") && $2=="open" { hasPort[ip]=1 }
     """
-    candidates: Set[str] = set()
-    current_ip: Optional[str] = None
+    candidates: set[str] = set()
+    current_ip: str | None = None
     for line in output.splitlines():
         stripped = line.strip()
         if stripped.startswith("Nmap scan report for "):

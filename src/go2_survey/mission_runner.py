@@ -6,12 +6,10 @@ attached to the MissionRunner. Every mission runs through this function
 — per-mission Python files should not re-implement setup/teardown.
 """
 
-from __future__ import annotations
-
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Awaitable, Callable, Optional
+from typing import Awaitable, Callable
 
 from go2_survey.capture import CaptureContext, build_strategy
 from go2_survey.config import MissionSettings, load_mission_config
@@ -41,8 +39,8 @@ class MissionRunner:
 
     mission_dir: Path
     dry_run: bool = False
-    on_waypoint_reached: Optional[WaypointHook] = None
-    on_gps_update: Optional[PositionHook] = None
+    on_waypoint_reached: WaypointHook | None = None
+    on_gps_update: PositionHook | None = None
 
 
 async def run_mission(runner: MissionRunner) -> bool:
@@ -275,8 +273,8 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
         return True
 
     use_gps = mode == "static_geotag"
-    gps: Optional[GPSManager] = None
-    robot: Optional[Go2Robot] = None
+    gps: GPSManager | None = None
+    robot: Go2Robot | None = None
 
     try:
         if use_gps:

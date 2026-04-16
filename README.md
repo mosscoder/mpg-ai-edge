@@ -25,7 +25,7 @@ by path (`go2-survey run /any/directory/with/a/mission.toml`) if it doesn't.
 ## Quick start
 
 ```bash
-pip install -e .                          # installs go2-survey + deps (Python 3.8+)
+pip install -e .                          # installs go2-survey + deps
 go2-survey list                           # 00_parking_lot, 01_tennis_court
 go2-survey run 00_parking_lot --dry-run   # load config + waypoints, skip hardware
 go2-survey run 00_parking_lot             # live navigation (parking lot circuit)
@@ -149,11 +149,6 @@ mpg-ai-edge/
   each waypoint (`src/go2_survey/vision/frames.py`, currently a TODO)
 - **Geotagging** — stamp captured frames with RTK position + calibrated heading
   for downstream inference pipelines (`vision/geotag.py`, also TODO)
-- **Verify Python 3.8 deployment on Jetson** — the package declares
-  `requires-python = ">=3.8"` and pulls the `tomli` backport on <3.11, but the
-  full install + live run has only been exercised on Python 3.12 so far.
-- **Test Python versions > 3.8** — earlier Jetson images required Python 3.8,
-  but upcoming CV work (frame capture, inference) will likely need newer.
 
 ## Project history
 

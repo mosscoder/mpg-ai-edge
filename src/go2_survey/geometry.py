@@ -1,7 +1,5 @@
 """Geodetic distance/bearing helpers and angle normalization."""
 
-from __future__ import annotations
-
 from math import asin, atan2, cos, degrees, radians, sin, sqrt
 
 EARTH_RADIUS_M = 6_371_000

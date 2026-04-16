@@ -1,7 +1,5 @@
 """Logging helpers shared across go2_survey modules."""
 
-from __future__ import annotations
-
 import logging
 
 _default_logger = logging.getLogger(__name__)

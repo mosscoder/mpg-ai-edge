@@ -1,14 +1,11 @@
 """Emlid NTRIP client for RTCM correction streaming."""
 
-from __future__ import annotations
-
 import base64
 import logging
 import socket
 import threading
 from collections import Counter
 from dataclasses import dataclass
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -29,9 +26,9 @@ class EmlidNTRIPClient:
 
     def __init__(self, config: NTRIPConfig):
         self.config = config
-        self.socket: Optional[socket.socket] = None
+        self.socket: socket.socket | None = None
         self.connected = False
-        self.correction_thread: Optional[threading.Thread] = None
+        self.correction_thread: threading.Thread | None = None
         self.running = False
         self.gps_receiver = None  # UBloxRTKGPS, typed as Any to avoid circular import
         self.correction_count = 0
@@ -85,7 +82,7 @@ class EmlidNTRIPClient:
         logger.info("Started RTCM correction stream")
 
     @staticmethod
-    def _rtcm_msg_type_from_payload(payload: bytes) -> Optional[int]:
+    def _rtcm_msg_type_from_payload(payload: bytes) -> int | None:
         if len(payload) < 2:
             return None
         return ((payload[0] << 4) | (payload[1] >> 4)) & 0x0FFF

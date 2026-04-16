@@ -1,13 +1,10 @@
 """u-blox ZED-F9P/F9R GPS interface and high-level manager."""
 
-from __future__ import annotations
-
 import logging
 import os
 import struct
 import time
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple
 
 import serial
 
@@ -33,13 +30,13 @@ class RTKPosition:
     accuracy_vertical: float
     fix_type: int
     satellites_used: int
-    course_over_ground: Optional[float]
+    course_over_ground: float | None
     timestamp: float
-    head_vehicle: Optional[float] = None
-    head_vehicle_accuracy: Optional[float] = None
-    altitude_msl: Optional[float] = None
-    pdop: Optional[float] = None
-    correction_age_bin: Optional[int] = None
+    head_vehicle: float | None = None
+    head_vehicle_accuracy: float | None = None
+    altitude_msl: float | None = None
+    pdop: float | None = None
+    correction_age_bin: int | None = None
 
 
 class UBloxRTKGPS:
@@ -55,8 +52,8 @@ class UBloxRTKGPS:
     def __init__(self, port: str = "/dev/ttyACM0", baudrate: int = 38400):
         self.port = port
         self.baudrate = baudrate
-        self.serial_conn: Optional[serial.Serial] = None
-        self.last_pvt: Optional[Dict] = None
+        self.serial_conn: serial.Serial | None = None
+        self.last_pvt: dict | None = None
 
     def connect(self) -> bool:
         try:
@@ -113,7 +110,7 @@ class UBloxRTKGPS:
                 time.sleep(0.005)
         return bytes(buf) if len(buf) == n else b""
 
-    def _read_ubx_message(self, timeout: float = 2.0) -> Optional[Tuple[int, int, bytes]]:
+    def _read_ubx_message(self, timeout: float = 2.0) -> tuple[int, int, bytes] | None:
         if not self.serial_conn:
             return None
         end = time.time() + timeout
@@ -142,7 +139,7 @@ class UBloxRTKGPS:
             return msg_class, msg_id, payload
         return None
 
-    def poll_nav_pvt(self) -> Optional[Dict]:
+    def poll_nav_pvt(self) -> dict | None:
         """Poll UBX-NAV-PVT for position and status."""
         self._send_ubx_message(self.UBX_NAV_CLASS, self.UBX_NAV_PVT, b"")
         msg = self._read_ubx_message(timeout=0.5)
@@ -221,7 +218,7 @@ class UBloxRTKGPS:
             logger.error(f"Error parsing NAV-PVT: {e}")
             return None
 
-    def poll_esf_status(self) -> Optional[Dict]:
+    def poll_esf_status(self) -> dict | None:
         """Poll UBX-ESF-STATUS for F9R sensor fusion status."""
         self._send_ubx_message(0x10, 0x10, b"")
         msg = self._read_ubx_message(timeout=0.5)
@@ -290,7 +287,7 @@ class UBloxRTKGPS:
             logger.error(f"Error parsing ESF-STATUS: {e}")
             return None
 
-    def poll_nav_hpposllh(self) -> Optional[Dict]:
+    def poll_nav_hpposllh(self) -> dict | None:
         """Poll UBX-NAV-HPPOSLLH for high-precision position.
 
         Returns sub-cm lat/lon/height by adding a small "Hp" byte
@@ -335,7 +332,7 @@ class UBloxRTKGPS:
             logger.error(f"Error parsing NAV-HPPOSLLH: {e}")
             return None
 
-    def poll_nav_dop(self) -> Optional[Dict]:
+    def poll_nav_dop(self) -> dict | None:
         """Poll UBX-NAV-DOP for dilution-of-precision breakdown."""
         self._send_ubx_message(self.UBX_NAV_CLASS, 0x04, b"")
         msg = self._read_ubx_message(timeout=0.5)
@@ -363,7 +360,7 @@ class UBloxRTKGPS:
             logger.error(f"Error parsing NAV-DOP: {e}")
             return None
 
-    def poll_nav_sat(self) -> Optional[Dict]:
+    def poll_nav_sat(self) -> dict | None:
         """Poll UBX-NAV-SAT for per-satellite info (variable length).
 
         Each 12-byte SV record yields gnssId, svId, cno, elev, azim,
@@ -409,7 +406,7 @@ class UBloxRTKGPS:
             logger.error(f"Error parsing NAV-SAT: {e}")
             return None
 
-    def poll_nav_status(self) -> Optional[Dict]:
+    def poll_nav_status(self) -> dict | None:
         """Poll UBX-NAV-STATUS for differential age and timing flags.
 
         `msss` is milliseconds since startup; pair with `ttff` (time
@@ -449,7 +446,7 @@ class UBloxRTKGPS:
             logger.error(f"Error parsing NAV-STATUS: {e}")
             return None
 
-    def poll_mon_ver(self) -> Optional[Dict]:
+    def poll_mon_ver(self) -> dict | None:
         """Poll UBX-MON-VER for firmware/hardware version strings.
 
         Variable length: 40 bytes of sw/hw version plus zero or more
@@ -480,7 +477,7 @@ class UBloxRTKGPS:
             logger.error(f"Error parsing MON-VER: {e}")
             return None
 
-    def get_position(self) -> Optional[RTKPosition]:
+    def get_position(self) -> RTKPosition | None:
         """Get current position as RTKPosition."""
         pvt = self.poll_nav_pvt()
         if not pvt:
@@ -568,9 +565,9 @@ class GPSManager:
 
     def __init__(
         self,
-        port: Optional[str] = None,
-        baudrate: Optional[int] = None,
-        ntrip_config: Optional[NTRIPConfig] = None,
+        port: str | None = None,
+        baudrate: int | None = None,
+        ntrip_config: NTRIPConfig | None = None,
     ):
         self.port = port or os.getenv("GPS_PORT", "/dev/ttyACM0")
         self.baudrate = baudrate or int(os.getenv("GPS_BAUD", "38400"))
@@ -608,7 +605,7 @@ class GPSManager:
         self.gps.disconnect()
         self._connected = False
 
-    def get_position(self) -> Optional[RTKPosition]:
+    def get_position(self) -> RTKPosition | None:
         return self.gps.get_position()
 
     def wait_for_fix(self, timeout: float = 300.0, min_fix_type: int = 4) -> bool:
@@ -619,7 +616,7 @@ class GPSManager:
         duration_seconds: float,
         min_samples: int = 3,
         poll_interval: float = 0.2,
-    ) -> Optional[RTKPosition]:
+    ) -> RTKPosition | None:
         """Poll position samples over a window and return the mean.
 
         Intended use: at a capture waypoint, after the robot has

@@ -14,8 +14,6 @@ The F9R probe runs three phases:
 No robot, no navigation. Just the GPS on USB + NTRIP corrections.
 """
 
-from __future__ import annotations
-
 import asyncio
 import json
 import logging
@@ -23,7 +21,6 @@ import statistics
 import time
 from collections import Counter
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from go2_survey.gps import GPSManager
 from go2_survey.logging_utils import log_banner
@@ -36,7 +33,7 @@ async def run_f9r_probe(
     out_dir: Path,
     duration_sec: float = 120.0,
     sample_rate_hz: float = 5.0,
-) -> Dict:
+) -> dict:
     """Run the F9R diagnostic probe. Returns the summary dict.
 
     Writes `probe_<timestamp>.jsonl` (one sample per line) and
@@ -69,9 +66,9 @@ async def run_f9r_probe(
     return summary
 
 
-def _phase1_snapshots(gps: GPSManager) -> Dict:
+def _phase1_snapshots(gps: GPSManager) -> dict:
     """One-time diagnostic pulls at the start of the probe."""
-    snapshots: Dict = {}
+    snapshots: dict = {}
 
     mon = gps.gps.poll_mon_ver()
     snapshots["mon_ver"] = mon
@@ -131,10 +128,10 @@ async def _phase2_sample(
     duration_sec: float,
     sample_rate_hz: float,
     jsonl_path: Path,
-) -> List[Dict]:
+) -> list[dict]:
     """Steady-state sampling loop. Writes JSONL + returns in-memory list."""
     period = 1.0 / sample_rate_hz
-    samples: List[Dict] = []
+    samples: list[dict] = []
     t_start = time.monotonic()
     t_last_summary = t_start
     n = 0
@@ -186,7 +183,7 @@ async def _phase2_sample(
     return samples
 
 
-def _log_interval_summary(samples: List[Dict], t_from: float, t_to: float) -> None:
+def _log_interval_summary(samples: list[dict], t_from: float, t_to: float) -> None:
     """Summarize the most recent window at INFO level."""
     window = [s for s in samples if t_from <= s["t_mono"] <= t_to]
     pvts = [s["nav_pvt"] for s in window if s["nav_pvt"]]
@@ -214,8 +211,8 @@ def _log_interval_summary(samples: List[Dict], t_from: float, t_to: float) -> No
 
 
 def _phase3_report(
-    snapshots: Dict, samples: List[Dict], report_path: Path
-) -> Dict:
+    snapshots: dict, samples: list[dict], report_path: Path
+) -> dict:
     """Synthesize answers to each outstanding question."""
     pvts = [s["nav_pvt"] for s in samples if s["nav_pvt"]]
     hpps = [s["nav_hpposllh"] for s in samples if s["nav_hpposllh"]]
@@ -304,8 +301,8 @@ def _phase3_report(
     return summary
 
 
-def _write_report_markdown(summary: Dict, path: Path) -> None:
-    lines: List[str] = []
+def _write_report_markdown(summary: dict, path: Path) -> None:
+    lines: list[str] = []
     lines.append(f"# F9R Probe Report")
     lines.append("")
     lines.append(f"Samples: {summary['n_samples']}")
@@ -381,7 +378,7 @@ def _write_report_markdown(summary: Dict, path: Path) -> None:
     path.write_text("\n".join(lines))
 
 
-def _format_summary_banner(summary: Dict) -> List[str]:
+def _format_summary_banner(summary: dict) -> list[str]:
     lines = []
     lines.append("=" * 60)
     lines.append("F9R PROBE SUMMARY")

@@ -10,15 +10,13 @@ Precedence (lowest to highest):
     3. Environment variables (GPS_PORT, EMLID_USERNAME, ...)
 """
 
-from __future__ import annotations
-
 import os
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 
 try:
     import tomllib  # Python 3.11+ stdlib
-except ModuleNotFoundError:  # Python 3.8-3.10 backport
+except ModuleNotFoundError:  # Python <3.11 backport
     import tomli as tomllib
 
 

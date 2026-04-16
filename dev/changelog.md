@@ -330,6 +330,63 @@ furthest-right mission in this phase per the plan. Site-specific
 surveys are a later increment once the pipeline is shaken out on
 the tennis court.
 
+### Follow-up: Python 3.8 legacy stripped repo-wide
+
+The 2026-04-14 Jetson-compat work walked `requires-python` back to
+`>=3.8` to fit the old Jetson Orin Nano image. The current deployment
+target is Jetpack 6.2 / Python 3.10, so those 3.8-era compromises are
+now load-bearing only for a platform we don't support. Removed
+everything tied to 3.8 and migrated the annotation style to the
+syntax 3.10 can evaluate natively.
+
+**Packaging + docs**
+
+- `pyproject.toml:10` — `requires-python = ">=3.8"` → `">=3.10"`.
+- `README.md` — dropped the "(Python 3.8+)" parenthetical from the
+  install example; deleted the Roadmap bullets about verifying 3.8
+  deployment and testing Python > 3.8 (both superseded by the move).
+- `setup/install.md:7` — prerequisite rewritten to "Python 3.10+"
+  with the accurate explanation that the `tomli` backport is still
+  used on 3.10 and stdlib `tomllib` on 3.11+.
+
+**Typing syntax — every module in `src/go2_survey/`**
+
+Mechanical rewrite across 15 files (discovery, gps, robot, navigator,
+mission_runner, cli, capture, ntrip, probes, config, waypoints,
+geometry, logging_utils, vision/frames, vision/geotag):
+
+- `Optional[X]` → `X | None` and `Union[A, B]` → `A | B` everywhere
+  (PEP 604, ~60 sites). The `Optional` / `Union` imports drop out of
+  every `from typing import ...` line as a consequence.
+- `List[X]`, `Dict[K, V]`, `Tuple[...]`, `Set[X]` → lowercase builtin
+  generics `list[X]`, `dict[K, V]`, `tuple[...]`, `set[X]`
+  (PEP 585, ~40 sites). Same imports drop out.
+- `from __future__ import annotations` removed from every module.
+  Not strictly a 3.8 workaround, but the only reason it had been
+  added uniformly was to smooth PEP 604/585 syntax on older
+  interpreters. On 3.10+ the native syntax evaluates eagerly and
+  correctly without it.
+- Edge case preserved: `capture.py::CaptureContext` uses
+  `TYPE_CHECKING`-gated imports for `WaypointNavigator`,
+  `CaptureSettings`, and `Waypoint`. Those annotations are kept as
+  string literals (`"WaypointNavigator | None"`, etc.) so the
+  deferred imports still work as type-check-only references.
+
+**What didn't change**
+
+- `tomli` fallback in `config.py:19-22` and its dependency line in
+  `pyproject.toml:16` (`python_version < '3.11'` marker). `tomllib`
+  only entered stdlib in 3.11, so on 3.10 the backport is still
+  required. Comment retitled from "Python 3.8-3.10 backport" to
+  "Python <3.11 backport" to reflect the current floor.
+- Historical changelog entries mentioning 3.8 compatibility (e.g.
+  the 2026-04-14 entry) are left as written — they're accurate for
+  the state of the repo at the time.
+
+Regression coverage: every module imports cleanly on 3.10, and both
+`go2-survey run 00_parking_lot --dry-run` and `01_tennis_court
+--dry-run` complete as before.
+
 ---
 
 ## 2026-04-14: Repo Refactor — `src/go2_survey/` Package, Data-Driven Missions, Jetson 3.8 Compatibility

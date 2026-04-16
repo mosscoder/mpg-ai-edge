@@ -8,15 +8,13 @@ Usage:
     go2-survey run 00_parking_lot -v  # debug logging
 """
 
-from __future__ import annotations
-
 import argparse
 import asyncio
 import logging
 import sys
 import time
 from pathlib import Path
-from typing import Iterator, Optional
+from typing import Iterator
 
 from go2_survey.mission_runner import MissionRunner, run_mission
 
@@ -34,7 +32,7 @@ def _missions_root() -> Path:
     return _find_repo_root() / "dev" / "missions"
 
 
-def resolve_mission_dir(arg: str) -> Optional[Path]:
+def resolve_mission_dir(arg: str) -> Path | None:
     """Resolve a mission argument to a directory.
 
     Accepts either an existing directory path containing mission.toml,
@@ -215,7 +213,7 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: Optional[list[str]] = None) -> int:
+def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
     return args.func(args)

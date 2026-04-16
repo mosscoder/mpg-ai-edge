@@ -6,13 +6,10 @@ and `_consume_video_track`); this module just waits for a fresh one
 and bundles it with metadata for downstream geotagging.
 """
 
-from __future__ import annotations
-
 import asyncio
 import logging
 import time
 from dataclasses import dataclass
-from typing import Optional
 
 try:
     import numpy as np
@@ -39,7 +36,7 @@ async def capture_frame(
     max_age: float = 0.5,
     wait_timeout: float = 5.0,
     poll_interval: float = 0.05,
-) -> Optional[FrameResult]:
+) -> FrameResult | None:
     """Wait for a fresh frame from the robot's video cache and return it.
 
     - `max_age`: frame must be newer than this (seconds). A cached

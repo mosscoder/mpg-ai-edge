@@ -15,14 +15,12 @@ and register it in `STRATEGIES`. Missions select a strategy by name
 via `[capture] strategy = "..."` in mission.toml.
 """
 
-from __future__ import annotations
-
 import asyncio
 import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from go2_survey.gps import GPSManager, RTKPosition
 from go2_survey.logging_utils import log_banner
@@ -46,10 +44,10 @@ class CaptureContext:
     mission_dir: Path
     robot: Go2Robot
     gps: GPSManager
-    navigator: Optional["WaypointNavigator"]  # None for static modes
+    navigator: "WaypointNavigator | None"  # None for static modes
     settings: "CaptureSettings"
-    waypoint: Optional["Waypoint"]  # None for static modes
-    arrival_position: Optional[RTKPosition]
+    waypoint: "Waypoint | None"  # None for static modes
+    arrival_position: RTKPosition | None
 
 
 class CaptureStrategy:
@@ -206,7 +204,7 @@ class RotatingQuadratStrategy(CaptureStrategy):
 # ---- helpers shared by strategies -----------------------------------------
 
 
-async def _sample_position(ctx: CaptureContext) -> Optional[RTKPosition]:
+async def _sample_position(ctx: CaptureContext) -> RTKPosition | None:
     """Average GPS for the configured window, else single-shot."""
     s = ctx.settings
     if s.gps_avg_sec > 0:
@@ -261,7 +259,7 @@ async def _turn_to_bearing(ctx: CaptureContext, target_bearing_deg: float) -> bo
 
 
 def _capture_output_path(
-    ctx: CaptureContext, wp_name: str, bearing: Optional[float]
+    ctx: CaptureContext, wp_name: str, bearing: float | None
 ) -> Path:
     """Build `<mission>/captures/<wp>_<bearing>_<ts>.jpg` path.
 
@@ -279,7 +277,7 @@ def _mission_context(
     ctx: CaptureContext,
     wp_name: str,
     strategy_name: str,
-    bearing: Optional[float],
+    bearing: float | None,
 ) -> dict:
     """Sidecar mission context block."""
     return {

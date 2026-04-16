@@ -1,11 +1,8 @@
 """Waypoint navigator: state machine (calibrate -> turn -> walk)."""
 
-from __future__ import annotations
-
 import asyncio
 import logging
 import time
-from typing import Optional, Tuple
 
 from go2_survey.geometry import calculate_bearing, haversine_distance, normalize_angle
 from go2_survey.gps import GPSManager, RTKPosition
@@ -54,14 +51,14 @@ class WaypointNavigator:
 
         self._running = False
         self._paused = False
-        self._pause_start: Optional[float] = None
-        self._pause_last_progress: Optional[float] = None
-        self._nav_last_status: Optional[float] = None
+        self._pause_start: float | None = None
+        self._pause_last_progress: float | None = None
+        self._nav_last_status: float | None = None
 
-        self._imu_north_offset: Optional[float] = None
-        self._calibration_start_pos: Optional[RTKPosition] = None
-        self._calibration_start_time: Optional[float] = None
-        self._calibration_last_progress: Optional[float] = None
+        self._imu_north_offset: float | None = None
+        self._calibration_start_pos: RTKPosition | None = None
+        self._calibration_start_time: float | None = None
+        self._calibration_last_progress: float | None = None
 
     async def navigate_to(self, waypoint: Waypoint, timeout: float = 300.0) -> bool:
         """Drive the robot to a single waypoint. Returns True on success."""
@@ -413,7 +410,7 @@ class WaypointNavigator:
 
         return False
 
-    def get_calibrated_heading(self) -> Optional[float]:
+    def get_calibrated_heading(self) -> float | None:
         """Convert the robot's IMU yaw to a true heading (0=north, 90=east)."""
         imu_yaw = self.robot.get_yaw_degrees()
         if imu_yaw is None or self._imu_north_offset is None:
@@ -495,7 +492,7 @@ class WaypointNavigator:
 
     def _compute_velocity(
         self, distance: float, heading_error: float
-    ) -> Tuple[float, float]:
+    ) -> tuple[float, float]:
         """Compute (forward, rotational) velocities for the walk phase."""
         vx = min(self.max_velocity, distance * 0.5)
         vx = max(0.2, vx)

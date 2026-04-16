@@ -12,8 +12,6 @@ encode path goes numpy BGR → PIL RGB → JPEG. No OpenCV dependency
 needed here, even though `unitree_webrtc_connect` pulls it in.
 """
 
-from __future__ import annotations
-
 import json
 import logging
 import time
@@ -21,7 +19,7 @@ from dataclasses import asdict
 from datetime import datetime, timezone
 from fractions import Fraction
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
 from PIL import Image
 from PIL.ExifTags import Base as ExifBase
@@ -51,11 +49,11 @@ def _deg_to_dms_floats(deg: float) -> tuple:
 
 def _build_gps_ifd(
     position: RTKPosition,
-    bearing: Optional[float],
-) -> Dict[int, Any]:
+    bearing: float | None,
+) -> dict[int, Any]:
     """Build the EXIF GPSInfo IFD dict. Keys are integer tags from
     PIL.ExifTags.GPS."""
-    gps_ifd: Dict[int, Any] = {}
+    gps_ifd: dict[int, Any] = {}
 
     gps_ifd[ExifGPS.GPSLatitudeRef] = "N" if position.latitude >= 0 else "S"
     gps_ifd[ExifGPS.GPSLatitude] = _deg_to_dms_floats(position.latitude)
@@ -96,13 +94,13 @@ def _build_gps_ifd(
 def _build_sidecar(
     frame: FrameResult,
     position: RTKPosition,
-    bearing: Optional[float],
+    bearing: float | None,
     heading_source: str,
-    mission_context: Optional[Dict[str, Any]],
-    extra: Optional[Dict[str, Any]],
-) -> Dict[str, Any]:
+    mission_context: dict[str, Any] | None,
+    extra: dict[str, Any] | None,
+) -> dict[str, Any]:
     """Everything EXIF can't represent cleanly lives in the sidecar JSON."""
-    sidecar: Dict[str, Any] = {
+    sidecar: dict[str, Any] = {
         "schema_version": 1,
         "captured_at_unix": position.timestamp,
         "captured_at_utc": datetime.fromtimestamp(
@@ -129,11 +127,11 @@ def _build_sidecar(
 def write_geotagged_jpeg(
     frame: FrameResult,
     position: RTKPosition,
-    bearing: Optional[float],
+    bearing: float | None,
     out_path: Path,
     heading_source: str = "unknown",
-    mission_context: Optional[Dict[str, Any]] = None,
-    extra: Optional[Dict[str, Any]] = None,
+    mission_context: dict[str, Any] | None = None,
+    extra: dict[str, Any] | None = None,
     jpeg_quality: int = 92,
 ) -> Path:
     """Write the frame as `<out_path>.jpg` with EXIF GPSInfo + sidecar JSON.

@@ -1,13 +1,11 @@
 """Unitree Go2 robot interface over WebRTC."""
 
-from __future__ import annotations
-
 import asyncio
 import json
 import logging
 import math
 import time
-from typing import Any, Dict, Optional
+from typing import Any
 
 try:
     import numpy as np
@@ -34,26 +32,26 @@ class Go2Robot:
     def __init__(
         self,
         connection_mode: str = "LocalAP",
-        robot_ip: Optional[str] = None,
-        robot_serial: Optional[str] = None,
+        robot_ip: str | None = None,
+        robot_serial: str | None = None,
     ):
         self.connection_mode = connection_mode
         self.robot_ip = robot_ip
         self.robot_serial = robot_serial
-        self.conn: Optional[UnitreeWebRTCConnection] = None
+        self.conn: UnitreeWebRTCConnection | None = None
         self._connected = False
-        self._latest_imu: Optional[Dict] = None
+        self._latest_imu: dict | None = None
         self._imu_timestamp: float = 0.0
         # Video cache (populated after enable_video()). Shape follows the
         # IMU cache above: latest frame as numpy BGR ndarray + wall-clock
         # timestamp. See dev/webrtc_docs/video_frame_captures.md for the
         # library quirks this works around.
-        self._latest_frame: Optional[Any] = None
+        self._latest_frame: Any | None = None
         self._frame_timestamp: float = 0.0
         self._frame_width: int = 0
         self._frame_height: int = 0
         self._video_enabled: bool = False
-        self._video_task: Optional[asyncio.Task] = None
+        self._video_task: asyncio.Task | None = None
         self._first_frame_logged: bool = False
 
     async def connect(self) -> bool:
@@ -111,14 +109,14 @@ class Go2Robot:
             await asyncio.sleep(0.5)
         return False
 
-    def _on_sport_state(self, message: Dict) -> None:
+    def _on_sport_state(self, message: dict) -> None:
         try:
             self._latest_imu = message["data"]["imu_state"]
             self._imu_timestamp = time.time()
         except (KeyError, TypeError):
             pass
 
-    def get_yaw_degrees(self, max_age: float = 1.0) -> Optional[float]:
+    def get_yaw_degrees(self, max_age: float = 1.0) -> float | None:
         """Get current IMU yaw in degrees.
 
         The Go2 IMU reports yaw CCW-positive relative to power-on
@@ -214,7 +212,7 @@ class Go2Robot:
         except Exception as e:
             logger.error(f"Video consumer task failed: {e}", exc_info=True)
 
-    def get_latest_frame(self, max_age: float = 1.0) -> Optional[Any]:
+    def get_latest_frame(self, max_age: float = 1.0) -> Any | None:
         """Return the most recent video frame as a numpy BGR ndarray.
 
         Returns None if no frame has arrived, the cache is older than

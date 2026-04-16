@@ -7,7 +7,7 @@ name = "go2-survey"
 version = "0.1.0"
 description = "Autonomous waypoint navigation for the Unitree Go2 with RTK GPS positioning"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 dependencies = [
     "pyserial",
     "pynmea2",
