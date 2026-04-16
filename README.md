@@ -137,7 +137,9 @@ mpg-ai-edge/
 │   │   └── 01_tennis_court/ # tennis court circuit (2 waypoints, tuned settings)
 │   ├── changelog.md       # dated log of what changed and why
 │   ├── archive/           # retired scripts and historical logs
-│   └── webrtc_docs/       # Go2 WebRTC protocol notes
+│   └── docs/
+│       ├── gps/           # u-blox ZED-F9R reference PDFs + config notes
+│       └── webrtc/        # unitree_webrtc_connect protocol notes
 ├── setup/                 # install walkthrough + Jetson platform notes
 ├── pyproject.toml         # single source of truth for deps + entry point
 └── README.md

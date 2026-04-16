@@ -387,6 +387,34 @@ Regression coverage: every module imports cleanly on 3.10, and both
 `go2-survey run 00_parking_lot --dry-run` and `01_tennis_court
 --dry-run` complete as before.
 
+### Follow-up: docs reorganized under `dev/docs/`
+
+Both vendor-reference doc piles had sat at the top of `dev/` with
+inconsistent shape (`gps_docs/` was one README + four PDFs;
+`webrtc_docs/` was three overlapping `.md` files). Consolidated into
+a common parent that future doc folders (Jetson platform notes, etc.)
+can slot into cleanly.
+
+- `git mv dev/gps_docs/` → `dev/docs/gps/` — preserves rename
+  history on the 450-line README and the four u-blox PDFs.
+- `dev/webrtc_docs/{imu_data,obstacle_avoidance,video_frame_captures}.md`
+  merged into a single `dev/docs/webrtc/README.md`, deduped and
+  reordered in library-primitive order (connection → IMU → video →
+  obstacle avoidance). Dropped the stale "Design implications for
+  `vision/frames.py`" speculation (now implemented in
+  `src/go2_survey/{robot.py, vision/frames.py}`). Fixed the stale
+  `autonomous_nav/nav_utils.py` / `autonomous_nav/mission/changelog.md`
+  paths in the old IMU notes during merge.
+- Reference sweep: `README.md:140` tree diagram updated;
+  `src/go2_survey/robot.py:47, 142` doc-comment pointers repointed
+  at `dev/docs/webrtc/README.md`; `dev/docs/gps/README.md:378`
+  internal reference to `dev/gps_docs/mount/` → `dev/docs/gps/mount/`.
+
+Historical entries above (and below) this one still reference
+`dev/gps_docs/` and `dev/webrtc_docs/` — left untouched per the
+append-only convention; those paths were correct at the time those
+entries were written.
+
 ---
 
 ## 2026-04-14: Repo Refactor — `src/go2_survey/` Package, Data-Driven Missions, Jetson 3.8 Compatibility

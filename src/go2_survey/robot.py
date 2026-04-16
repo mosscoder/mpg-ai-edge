@@ -44,8 +44,8 @@ class Go2Robot:
         self._imu_timestamp: float = 0.0
         # Video cache (populated after enable_video()). Shape follows the
         # IMU cache above: latest frame as numpy BGR ndarray + wall-clock
-        # timestamp. See dev/webrtc_docs/video_frame_captures.md for the
-        # library quirks this works around.
+        # timestamp. See dev/docs/webrtc/README.md for the library quirks
+        # this works around.
         self._latest_frame: Any | None = None
         self._frame_timestamp: float = 0.0
         self._frame_width: int = 0
@@ -139,7 +139,7 @@ class Go2Robot:
         on — the library's internal `@pc.on("track")` handler calls
         registered callbacks once per track. We consume frames from the
         track in a long-running task and stash the latest as a numpy
-        BGR ndarray. See dev/webrtc_docs/video_frame_captures.md.
+        BGR ndarray. See dev/docs/webrtc/README.md.
 
         Safe to call more than once; second and later calls are no-ops.
         """
