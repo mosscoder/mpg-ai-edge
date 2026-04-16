@@ -7,13 +7,20 @@ import json
 import logging
 import math
 import time
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
+
+try:
+    import numpy as np
+except ImportError:
+    np = None  # type: ignore
 
 from unitree_webrtc_connect.constants import RTC_TOPIC, SPORT_CMD
 from unitree_webrtc_connect.webrtc_driver import (
     UnitreeWebRTCConnection,
     WebRTCConnectionMethod,
 )
+
+from go2_survey.logging_utils import log_banner
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +44,17 @@ class Go2Robot:
         self._connected = False
         self._latest_imu: Optional[Dict] = None
         self._imu_timestamp: float = 0.0
+        # Video cache (populated after enable_video()). Shape follows the
+        # IMU cache above: latest frame as numpy BGR ndarray + wall-clock
+        # timestamp. See dev/webrtc_docs/video_frame_captures.md for the
+        # library quirks this works around.
+        self._latest_frame: Optional[Any] = None
+        self._frame_timestamp: float = 0.0
+        self._frame_width: int = 0
+        self._frame_height: int = 0
+        self._video_enabled: bool = False
+        self._video_task: Optional[asyncio.Task] = None
+        self._first_frame_logged: bool = False
 
     async def connect(self) -> bool:
         """Establish WebRTC connection to the robot."""
@@ -115,6 +133,106 @@ class Go2Robot:
             return math.degrees(self._latest_imu["rpy"][2])
         except (KeyError, TypeError, IndexError):
             return None
+
+    async def enable_video(self) -> None:
+        """Subscribe to the Go2 video track and start caching frames.
+
+        Registers an async track callback BEFORE toggling the channel
+        on — the library's internal `@pc.on("track")` handler calls
+        registered callbacks once per track. We consume frames from the
+        track in a long-running task and stash the latest as a numpy
+        BGR ndarray. See dev/webrtc_docs/video_frame_captures.md.
+
+        Safe to call more than once; second and later calls are no-ops.
+        """
+        if not self._connected or self.conn is None:
+            raise RuntimeError("Call connect() before enable_video()")
+        if self._video_enabled:
+            return
+
+        log_banner("ENABLING VIDEO CHANNEL", char="-", logger=logger)
+        self.conn.video.add_track_callback(self._on_video_track)
+        self.conn.video.switchVideoChannel(True)
+        self._video_enabled = True
+        logger.info("Video channel turned on; waiting for first frame")
+
+    async def disable_video(self) -> None:
+        """Turn the video channel off and clear the cache."""
+        if not self._video_enabled or self.conn is None:
+            return
+        try:
+            self.conn.video.switchVideoChannel(False)
+        except Exception as e:
+            logger.debug(f"switchVideoChannel(False) raised: {e}")
+        if self._video_task is not None and not self._video_task.done():
+            self._video_task.cancel()
+        self._video_enabled = False
+        self._latest_frame = None
+        self._frame_timestamp = 0.0
+        self._first_frame_logged = False
+        log_banner("VIDEO CHANNEL OFF", char="-", logger=logger)
+
+    async def _on_video_track(self, track) -> None:
+        """Library callback — spawn a consumer task for this track.
+
+        The library calls this once per incoming video track; we must
+        start our own loop that pulls frames with `track.recv()`. The
+        library's internal handler has already consumed one frame
+        before we get here (see webrtc_driver.py on_track handler),
+        which we can't avoid — our first recv() returns the *second*
+        frame the robot sent. For a cached-latest-frame API this
+        doesn't matter.
+        """
+        logger.info("Video track attached; starting frame consumer")
+        self._video_task = asyncio.create_task(self._consume_video_track(track))
+
+    async def _consume_video_track(self, track) -> None:
+        """Pull frames off the track in a loop, convert to BGR ndarray."""
+        if np is None:
+            logger.error("numpy not available; cannot decode video frames")
+            return
+        try:
+            while True:
+                frame = await track.recv()
+                try:
+                    img = frame.to_ndarray(format="bgr24")
+                except Exception as e:
+                    logger.debug(f"frame.to_ndarray failed: {e}")
+                    continue
+                self._latest_frame = img
+                self._frame_timestamp = time.time()
+                self._frame_height, self._frame_width = img.shape[:2]
+                if not self._first_frame_logged:
+                    logger.info(
+                        f"First video frame decoded | "
+                        f"{self._frame_width}x{self._frame_height} BGR"
+                    )
+                    self._first_frame_logged = True
+        except asyncio.CancelledError:
+            logger.debug("Video consumer task cancelled")
+            raise
+        except Exception as e:
+            logger.error(f"Video consumer task failed: {e}", exc_info=True)
+
+    def get_latest_frame(self, max_age: float = 1.0) -> Optional[Any]:
+        """Return the most recent video frame as a numpy BGR ndarray.
+
+        Returns None if no frame has arrived, the cache is older than
+        `max_age` seconds, or video is disabled.
+        """
+        if self._latest_frame is None:
+            return None
+        if time.time() - self._frame_timestamp > max_age:
+            return None
+        return self._latest_frame
+
+    def get_frame_timestamp(self) -> float:
+        """Wall-clock time (seconds) when the cached frame was received."""
+        return self._frame_timestamp
+
+    def get_frame_size(self) -> tuple:
+        """(width, height) of the most recent decoded frame. (0, 0) if none yet."""
+        return (self._frame_width, self._frame_height)
 
     async def ensure_normal_mode(self) -> None:
         """Ensure robot is in normal walking mode."""

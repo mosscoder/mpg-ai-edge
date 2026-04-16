@@ -420,6 +420,79 @@ class WaypointNavigator:
             return None
         return (-imu_yaw + self._imu_north_offset) % 360
 
+    async def turn_to_bearing(
+        self,
+        target_bearing_deg: float,
+        tolerance_deg: float = 5.0,
+        timeout: float = 15.0,
+    ) -> bool:
+        """Rotate in place to face `target_bearing_deg` (true-north).
+
+        Uses `get_calibrated_heading()` as the heading source —
+        requires the IMU-to-GPS offset to have been established by a
+        prior `_calibrate_imu()` call (done during the first waypoint
+        approach). Returns True when aligned within `tolerance_deg`,
+        False on timeout or if heading is unavailable.
+
+        Intended use: capture strategies that need the robot facing a
+        specific absolute bearing before snapping a frame.
+        """
+        if self._imu_north_offset is None:
+            logger.error(
+                "turn_to_bearing: IMU offset not yet calibrated; "
+                "run at least one nav leg before calling this."
+            )
+            return False
+
+        target = target_bearing_deg % 360.0
+        t_start = time.time()
+        last_log = 0.0
+
+        await self.robot.balance_stand()
+        await asyncio.sleep(0.5)
+
+        while self._running:
+            if time.time() - t_start > timeout:
+                logger.error(
+                    f"turn_to_bearing({target:.1f}°) timeout after {timeout:.1f}s"
+                )
+                await self.robot.stop()
+                return False
+
+            heading = self.get_calibrated_heading()
+            if heading is None:
+                await asyncio.sleep(0.1)
+                continue
+
+            error = normalize_angle(target - heading)
+
+            now = time.time()
+            if now - last_log >= 1.0:
+                logger.info(
+                    f"[turn→{target:.0f}°] hdg={heading:.1f}° err={error:.1f}°"
+                )
+                last_log = now
+
+            if abs(error) <= tolerance_deg:
+                await self.robot.stop()
+                logger.info(
+                    f"Aligned to {target:.1f}° (heading={heading:.1f}°, "
+                    f"err={error:.1f}°)"
+                )
+                await self.robot.balance_stand()
+                await asyncio.sleep(0.5)
+                return True
+
+            # Same sign convention as navigate_to(): positive error →
+            # need to rotate CW in the GPS frame, which is CCW-negative
+            # on the Go2 IMU. direction = -1 for CCW (positive z-rate).
+            direction = -1.0 if error > 0 else 1.0
+            await self.robot.send_velocity(z=direction * self.rotation_rate)
+            await asyncio.sleep(0.1)
+
+        await self.robot.stop()
+        return False
+
     def _compute_velocity(
         self, distance: float, heading_error: float
     ) -> Tuple[float, float]:

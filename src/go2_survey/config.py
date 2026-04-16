@@ -64,6 +64,21 @@ class ProbeSettings:
 
 
 @dataclass
+class CaptureSettings:
+    """Per-waypoint capture behavior. See `capture.py::STRATEGIES`."""
+
+    strategy: str = "none"              # "none" | "waypoint_forward" | "rotating_quadrat"
+    settle_time: float = 2.0            # seconds after stop before sampling
+    gps_avg_sec: float = 3.0            # GPS averaging window (0 disables)
+    bearings: list = field(default_factory=lambda: [0.0, 90.0, 180.0, 270.0])
+    output_subdir: str = "captures"     # relative to mission dir
+    frame_max_age: float = 0.5          # max staleness for a captured frame (s)
+    frame_wait_timeout: float = 5.0     # max wait for a fresh frame (s)
+    turn_tolerance_deg: float = 5.0     # how close to target bearing before capture
+    turn_timeout_sec: float = 15.0      # per-bearing rotation timeout
+
+
+@dataclass
 class MissionSettings:
     name: str = ""
     description: str = ""
@@ -73,6 +88,7 @@ class MissionSettings:
     robot: RobotSettings = field(default_factory=RobotSettings)
     navigation: NavigationSettings = field(default_factory=NavigationSettings)
     probe: ProbeSettings = field(default_factory=ProbeSettings)
+    capture: CaptureSettings = field(default_factory=CaptureSettings)
 
 
 def _apply_section(target: object, section: dict) -> None:
@@ -121,5 +137,6 @@ def load_mission_config(mission_dir: Path) -> MissionSettings:
     _apply_section(cfg.robot, data.get("robot", {}))
     _apply_section(cfg.navigation, data.get("navigation", {}))
     _apply_section(cfg.probe, data.get("probe", {}))
+    _apply_section(cfg.capture, data.get("capture", {}))
     _apply_env_overrides(cfg)
     return cfg

@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Awaitable, Callable, Optional
 
+from go2_survey.capture import CaptureContext, build_strategy
 from go2_survey.config import MissionSettings, load_mission_config
 from go2_survey.discovery import find_robot_ips
 from go2_survey.gps import GPSManager, RTKPosition
@@ -56,6 +57,9 @@ async def run_mission(runner: MissionRunner) -> bool:
 
     if settings.mode == "probe_gps":
         return await _run_probe_gps(runner, settings)
+
+    if settings.mode in ("static_camera", "static_geotag"):
+        return await _run_static(runner, settings)
 
     waypoints_path = mission_dir / "waypoints.geojson"
     if not waypoints_path.exists():
@@ -180,6 +184,15 @@ async def run_mission(runner: MissionRunner) -> bool:
             return False
         await robot.prepare_for_navigation()
 
+        capture_strategy = build_strategy(settings.capture)
+        if settings.capture.strategy != "none":
+            log_banner(
+                f"CAPTURE STRATEGY: {settings.capture.strategy}",
+                char="-",
+                logger=logger,
+            )
+            await robot.enable_video()
+
         log_banner(
             f"PHASE 3: NAVIGATE {len(waypoints)} WAYPOINT(S)",
             char="-",
@@ -194,10 +207,23 @@ async def run_mission(runner: MissionRunner) -> bool:
                 logger.error(f"Failed to reach waypoint {i}: {wp.name}")
                 return False
 
-            if runner.on_waypoint_reached is not None:
-                pos = gps.get_position()
-                if pos is not None:
-                    await runner.on_waypoint_reached(wp, pos)
+            arrival_pos = gps.get_position()
+
+            if settings.capture.strategy != "none":
+                ctx = CaptureContext(
+                    mission_name=settings.name or mission_dir.name,
+                    mission_dir=mission_dir,
+                    robot=robot,
+                    gps=gps,
+                    navigator=navigator,
+                    settings=settings.capture,
+                    waypoint=wp,
+                    arrival_position=arrival_pos,
+                )
+                await capture_strategy.execute(ctx)
+
+            if runner.on_waypoint_reached is not None and arrival_pos is not None:
+                await runner.on_waypoint_reached(wp, arrival_pos)
 
         log_banner("MISSION COMPLETE", logger=logger)
         final = gps.get_position()
@@ -215,6 +241,10 @@ async def run_mission(runner: MissionRunner) -> bool:
         return False
     finally:
         try:
+            await robot.disable_video()
+        except Exception:
+            pass
+        try:
             await robot.stop()
         except Exception:
             pass
@@ -222,6 +252,128 @@ async def run_mission(runner: MissionRunner) -> bool:
             gps.disconnect()
         except Exception:
             pass
+        logger.info("Connections closed")
+
+
+async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
+    """Static capture modes: robot in place, no navigation.
+
+    - `static_camera` — robot only, video only, single capture. No GPS,
+      no RTK, no waypoints. Lab-bench plumbing test.
+    - `static_geotag` — GPS + robot + video + sidecar. Robot stands
+      (or pivots, per strategy) at one location; RTK fix required.
+    """
+    mission_dir = runner.mission_dir
+    mode = settings.mode
+
+    logger.info(
+        f"Static mode: {mode} | capture strategy: {settings.capture.strategy}"
+    )
+
+    if runner.dry_run:
+        log_banner("DRY RUN — not connecting to hardware", logger=logger)
+        return True
+
+    use_gps = mode == "static_geotag"
+    gps: Optional[GPSManager] = None
+    robot: Optional[Go2Robot] = None
+
+    try:
+        if use_gps:
+            ntrip_cfg = NTRIPConfig(
+                host=settings.ntrip.host,
+                port=settings.ntrip.port,
+                mountpoint=settings.ntrip.mountpoint,
+                username=settings.ntrip.username,
+                password=settings.ntrip.password,
+            )
+            gps = GPSManager(
+                port=settings.gps.port,
+                baudrate=settings.gps.baud,
+                ntrip_config=ntrip_cfg,
+            )
+            log_banner("PHASE 1: GPS", char="-", logger=logger)
+            if not gps.connect(use_ntrip=bool(settings.ntrip.username)):
+                logger.error("Failed to connect to GPS")
+                return False
+            if not gps.wait_for_fix(
+                timeout=settings.navigation.gps_fix_timeout,
+                min_fix_type=settings.navigation.min_fix_type,
+            ):
+                logger.error("GPS fix timeout")
+                return False
+
+        robot_ip = settings.robot.ip
+        if (
+            robot_ip is None
+            and settings.robot.serial is None
+            and settings.robot.connection_mode == "LocalSTA"
+        ):
+            log_banner("AUTO-DISCOVERING ROBOT IP", char="-", logger=logger)
+            try:
+                ips = find_robot_ips()
+            except RuntimeError as e:
+                logger.error(f"Robot IP auto-discovery failed: {e}")
+                return False
+            if not ips:
+                logger.error("Robot IP auto-discovery found no Go2")
+                return False
+            robot_ip = ips[0]
+            logger.info(f"Auto-discovered Go2 at {robot_ip}")
+
+        robot = Go2Robot(
+            connection_mode=settings.robot.connection_mode,
+            robot_ip=robot_ip,
+            robot_serial=settings.robot.serial,
+        )
+        log_banner("PHASE 2: ROBOT", char="-", logger=logger)
+        if not await robot.connect():
+            logger.error("Failed to connect to robot")
+            return False
+
+        await robot.enable_video()
+
+        capture_strategy = build_strategy(settings.capture)
+        log_banner(
+            f"PHASE 3: STATIC CAPTURE ({settings.capture.strategy})",
+            char="-",
+            logger=logger,
+        )
+
+        arrival_pos = gps.get_position() if gps is not None else None
+        ctx = CaptureContext(
+            mission_name=settings.name or mission_dir.name,
+            mission_dir=mission_dir,
+            robot=robot,
+            gps=gps,  # type: ignore[arg-type]
+            navigator=None,  # no rotation support for static
+            settings=settings.capture,
+            waypoint=None,
+            arrival_position=arrival_pos,
+        )
+        n_frames = await capture_strategy.execute(ctx)
+        log_banner(
+            f"STATIC CAPTURE DONE | {n_frames} frames", logger=logger
+        )
+        return True
+
+    except KeyboardInterrupt:
+        logger.warning("Static capture interrupted by user")
+        return False
+    except Exception as e:
+        logger.error(f"Static capture error: {e}", exc_info=True)
+        return False
+    finally:
+        if robot is not None:
+            try:
+                await robot.disable_video()
+            except Exception:
+                pass
+        if gps is not None:
+            try:
+                gps.disconnect()
+            except Exception:
+                pass
         logger.info("Connections closed")
 
 

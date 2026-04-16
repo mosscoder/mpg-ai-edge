@@ -613,3 +613,77 @@ class GPSManager:
 
     def wait_for_fix(self, timeout: float = 300.0, min_fix_type: int = 4) -> bool:
         return self.gps.wait_for_rtk_fix(timeout=timeout, min_fix_type=min_fix_type)
+
+    def average_position(
+        self,
+        duration_seconds: float,
+        min_samples: int = 3,
+        poll_interval: float = 0.2,
+    ) -> Optional[RTKPosition]:
+        """Poll position samples over a window and return the mean.
+
+        Intended use: at a capture waypoint, after the robot has
+        settled, average GPS readings for a few seconds to beat down
+        short-term RTK noise before stamping the frame.
+
+        Returns a synthetic `RTKPosition` whose lat/lon/alt/hMSL are
+        the sample means, whose hAcc/vAcc/pdop are the worst-case
+        (maximum) values observed during the window, and whose
+        fix_type/numSV/heading fields are taken from the final
+        sample. `timestamp` is set to wall-clock time of the final
+        sample. Returns None if fewer than `min_samples` successful
+        polls were collected.
+        """
+        if duration_seconds <= 0:
+            return self.get_position()
+
+        start = time.monotonic()
+        samples: list = []
+        while time.monotonic() - start < duration_seconds:
+            pos = self.get_position()
+            if pos is not None:
+                samples.append(pos)
+            time.sleep(poll_interval)
+
+        n = len(samples)
+        if n < min_samples:
+            logger.warning(
+                f"average_position: only {n}/{min_samples} required samples "
+                f"in {duration_seconds:.1f}s window; returning None"
+            )
+            return None
+
+        last = samples[-1]
+        mean_lat = sum(p.latitude for p in samples) / n
+        mean_lon = sum(p.longitude for p in samples) / n
+        mean_alt = sum(p.altitude for p in samples) / n
+        msl_vals = [p.altitude_msl for p in samples if p.altitude_msl is not None]
+        mean_msl = (sum(msl_vals) / len(msl_vals)) if msl_vals else None
+        worst_hacc = max(p.accuracy_horizontal for p in samples)
+        worst_vacc = max(p.accuracy_vertical for p in samples)
+        pdop_vals = [p.pdop for p in samples if p.pdop is not None]
+        worst_pdop = max(pdop_vals) if pdop_vals else None
+
+        log_banner(
+            f"GPS AVERAGED | {n} samples | hAcc_worst={worst_hacc:.3f}m "
+            f"| pDOP_worst={(worst_pdop or 0.0):.2f}",
+            char="-",
+            logger=logger,
+        )
+
+        return RTKPosition(
+            latitude=mean_lat,
+            longitude=mean_lon,
+            altitude=mean_alt,
+            accuracy_horizontal=worst_hacc,
+            accuracy_vertical=worst_vacc,
+            fix_type=last.fix_type,
+            satellites_used=last.satellites_used,
+            course_over_ground=last.course_over_ground,
+            timestamp=last.timestamp,
+            head_vehicle=last.head_vehicle,
+            head_vehicle_accuracy=last.head_vehicle_accuracy,
+            altitude_msl=mean_msl,
+            pdop=worst_pdop,
+            correction_age_bin=last.correction_age_bin,
+        )
