@@ -1,5 +1,221 @@
 # Navigation Changelog
 
+## 2026-04-16: F9R Manual Deep-Read — NAV-PVT Parse Fix + GPS Docs Archive + Mission Renames
+
+### Scope
+
+Sat down with the u-blox ZED-F9R documentation set end-to-end for the
+first time. Mirrored the four canonical PDFs locally, wrote a ~450-line
+reference README explaining how sensor fusion (HPS) actually works on
+this module, and in the process found that our live NAV-PVT parser has
+been reading the wrong bytes for several fields. The position itself
+was always correct; the "fix quality" story around it was not.
+
+Mission folders renamed for clarity (`mission_00` → `00_parking_lot`,
+`mission_01` → `01_tennis_court`). Unused diagnostic probe mission
+(`02_probe_sparkfun_data`) deleted before ever running on hardware
+once the deep read made the probe's primary question (which byte
+offset holds `headAcc`) answerable from the manual directly.
+
+### What we learned from the F9R manual
+
+`dev/gps_docs/` now holds the four canonical u-blox PDFs — Data Sheet,
+Integration Manual, F9 HPS 1.30 Interface Description, and FW1.00
+HPS1.30 release notes — plus a local `README.md` that indexes them and
+explains how to configure the F9R's sensor fusion for reliable
+heading output.
+
+**Major finding: the F9R's IMU is NOT currently a usable compass for
+us, and making it one is genuine work.** To get trustworthy `headVeh`
+values out of the F9R's High Precision Sensor fusion (HPS) engine,
+the module needs:
+
+1. **Lever-arm configuration** — the 3D vector in cm from the F9R
+   chip's internal IMU reference point to the GNSS antenna's phase
+   center, expressed in the installation frame (X = forward,
+   Y = left, Z = up). Configured via the `CFG-SFIMU-IMU2ANT_*` keys.
+   Currently zero on our unit — so any body rotation introduces phantom
+   velocity at the antenna that fusion can't reconcile.
+2. **IMU-to-vehicle-frame rotation** — three Euler angles
+   (`CFG-SFIMU-IMU_MNTALG_YAW/PITCH/ROLL`) telling the F9R how its
+   internal chip axes are rotated relative to the dog's
+   forward/left/up. Auto-alignment exists but needs vehicle dynamics
+   above 10-30 km/h per the manual; our dog walks at 1.8 km/h, well
+   below the validated regime. User-defined angles (tape-measure +
+   protractor) are the more reliable path at our speeds.
+3. **Speed/odometer data** — the F9R was designed for wheel-tick
+   vehicles. Without one, it runs in Degraded HPS mode with position
+   drift when stationary. Ideal fix is a small bridge feeding the
+   Go2's body velocity (already published in the WebRTC sport-state
+   stream we subscribe to for IMU yaw) into the F9R as
+   `UBX-ESF-MEAS` speed data over the serial link.
+4. **A calibration drive** — stationary warm-up, motion with
+   left-and-right turns for IMU-mount alignment, then a straight
+   segment for attitude initialization. The automotive/e-scooter
+   tables in the manual target speeds we can't hit; convergence at
+   dog walking speed is an open question.
+
+Verification path: monitor `UBX-ESF-STATUS.fusionMode = 1:FUSION`
+continuously, `UBX-ESF-ALG.status = 3:COARSE` or `4:FINE ALIGNED`,
+and `NAV-PVT.headVehValid` bit set. The local `dev/gps_docs/README.md`
+walks through this as a punch list of remaining work.
+
+For the current roadmap (capture + geotag missions through
+`07_tennis_quadrat_pair`), **none of this F9R tuning is required.**
+Bearing decisions continue to come from the Go2's own IMU with the
+navigator's GPS-position-derived calibration (field-proven to 1-6°
+per the 2026-03-19 entry). F9R heading data is recorded as sidecar
+metadata only. If and when sub-degree true-north heading becomes
+worth the setup cost — e.g. for repeatable change-detection surveys —
+the appendix in `dev/gps_docs/README.md` has the step-by-step.
+
+### Fix: NAV-PVT parser was reading the wrong bytes
+
+Cross-referenced `src/go2_survey/gps.py` against the F9 HPS 1.30
+Interface Description (UBX-22010984, §3.15.15.1) and found **two
+independent parse bugs**. Both fixed in this commit.
+
+**Bug 1 — `struct.unpack` format misalignment at offsets 12-23.**
+The format string `"<IBIBBB"` assigned 1 byte to `nano` (spec says
+I4, 4 bytes) and 4 bytes to `fixType` (spec says U1, 1 byte). The
+downstream `flags`/`flags2`/`numSV` bytes landed at the right offsets
+by coincidence of byte-count totals, but `fixType` as we stored it
+was garbage — bytes 17-20 of the payload read as a U4, which packs
+the upper three bytes of the real `nano` field in with the real
+`fixType` byte. That's the origin of the `fixType=67108757` numbers
+that show up in the pre-refactor 2025-09 logs. Corrected format
+string: `"<IiBBBB"` (capital I for unsigned tAcc, lowercase i for
+signed nano, four single bytes for the rest).
+
+**Bug 2 — `carrSoln` and `diffSoln` reading wrong bits.** Per spec,
+the `flags` byte at offset 21 has:
+- bit 0: `gnssFixOk`
+- bit 1: `diffSoln`
+- bit 5: `headVehValid`
+- bits 6-7: `carrSoln` (0 = no RTK, 1 = float, 2 = fixed)
+
+Our code was doing `carrSoln = flags2 & 0x03` — reading the low two
+bits of `flags2`, a *different* byte, which per spec are reserved.
+And `diffSoln = flags & 0x01` — that's bit 0 (gnssFixOk), not bit 1.
+So what we called `carrSoln` was effectively always 0, and what we
+called `diffSoln` was actually the generic fix-valid flag.
+
+Corrected: `carrSoln = (flags >> 6) & 0x03`,
+`diffSoln = bool(flags & 0x02)`. Only `headVehValid` (bit 5) was
+extracted correctly before.
+
+**Bug 3 (separate issue, also fixed) — `headAcc` at wrong offset.**
+Existing code read offset 88-91 as `headAcc`. Per spec, offset 72-75
+is the U4 `headAcc` (applies to both motion and vehicle heading);
+offset 88-91 is `magDec` (I2) + `magAcc` (U2) — magnetic declination
+fields. Our `RTKPosition.head_vehicle_accuracy` has therefore been
+populated with combined magnetic-declination bytes interpreted as
+heading accuracy. Corrected to read offset 72.
+
+**Bonus: `flags3` now parsed.** The U2 at offset 78 carries
+`invalidLlh` (bit 0) and `lastCorrectionAge` (bits 1-4, 12 quantized
+age bins 0-1s up to ≥120s). `lastCorrectionAge` is now surfaced as
+`RTKPosition.correction_age_bin` — gives us differential correction
+age for free, no extra UBX poll required. Earlier plan had us polling
+NAV-STATUS to get this; that's now unnecessary.
+
+### Reliability impact on prior missions — position yes, fix label no
+
+The above findings prompt a clear split in what to trust from prior
+runs:
+
+**Reliable retroactively:**
+- **Lat / lon values.** Offsets 24-31 were parsed correctly from the
+  very beginning. Every waypoint we've ever reached was the waypoint
+  on the map.
+- **Horizontal accuracy (`hAcc`).** Offset 40-43, correct. The 14 mm
+  hAcc claims in archived logs reflect genuine RTK Fixed performance.
+- **Ellipsoidal height (`height`).** Offset 32-35, correct. `hMSL`
+  was also parsed (offset 36-39) but until the 2026-04-16 surfacing
+  commit (this entry) it was silently thrown away before reaching
+  `RTKPosition`.
+- **`max_hacc = 0.10m` navigation safety gate.** Runs against the
+  correctly-parsed `hAcc`, so pauses and aborts on degraded
+  accuracy worked as intended.
+
+**NOT reliable retroactively:**
+- **Any statement of the form "we achieved RTK Fixed at time T"** —
+  based on the broken `carrSoln` read, which was always 0. The fix
+  might have been RTK Fixed, RTK Float, or GNSS-only at those
+  moments; our code couldn't distinguish.
+- **`fix_type` labels in logs** (e.g. "GPS RTK Fixed ACHIEVED" banner
+  lines). These reported based on broken parse. The fact that
+  missions succeeded is evidence that `hAcc` was 14 mm so fix quality
+  *was* good, but we can't cite those log banners as independent
+  confirmation.
+- **The `min_fix_type = 4` pre-flight gate.** Effectively a no-op
+  — the garbage `fixType` U4 was almost always a large number that
+  trivially passes `>= 4`. The `max_hacc` check carried the safety
+  role instead.
+
+Net: no mission ever went to the wrong coordinates. No position was
+ever reported with false precision. The "RTK Fixed" claims in logs
+are post-hoc defensible via `hAcc` evidence even if they weren't
+technically computed from the correct bits.
+
+### Mission folder renames
+
+`dev/missions/mission_00` → `dev/missions/00_parking_lot` and
+`dev/missions/mission_01` → `dev/missions/01_tennis_court`. Folder
+names now describe the physical site. `resolve_mission_dir()` is
+folder-name-agnostic so this is purely cosmetic — no code changes
+required beyond README / install.md / cli.py docstring examples.
+Internal `name` fields inside each `mission.toml` and
+`waypoints.geojson` updated to match.
+
+### Deleted: `02_probe_sparkfun_data`
+
+The probe mission was originally queued as the first new mission on
+the roadmap, explicitly to answer the `headAcc` offset ambiguity via
+empirical measurement. With `dev/gps_docs/` mirrored locally, the
+offset is answered authoritatively by reading the Interface
+Description PDF in 30 seconds — the empirical approach became
+weaker evidence than the spec it was probing against. Mission folder
+deleted. The underlying infrastructure (`probes.py` module, new UBX
+pollers for NAV-HPPOSLLH/NAV-DOP/NAV-SAT/NAV-STATUS/MON-VER,
+`probe_gps` mission mode in `mission_runner.py`) is retained as
+reusable scaffolding for a future motion-based `headVeh` validation
+probe, which would actually answer a question the manual can't (will
+F9R HPS converge at dog walking speed?).
+
+### Files touched
+
+- `src/go2_survey/gps.py` — NAV-PVT parser corrected; `RTKPosition`
+  gains `correction_age_bin`; fix-achieved banner now logs real
+  `carrSoln`-derived fix label, real `pDOP`, real `hMSL`.
+- `src/go2_survey/probes.py` — dropped the dual-offset headAcc
+  comparison (now settled by spec); simplified to single-value
+  reporting.
+- `dev/missions/00_parking_lot/` — renamed from `mission_00`.
+- `dev/missions/01_tennis_court/` — renamed from `mission_01`.
+- `dev/missions/02_probe_sparkfun_data/` — deleted.
+- `dev/gps_docs/` — new folder, four u-blox PDFs + 450-line README.
+- `README.md`, `setup/install.md`, `src/go2_survey/cli.py` — example
+  mission names updated to new folder names.
+
+### Verification
+
+```bash
+go2-survey list
+# 00_parking_lot
+# 01_tennis_court
+
+go2-survey run 00_parking_lot --dry-run
+go2-survey run 01_tennis_court --dry-run
+# both pass
+```
+
+Next real run (post-fix) will log genuine `carrSoln` values for the
+first time. Expect "RTK Fixed" banner lines to correspond to actual
+carrSoln=2 rather than rubber-stamp nearly-always-true old behavior.
+
+---
+
 ## 2026-04-14: Repo Refactor — `src/go2_survey/` Package, Data-Driven Missions, Jetson 3.8 Compatibility
 
 ### Scope

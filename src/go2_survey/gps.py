@@ -39,6 +39,7 @@ class RTKPosition:
     head_vehicle_accuracy: Optional[float] = None
     altitude_msl: Optional[float] = None
     pdop: Optional[float] = None
+    correction_age_bin: Optional[int] = None
 
 
 class UBloxRTKGPS:
@@ -152,38 +153,49 @@ class UBloxRTKGPS:
             return None
 
         try:
+            # Offsets and types per u-blox F9 HPS 1.30 Interface Description
+            # (UBX-22010984), section 3.15.15.1. Payload is 92 bytes.
             (iTOW, year, month, day, hour, minute, second, valid) = struct.unpack(
                 "<IHBBBBBB", payload[:12]
             )
+            # offsets 12-23: tAcc(U4), nano(I4), fixType(U1), flags(X1),
+            # flags2(X1), numSV(U1). Note: signed "i" for nano.
             tAcc, nano, fixType, flags, flags2, numSV = struct.unpack(
-                "<IBIBBB", payload[12:24]
+                "<IiBBBB", payload[12:24]
             )
             lon, lat, height, hMSL = struct.unpack("<iiii", payload[24:40])
             hAcc, vAcc = struct.unpack("<II", payload[40:48])
             velN, velE, velD = struct.unpack("<iii", payload[48:60])
-            gSpeed = struct.unpack("<i", payload[60:64])[0]
-            headMot = struct.unpack("<i", payload[64:68])[0]
-            # Two candidate offsets for heading accuracy. u-blox v27
-            # NAV-PVT spec puts headAcc at 72; the existing code reads
-            # offset 88 (which per spec is magDec/magAcc reserved). We
-            # surface both so 02_probe_sparkfun_data can empirically
-            # determine which the F9R-03B-00 actually uses. Current
-            # `head_vehicle_accuracy` in RTKPosition keeps pointing at
-            # offset 88 to preserve behavior until the probe settles it.
-            headAcc_72 = struct.unpack("<I", payload[72:76])[0]
+            gSpeed, headMot, sAcc, headAcc = struct.unpack(
+                "<iiII", payload[60:76]
+            )
             pDOP = struct.unpack("<H", payload[76:78])[0]
+            flags3 = struct.unpack("<H", payload[78:80])[0]
             headVeh = struct.unpack("<i", payload[84:88])[0]
-            headAcc_88 = struct.unpack("<I", payload[88:92])[0]
-            head_veh_valid = bool(flags & 0x20)
 
-            carrSoln = flags2 & 0x03
-            diffSoln = flags & 0x01
+            # flags (X1 at offset 21) — per spec:
+            #   bit 0   gnssFixOk
+            #   bit 1   diffSoln
+            #   bits 2-4 psmState
+            #   bit 5   headVehValid
+            #   bits 6-7 carrSoln  (0=no, 1=float, 2=fixed)
+            gnss_fix_ok = bool(flags & 0x01)
+            diffSoln = bool(flags & 0x02)
+            head_veh_valid = bool(flags & 0x20)
+            carrSoln = (flags >> 6) & 0x03
+
+            # flags3 (X2 at offset 78):
+            #   bit 0      invalidLlh
+            #   bits 1-4   lastCorrectionAge (12 quantized bins, 0=N/A)
+            invalidLlh = bool(flags3 & 0x0001)
+            lastCorrectionAge = (flags3 >> 1) & 0x0F
 
             cog = headMot * 1e-5 if gSpeed > 100 else None
 
             out = {
                 "iTOW": iTOW,
                 "fixType": fixType,
+                "gnssFixOk": gnss_fix_ok,
                 "carrSoln": carrSoln,
                 "diffSoln": diffSoln,
                 "numSV": numSV,
@@ -196,11 +208,12 @@ class UBloxRTKGPS:
                 "pDOP": pDOP * 0.01,
                 "gSpeed": gSpeed * 1e-3,
                 "cog": cog,
+                "headMot": headMot,
                 "headVeh": headVeh,
-                "headAcc_72": headAcc_72,
-                "headAcc_88": headAcc_88,
-                "headAcc": headAcc_88,  # back-compat alias for current callers
+                "headAcc": headAcc,
                 "headVehValid": head_veh_valid,
+                "invalidLlh": invalidLlh,
+                "lastCorrectionAge": lastCorrectionAge,
             }
             self.last_pvt = out
             return out
@@ -494,6 +507,7 @@ class UBloxRTKGPS:
             head_vehicle_accuracy=pvt["headAcc"] * 1e-5,
             altitude_msl=pvt["hMSL"],
             pdop=pvt["pDOP"],
+            correction_age_bin=pvt["lastCorrectionAge"],
         )
 
     def wait_for_rtk_fix(self, timeout: float = 300.0, min_fix_type: int = 4) -> bool:

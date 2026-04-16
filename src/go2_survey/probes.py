@@ -113,12 +113,12 @@ def _phase1_snapshots(gps: GPSManager) -> Dict:
     snapshots["nav_pvt_initial"] = pvt
     if pvt:
         logger.info(
-            f"NAV-PVT headAcc candidates: offset_72={pvt['headAcc_72']} "
-            f"offset_88={pvt['headAcc_88']} (raw deg × 1e-5)"
+            f"NAV-PVT headAcc: {pvt['headAcc']} raw (= "
+            f"{pvt['headAcc'] * 1e-5:.3f}°)"
         )
         logger.info(
-            f"  offset_72 → {pvt['headAcc_72'] * 1e-5:.3f}°, "
-            f"offset_88 → {pvt['headAcc_88'] * 1e-5:.3f}°"
+            f"NAV-PVT lastCorrectionAge bin: {pvt['lastCorrectionAge']} "
+            f"(0=N/A, 1-11 = age bins up to 120s)"
         )
     else:
         logger.warning("NAV-PVT initial poll failed")
@@ -220,15 +220,10 @@ def _phase3_report(
     pvts = [s["nav_pvt"] for s in samples if s["nav_pvt"]]
     hpps = [s["nav_hpposllh"] for s in samples if s["nav_hpposllh"]]
 
-    # Heading accuracy candidates
-    ha72 = [p["headAcc_72"] * 1e-5 for p in pvts]
-    ha88 = [p["headAcc_88"] * 1e-5 for p in pvts]
-    ha72_mean = statistics.mean(ha72) if ha72 else float("nan")
-    ha88_mean = statistics.mean(ha88) if ha88 else float("nan")
-    # Plausible heading accuracy: < 10° typical, datasheet claims 0.2°.
-    # Implausible: giant numbers, or values > 360°.
-    ha72_plausible = 0.0 <= ha72_mean <= 360.0
-    ha88_plausible = 0.0 <= ha88_mean <= 360.0
+    # Heading accuracy (offset 72 per spec, confirmed by RTFM)
+    ha = [p["headAcc"] * 1e-5 for p in pvts]
+    ha_mean = statistics.mean(ha) if ha else float("nan")
+    ha_max = max(ha) if ha else float("nan")
 
     # headVeh behavior
     valid_count = sum(1 for p in pvts if p.get("headVehValid"))
@@ -288,15 +283,10 @@ def _phase3_report(
         "n_samples": len(samples),
         "firmware": snapshots.get("mon_ver"),
         "fusion": snapshots.get("esf_status"),
-        "headAcc_offset_72": {
-            "mean_deg": ha72_mean,
-            "plausible": ha72_plausible,
-            "raw_mean": statistics.mean([p["headAcc_72"] for p in pvts]) if pvts else None,
-        },
-        "headAcc_offset_88": {
-            "mean_deg": ha88_mean,
-            "plausible": ha88_plausible,
-            "raw_mean": statistics.mean([p["headAcc_88"] for p in pvts]) if pvts else None,
+        "headAcc": {
+            "mean_deg": ha_mean,
+            "max_deg": ha_max,
+            "raw_mean": statistics.mean([p["headAcc"] for p in pvts]) if pvts else None,
         },
         "headVeh": {
             "valid_count": valid_count,
@@ -342,23 +332,12 @@ def _write_report_markdown(summary: Dict, path: Path) -> None:
         )
     lines.append("")
 
-    h72 = summary["headAcc_offset_72"]
-    h88 = summary["headAcc_offset_88"]
-    lines.append("## Heading accuracy offset")
+    ha = summary["headAcc"]
+    lines.append("## Heading accuracy (NAV-PVT offset 72, per F9 HPS 1.30 spec)")
     lines.append("")
-    lines.append(f"- Offset 72: mean {h72['mean_deg']:.3f}° "
-                 f"(raw {h72['raw_mean']}) — "
-                 f"{'plausible' if h72['plausible'] else 'IMPLAUSIBLE'}")
-    lines.append(f"- Offset 88: mean {h88['mean_deg']:.3f}° "
-                 f"(raw {h88['raw_mean']}) — "
-                 f"{'plausible' if h88['plausible'] else 'IMPLAUSIBLE'}")
-    if h72["plausible"] and not h88["plausible"]:
-        lines.append("- **Conclusion: offset 72 is the real headAcc.**")
-    elif h88["plausible"] and not h72["plausible"]:
-        lines.append("- **Conclusion: offset 88 is the real headAcc.**")
-    else:
-        lines.append("- Conclusion: inconclusive — both ranges look similar; "
-                     "verify against datasheet.")
+    lines.append(f"- Mean: {ha['mean_deg']:.3f}°")
+    lines.append(f"- Max:  {ha['max_deg']:.3f}°")
+    lines.append(f"- Raw mean (deg × 1e-5): {ha['raw_mean']}")
     lines.append("")
 
     hv = summary["headVeh"]
@@ -407,15 +386,9 @@ def _format_summary_banner(summary: Dict) -> List[str]:
     lines.append("=" * 60)
     lines.append("F9R PROBE SUMMARY")
     lines.append("=" * 60)
-    h72 = summary["headAcc_offset_72"]
-    h88 = summary["headAcc_offset_88"]
+    ha = summary["headAcc"]
     lines.append(
-        f"headAcc @ 72: {h72['mean_deg']:.3f}° "
-        f"({'plausible' if h72['plausible'] else 'IMPLAUSIBLE'})"
-    )
-    lines.append(
-        f"headAcc @ 88: {h88['mean_deg']:.3f}° "
-        f"({'plausible' if h88['plausible'] else 'IMPLAUSIBLE'})"
+        f"headAcc: mean {ha['mean_deg']:.3f}° / max {ha['max_deg']:.3f}°"
     )
     hv = summary["headVeh"]
     lines.append(
