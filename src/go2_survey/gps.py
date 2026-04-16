@@ -19,7 +19,12 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class RTKPosition:
-    """GPS position with accuracy metrics."""
+    """GPS position with accuracy metrics.
+
+    `altitude` is height above the WGS84 ellipsoid (NAV-PVT `height`
+    field). `altitude_msl` is height above mean sea level (NAV-PVT
+    `hMSL`), using the receiver's internal geoid model.
+    """
 
     latitude: float
     longitude: float
@@ -32,6 +37,8 @@ class RTKPosition:
     timestamp: float
     head_vehicle: Optional[float] = None
     head_vehicle_accuracy: Optional[float] = None
+    altitude_msl: Optional[float] = None
+    pdop: Optional[float] = None
 
 
 class UBloxRTKGPS:
@@ -156,8 +163,17 @@ class UBloxRTKGPS:
             velN, velE, velD = struct.unpack("<iii", payload[48:60])
             gSpeed = struct.unpack("<i", payload[60:64])[0]
             headMot = struct.unpack("<i", payload[64:68])[0]
+            # Two candidate offsets for heading accuracy. u-blox v27
+            # NAV-PVT spec puts headAcc at 72; the existing code reads
+            # offset 88 (which per spec is magDec/magAcc reserved). We
+            # surface both so 02_probe_sparkfun_data can empirically
+            # determine which the F9R-03B-00 actually uses. Current
+            # `head_vehicle_accuracy` in RTKPosition keeps pointing at
+            # offset 88 to preserve behavior until the probe settles it.
+            headAcc_72 = struct.unpack("<I", payload[72:76])[0]
+            pDOP = struct.unpack("<H", payload[76:78])[0]
             headVeh = struct.unpack("<i", payload[84:88])[0]
-            headAcc = struct.unpack("<I", payload[88:92])[0]
+            headAcc_88 = struct.unpack("<I", payload[88:92])[0]
             head_veh_valid = bool(flags & 0x20)
 
             carrSoln = flags2 & 0x03
@@ -174,12 +190,16 @@ class UBloxRTKGPS:
                 "lat": lat * 1e-7,
                 "lon": lon * 1e-7,
                 "height": height * 1e-3,
+                "hMSL": hMSL * 1e-3,
                 "hAcc": hAcc * 1e-3,
                 "vAcc": vAcc * 1e-3,
+                "pDOP": pDOP * 0.01,
                 "gSpeed": gSpeed * 1e-3,
                 "cog": cog,
                 "headVeh": headVeh,
-                "headAcc": headAcc,
+                "headAcc_72": headAcc_72,
+                "headAcc_88": headAcc_88,
+                "headAcc": headAcc_88,  # back-compat alias for current callers
                 "headVehValid": head_veh_valid,
             }
             self.last_pvt = out
@@ -282,6 +302,8 @@ class UBloxRTKGPS:
             timestamp=time.time(),
             head_vehicle=pvt["headVeh"] * 1e-5 if pvt["headVehValid"] else None,
             head_vehicle_accuracy=pvt["headAcc"] * 1e-5,
+            altitude_msl=pvt["hMSL"],
+            pdop=pvt["pDOP"],
         )
 
     def wait_for_rtk_fix(self, timeout: float = 300.0, min_fix_type: int = 4) -> bool:
@@ -294,13 +316,19 @@ class UBloxRTKGPS:
             if pos and pos.fix_type >= min_fix_type:
                 fix_names = {3: "3D Fix", 4: "GNSS+DR", 5: "RTK Float", 6: "RTK Fixed"}
                 fix_label = fix_names.get(pos.fix_type, "Fix")
+                msl_str = (
+                    f" hMSL: {pos.altitude_msl:.2f}m" if pos.altitude_msl is not None else ""
+                )
+                pdop_str = f" pDOP: {pos.pdop:.2f}" if pos.pdop is not None else ""
                 logger.info(
                     f"{fix_label} achieved! "
                     f"Lat: {pos.latitude:.8f}, Lon: {pos.longitude:.8f}, "
-                    f"hAcc: {pos.accuracy_horizontal:.3f}m"
+                    f"h: {pos.altitude:.2f}m,{msl_str} "
+                    f"hAcc: {pos.accuracy_horizontal:.3f}m{pdop_str}"
                 )
                 log_banner(
-                    f"GPS {fix_label} ACHIEVED | hAcc: {pos.accuracy_horizontal:.3f}m",
+                    f"GPS {fix_label} ACHIEVED | hAcc: {pos.accuracy_horizontal:.3f}m"
+                    f"{pdop_str}",
                     logger=logger,
                 )
                 return True
