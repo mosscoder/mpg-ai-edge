@@ -65,7 +65,7 @@ class ProbeSettings:
 class CaptureSettings:
     """Per-waypoint capture behavior. See `capture.py::STRATEGIES`."""
 
-    strategy: str = "none"              # "none" | "waypoint_forward" | "rotating_quadrat"
+    strategy: str = "none"              # "none" | "frame_only" | "waypoint_forward" | "rotating_quadrat"
     settle_time: float = 2.0            # seconds after stop before sampling
     gps_avg_sec: float = 3.0            # GPS averaging window (0 disables)
     bearings: list = field(default_factory=lambda: [0.0, 90.0, 180.0, 270.0])

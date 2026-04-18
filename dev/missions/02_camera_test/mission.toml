@@ -7,9 +7,9 @@ connection_mode = "LocalSTA"
 # ip     = "192.168.1.105"   # optional; otherwise auto-discover
 
 [capture]
-strategy           = "waypoint_forward"   # one forward shot; no rotation
+# Lab-bench frame capture: no GPS, no geotag. Pairs with mode = "static_camera".
+strategy           = "frame_only"
 settle_time        = 1.0
-gps_avg_sec        = 0.0                  # ignored in static_camera mode
 output_subdir      = "captures"
 frame_max_age      = 2.0                  # first-frame latency may be higher
 frame_wait_timeout = 10.0                 # keyframe wait can be slow on cold start

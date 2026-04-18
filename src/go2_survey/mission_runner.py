@@ -343,7 +343,7 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
             mission_name=settings.name or mission_dir.name,
             mission_dir=mission_dir,
             robot=robot,
-            gps=gps,  # type: ignore[arg-type]
+            gps=gps,
             navigator=None,  # no rotation support for static
             settings=settings.capture,
             waypoint=None,

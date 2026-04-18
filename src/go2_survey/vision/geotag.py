@@ -178,3 +178,64 @@ def write_geotagged_jpeg(
 
     logger.info(f"Wrote geotagged capture: {out_path.name} + {sidecar_path.name}")
     return out_path
+
+
+def write_frame_only_jpeg(
+    frame: FrameResult,
+    out_path: Path,
+    mission_context: dict[str, Any] | None = None,
+    extra: dict[str, Any] | None = None,
+    jpeg_quality: int = 92,
+) -> Path:
+    """Write the frame with basic EXIF only — no GPS, no bearing.
+
+    For lab-bench smoke tests where no RTK is available. EXIF carries
+    Make/Model/Software/DateTime; sidecar JSON mirrors the geotagged
+    sidecar shape but with `position: null` and `heading.source: "none"`
+    so a downstream consumer that loads either kind doesn't have to
+    branch on key presence.
+    """
+    out_path = Path(out_path)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+
+    bgr = frame.image
+    if bgr.ndim != 3 or bgr.shape[2] != 3:
+        raise ValueError(
+            f"Expected BGR image of shape (H, W, 3); got {bgr.shape}"
+        )
+    rgb = bgr[:, :, ::-1]
+    img = Image.fromarray(rgb, mode="RGB")
+
+    exif = img.getexif()
+    exif[ExifBase.Make] = "Unitree"
+    exif[ExifBase.Model] = "Go2"
+    exif[ExifBase.Software] = "go2_survey"
+    exif[ExifBase.DateTime] = datetime.fromtimestamp(
+        frame.timestamp, tz=timezone.utc
+    ).strftime("%Y:%m:%d %H:%M:%S")
+
+    img.save(out_path, "JPEG", exif=exif, quality=jpeg_quality)
+
+    sidecar: dict[str, Any] = {
+        "schema_version": 1,
+        "captured_at_unix": frame.timestamp,
+        "captured_at_utc": datetime.fromtimestamp(
+            frame.timestamp, tz=timezone.utc
+        ).isoformat(),
+        "frame": {
+            "timestamp_unix": frame.timestamp,
+            "width": frame.width,
+            "height": frame.height,
+        },
+        "position": None,
+        "heading": {"degrees_true": None, "source": "none"},
+    }
+    if mission_context:
+        sidecar["mission"] = mission_context
+    if extra:
+        sidecar["extra"] = extra
+    sidecar_path = out_path.with_suffix(".json")
+    sidecar_path.write_text(json.dumps(sidecar, indent=2, default=str))
+
+    logger.info(f"Wrote frame-only capture: {out_path.name} + {sidecar_path.name}")
+    return out_path

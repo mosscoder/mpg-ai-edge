@@ -26,7 +26,7 @@ from go2_survey.gps import GPSManager, RTKPosition
 from go2_survey.logging_utils import log_banner
 from go2_survey.robot import Go2Robot
 from go2_survey.vision.frames import capture_frame
-from go2_survey.vision.geotag import write_geotagged_jpeg
+from go2_survey.vision.geotag import write_frame_only_jpeg, write_geotagged_jpeg
 
 if TYPE_CHECKING:
     from go2_survey.config import CaptureSettings
@@ -43,7 +43,7 @@ class CaptureContext:
     mission_name: str
     mission_dir: Path
     robot: Go2Robot
-    gps: GPSManager
+    gps: GPSManager | None  # None for static_camera mode
     navigator: "WaypointNavigator | None"  # None for static modes
     settings: "CaptureSettings"
     waypoint: "Waypoint | None"  # None for static modes
@@ -67,6 +67,49 @@ class NoOpStrategy(CaptureStrategy):
 
     async def execute(self, ctx: CaptureContext) -> int:
         return 0
+
+
+class FrameOnlyStrategy(CaptureStrategy):
+    """Settle → capture one frame → write JPEG + minimal sidecar.
+
+    No GPS, no bearing, no rotation. For lab-bench smoke tests
+    (`mode = "static_camera"`) where the WebRTC video pipeline can
+    be exercised without sky view, RTK, or a navigator. Sidecar
+    carries `position: null` and `heading.source: "none"`.
+    """
+
+    name = "frame_only"
+
+    async def execute(self, ctx: CaptureContext) -> int:
+        s = ctx.settings
+        wp_name = ctx.waypoint.name if ctx.waypoint else "static"
+
+        log_banner(f"CAPTURE @ {wp_name} | {self.name}", char="-", logger=logger)
+
+        logger.info(f"Settling for {s.settle_time:.1f}s")
+        await asyncio.sleep(s.settle_time)
+
+        frame_result = await capture_frame(
+            ctx.robot,
+            max_age=s.frame_max_age,
+            wait_timeout=s.frame_wait_timeout,
+        )
+        if frame_result is None:
+            logger.error(f"No fresh frame at {wp_name}; skipping")
+            return 0
+
+        out_path = _capture_output_path(ctx, wp_name, bearing=None)
+        write_frame_only_jpeg(
+            frame=frame_result,
+            out_path=out_path,
+            mission_context=_mission_context(ctx, wp_name, self.name, bearing=None),
+        )
+        log_banner(
+            f"CAPTURE DONE @ {wp_name} | 1 frame (no geotag)",
+            char="-",
+            logger=logger,
+        )
+        return 1
 
 
 class WaypointForwardStrategy(CaptureStrategy):
@@ -205,7 +248,14 @@ class RotatingQuadratStrategy(CaptureStrategy):
 
 
 async def _sample_position(ctx: CaptureContext) -> RTKPosition | None:
-    """Average GPS for the configured window, else single-shot."""
+    """Average GPS for the configured window, else single-shot.
+
+    Returns None when no GPS manager is attached (static_camera mode).
+    Strategies that require a position should treat None as "skip
+    capture"; strategies that don't need GPS shouldn't call this.
+    """
+    if ctx.gps is None:
+        return None
     s = ctx.settings
     if s.gps_avg_sec > 0:
         return ctx.gps.average_position(s.gps_avg_sec)
@@ -291,6 +341,7 @@ def _mission_context(
 
 STRATEGIES = {
     NoOpStrategy.name: NoOpStrategy,
+    FrameOnlyStrategy.name: FrameOnlyStrategy,
     WaypointForwardStrategy.name: WaypointForwardStrategy,
     RotatingQuadratStrategy.name: RotatingQuadratStrategy,
 }
