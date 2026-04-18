@@ -1,5 +1,111 @@
 # Navigation Changelog
 
+## 2026-04-18: Capture Bug Fix + Per-Waypoint IMU Recalibration
+
+### Scope
+
+Two follow-ups to the 2026-04-16 capture infrastructure: a real
+strategy for the previously-broken `static_camera` mode, and a way to
+fight Go2 IMU yaw drift across multi-waypoint missions without forcing
+a calibration walk at every stop.
+
+### Fix: `FrameOnlyStrategy` for `static_camera` mode
+
+Mission `02_camera_test` was crashing on first hardware run.
+`mission_runner._run_static()` constructs a `CaptureContext` with
+`gps=None` in `static_camera` mode (no GPS by design — it's a
+lab-bench smoke test), but the strategy it dispatched to —
+`WaypointForwardStrategy` — called `_sample_position(ctx)`
+unconditionally, which dereferenced `ctx.gps.get_position()` on a
+`None`. AttributeError before the first frame was ever pulled.
+
+Three changes to fix the underlying design mismatch:
+
+- **New `FrameOnlyStrategy` in `src/go2_survey/capture.py`** — settle,
+  capture one frame, write JPEG + minimal sidecar. No GPS, no bearing,
+  no rotation. Registered under name `"frame_only"`. The right
+  primitive for "prove the WebRTC video pipeline works without RTK
+  or sky view."
+- **New `write_frame_only_jpeg()` in `vision/geotag.py`** — sibling to
+  `write_geotagged_jpeg`; writes basic EXIF (Make/Model/Software/
+  DateTime) and a sidecar shaped like the geotagged sidecar but with
+  `position: null` and `heading.source: "none"` so a downstream
+  consumer can load both flavors uniformly.
+- **`CaptureContext.gps` annotation tightened** to `GPSManager | None`
+  to match what `_run_static` actually passes; `_sample_position`
+  guarded against `ctx.gps is None`; the
+  `# type: ignore[arg-type]` on the `_run_static` call site is gone.
+
+`02_camera_test/mission.toml` now points at `strategy = "frame_only"`
+and drops the unused `gps_avg_sec` field.
+
+### Per-waypoint IMU recalibration from trajectory buffer
+
+The navigator previously calibrated `_imu_north_offset` exactly once
+per mission, on the approach to the first waypoint. On a multi-leg
+mission like `06_tennis_quadrat_pair`, the Go2 IMU drifts a few degrees
+between waypoints, biasing every captured-frame bearing thereafter.
+Forcing another full calibration walk at each waypoint would slow the
+mission down and waste the GPS+IMU samples we already collect during
+normal walking. So instead: buffer those samples and recompute the
+offset at each arrival.
+
+Mechanics:
+
+- **Trajectory buffer** — a `collections.deque(maxlen=60)` (~12 s at
+  5 Hz) on `WaypointNavigator`. Cleared at the top of every
+  `navigate_to()` so leg N's recal sees only leg N's samples.
+- **Sample-admission filter** in `_maybe_buffer_sample()`:
+  GPS quality gate (`fix_type ≥ min_fix_type`, `hAcc ≤ max_hacc` —
+  same gate the navigator already uses for motion decisions),
+  *plus* `|commanded vz| ≤ 0.05 rad/s`. The straight-line gate is
+  the load-bearing one: if the robot is actively steering to converge
+  on the waypoint, a chord between two GPS points doesn't represent
+  the robot's heading at the endpoint, and the recal would replace a
+  clean offset with a dirtier one. Cal-walk samples (Phase 1, vz=0
+  by construction) always pass — those are the cleanest data in the
+  whole leg.
+- **`_recalibrate_from_buffer()`** runs on arrival, after
+  `robot.stop()` and before `return True`. Drops the last 1.0 s of
+  samples (arrival deceleration noise), picks A = earliest remaining
+  sample and B = newest remaining sample, requires ≥ 10 buffered
+  samples and a ≥ 1.5 m baseline, then computes
+  `new_offset = normalize_angle(bearing(A → B) + B.imu_yaw)` —
+  same sign convention as the existing `_calibrate_imu`.
+- **30° guardrail** — if the proposed shift exceeds
+  `RECAL_MAX_DELTA_DEG`, it's rejected as a corrupt sample (real
+  drift in a single leg is sub-degree to a few degrees). All
+  outcomes log via `log_banner` so per-leg drift is visible in
+  mission logs.
+
+Tunables (`RECAL_MIN_SAMPLES = 10`, `RECAL_MIN_BASELINE_M = 1.5`,
+`RECAL_MAX_DELTA_DEG = 30`, `RECAL_DROP_RECENT_SEC = 1.0`,
+`RECAL_STRAIGHT_VZ_THRESHOLD = 0.05`, `RECAL_BUFFER_MAXLEN = 60`)
+are class constants on `WaypointNavigator` — the next person debugging
+this will want to twiddle them, but they don't belong in mission TOML.
+The on/off switch is the only knob exposed via config:
+`NavigationSettings.imu_recalibrate_on_arrival: bool = True`. Setting
+it `false` preserves the legacy single-shot calibration.
+
+Runtime cost is negligible — microseconds per tick to buffer, sub-ms
+at arrival to recalibrate, no new sleeps or robot commands. Mission
+durations are unchanged. The only second-order behavioral effect is
+that the Phase 2 turn-in at subsequent waypoints uses a possibly-
+shifted offset; for a few-degree drift that's tens of milliseconds
+of extra or fewer rotation, well below stopwatch noise.
+
+**Caveat worth flagging for the eventual `06_tennis_quadrat_pair`
+post-run review:** this fixes drift accumulated *between* legs, not
+*within* a rotating-quadrat sequence. The IMU is driven hard during
+those four 90° turns, and the offset set on arrival is already stale
+by capture #4. If quadrat bearing error in real data turns out to be
+dominated by within-strategy drift, the per-waypoint recal won't
+move the needle much — and we'd want a different approach (e.g. an
+in-strategy mini-recal, or accepting that absolute bearings need an
+external compass).
+
+---
+
 ## 2026-04-16: F9R Manual Deep-Read — NAV-PVT Parse Fix + GPS Docs Archive + Mission Renames
 
 ### Scope
