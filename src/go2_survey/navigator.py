@@ -3,6 +3,8 @@
 import asyncio
 import logging
 import time
+from collections import deque
+from typing import NamedTuple
 
 from go2_survey.geometry import calculate_bearing, haversine_distance, normalize_angle
 from go2_survey.gps import GPSManager, RTKPosition
@@ -13,6 +15,15 @@ from go2_survey.waypoints import Waypoint
 logger = logging.getLogger(__name__)
 
 
+class _TrajSample(NamedTuple):
+    """One (time, position, IMU yaw) sample collected while walking."""
+
+    t: float
+    lat: float
+    lon: float
+    imu_yaw: float
+
+
 class WaypointNavigator:
     """Navigation controller for waypoint following.
 
@@ -21,9 +32,20 @@ class WaypointNavigator:
       2. Turn to face waypoint (committed direction, no oscillation)
       3. Walk to waypoint (proportional steering)
 
-    The IMU calibration is performed once per navigator instance and reused
-    across subsequent waypoints.
+    The first-leg IMU calibration walk seeds `_imu_north_offset`. With
+    `imu_recalibrate_on_arrival = True` (default), the offset is then
+    refreshed at every waypoint arrival from the GPS+IMU samples
+    collected during that leg's walk — see `_recalibrate_from_buffer`.
     """
+
+    # Per-waypoint recalibration tunables. Constants rather than init
+    # params: only the on/off switch is exposed via config.
+    RECAL_MIN_SAMPLES = 10
+    RECAL_MIN_BASELINE_M = 1.5
+    RECAL_MAX_DELTA_DEG = 30.0
+    RECAL_DROP_RECENT_SEC = 1.0      # ignore samples from arrival deceleration
+    RECAL_STRAIGHT_VZ_THRESHOLD = 0.05  # rad/s — only buffer when going straight
+    RECAL_BUFFER_MAXLEN = 60         # ~12s at 5Hz
 
     def __init__(
         self,
@@ -37,6 +59,7 @@ class WaypointNavigator:
         gps_timeout: float = 300.0,
         calibration_timeout: float = 30.0,
         calibration_hacc: float = 0.1,
+        imu_recalibrate_on_arrival: bool = True,
     ):
         self.gps = gps
         self.robot = robot
@@ -48,6 +71,7 @@ class WaypointNavigator:
         self.gps_timeout = gps_timeout
         self.calibration_timeout = calibration_timeout
         self.calibration_hacc = calibration_hacc
+        self.imu_recalibrate_on_arrival = imu_recalibrate_on_arrival
 
         self._running = False
         self._paused = False
@@ -60,6 +84,11 @@ class WaypointNavigator:
         self._calibration_start_time: float | None = None
         self._calibration_last_progress: float | None = None
 
+        # Trajectory buffer feeding _recalibrate_from_buffer at arrival.
+        # Cleared at the start of every navigate_to() so leg N's recal
+        # uses only leg N's samples.
+        self._traj_buf: deque = deque(maxlen=self.RECAL_BUFFER_MAXLEN)
+
     async def navigate_to(self, waypoint: Waypoint, timeout: float = 300.0) -> bool:
         """Drive the robot to a single waypoint. Returns True on success."""
         logger.info(
@@ -71,6 +100,7 @@ class WaypointNavigator:
         self._running = True
         self._paused = False
         self._nav_last_status = None
+        self._traj_buf.clear()
         nav_start = time.time()
 
         await self.robot.balance_stand()
@@ -100,6 +130,10 @@ class WaypointNavigator:
 
                 imu_yaw = self.robot.get_yaw_degrees()
                 if imu_yaw is not None:
+                    # Cal walk is pure forward motion (vz=0) — these are
+                    # the cleanest samples in the whole leg for the
+                    # buffer recal at arrival.
+                    self._maybe_buffer_sample(pos, imu_yaw, vz=0.0)
                     if self._calibrate_imu(pos, imu_yaw):
                         await self.robot.stop()
                         await self.robot.balance_stand()
@@ -291,6 +325,7 @@ class WaypointNavigator:
                     logger=logger,
                 )
                 await self.robot.stop()
+                self._recalibrate_from_buffer()
                 return True
 
             current_heading = self.get_calibrated_heading()
@@ -301,6 +336,14 @@ class WaypointNavigator:
             )
 
             vx, vz = self._compute_velocity(distance, heading_error)
+
+            # Buffer this sample BEFORE sending the new velocity so the
+            # vz filter reflects the steering load for this tick — only
+            # samples taken during near-straight motion contribute.
+            imu_yaw_now = self.robot.get_yaw_degrees()
+            if imu_yaw_now is not None:
+                self._maybe_buffer_sample(pos, imu_yaw_now, vz=vz)
+
             await self.robot.send_velocity(x=vx, z=vz)
 
             calibrated = "yes" if self._imu_north_offset is not None else "no"
@@ -409,6 +452,111 @@ class WaypointNavigator:
             return True
 
         return False
+
+    def _maybe_buffer_sample(
+        self, pos: RTKPosition, imu_yaw: float, vz: float
+    ) -> None:
+        """Append a trajectory sample if it passes quality + straight-line filters.
+
+        Quality gate matches the navigation gate (`min_fix_type`,
+        `max_hacc`) so degraded GPS samples never feed the recal.
+        Straight-line gate (`|vz| <= RECAL_STRAIGHT_VZ_THRESHOLD`) keeps
+        only samples taken during near-zero commanded rotation, so the
+        chord-vs-curve geometric error in `calculate_bearing(A, B)`
+        stays small.
+        """
+        if pos.fix_type < self.min_fix_type:
+            return
+        if pos.accuracy_horizontal > self.max_hacc:
+            return
+        if abs(vz) > self.RECAL_STRAIGHT_VZ_THRESHOLD:
+            return
+        self._traj_buf.append(
+            _TrajSample(
+                t=time.time(),
+                lat=pos.latitude,
+                lon=pos.longitude,
+                imu_yaw=imu_yaw,
+            )
+        )
+
+    def _recalibrate_from_buffer(self) -> None:
+        """Refresh `_imu_north_offset` at arrival from buffered samples.
+
+        Picks the longest available straight-line baseline in the buffer:
+        A = earliest sample, B = most recent sample (after dropping the
+        last `RECAL_DROP_RECENT_SEC` of arrival deceleration noise).
+        Computes `gps_bearing = bearing(A → B)` and sets
+        `new_offset = normalize_angle(gps_bearing + B.imu_yaw)` —
+        same sign convention as the first-leg cal walk in
+        `_calibrate_imu`.
+
+        Skips with a warning if any of:
+          - feature disabled in config
+          - too few samples ever buffered
+          - too few samples remain after dropping the deceleration zone
+          - resulting baseline shorter than `RECAL_MIN_BASELINE_M`
+          - proposed offset shift exceeds `RECAL_MAX_DELTA_DEG` (likely
+            a corrupt sample, not real drift in a single leg)
+        """
+        if not self.imu_recalibrate_on_arrival:
+            return
+
+        if self._imu_north_offset is None:
+            # First leg's cal walk hasn't completed; nothing to refine.
+            return
+
+        n = len(self._traj_buf)
+        if n < self.RECAL_MIN_SAMPLES:
+            logger.warning(
+                f"IMU recal: only {n}/{self.RECAL_MIN_SAMPLES} samples in "
+                f"buffer; keeping offset {self._imu_north_offset:.1f}°"
+            )
+            return
+
+        cutoff = time.time() - self.RECAL_DROP_RECENT_SEC
+        candidates = [s for s in self._traj_buf if s.t <= cutoff]
+        if len(candidates) < 2:
+            logger.warning(
+                f"IMU recal: only {len(candidates)} samples remain after "
+                f"dropping last {self.RECAL_DROP_RECENT_SEC:.1f}s; "
+                f"keeping offset {self._imu_north_offset:.1f}°"
+            )
+            return
+
+        a = candidates[0]
+        b = candidates[-1]
+        baseline = haversine_distance(a.lat, a.lon, b.lat, b.lon)
+        if baseline < self.RECAL_MIN_BASELINE_M:
+            logger.warning(
+                f"IMU recal: baseline {baseline:.2f}m < "
+                f"{self.RECAL_MIN_BASELINE_M:.1f}m minimum across "
+                f"{len(candidates)} samples; keeping offset "
+                f"{self._imu_north_offset:.1f}°"
+            )
+            return
+
+        gps_bearing = calculate_bearing(a.lat, a.lon, b.lat, b.lon)
+        new_offset = normalize_angle(gps_bearing + b.imu_yaw)
+        delta = normalize_angle(new_offset - self._imu_north_offset)
+
+        if abs(delta) > self.RECAL_MAX_DELTA_DEG:
+            logger.warning(
+                f"IMU recal: proposed shift {delta:+.1f}° exceeds "
+                f"{self.RECAL_MAX_DELTA_DEG:.0f}° guardrail "
+                f"(bsl={baseline:.2f}m, n={len(candidates)}); "
+                f"keeping offset {self._imu_north_offset:.1f}°"
+            )
+            return
+
+        old = self._imu_north_offset
+        self._imu_north_offset = new_offset
+        log_banner(
+            f"IMU RECAL | {old:.1f}° → {new_offset:.1f}° "
+            f"(Δ {delta:+.1f}°) | n={len(candidates)} bsl={baseline:.2f}m",
+            char="-",
+            logger=logger,
+        )
 
     def get_calibrated_heading(self) -> float | None:
         """Convert the robot's IMU yaw to a true heading (0=north, 90=east)."""

@@ -153,6 +153,7 @@ async def run_mission(runner: MissionRunner) -> bool:
         arrival_tolerance=settings.navigation.arrival_tolerance,
         min_fix_type=settings.navigation.min_fix_type,
         max_hacc=settings.navigation.max_hacc,
+        imu_recalibrate_on_arrival=settings.navigation.imu_recalibrate_on_arrival,
     )
 
     try:

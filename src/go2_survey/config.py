@@ -50,6 +50,10 @@ class NavigationSettings:
     min_fix_type: int = 4
     max_hacc: float = 0.10
     gps_fix_timeout: int = 300
+    # Refresh the IMU→true-north offset on each waypoint arrival using
+    # GPS+IMU samples already collected during the walk leg. Disable to
+    # preserve the legacy single-shot calibration set on the first leg.
+    imu_recalibrate_on_arrival: bool = True
 
 
 @dataclass
