@@ -1,5 +1,68 @@
 # Navigation Changelog
 
+## 2026-04-18: Docs Reorg — Single Top-Level `docs/`
+
+### Scope
+
+Reorganized all documentation into one `docs/` tree at the repo root.
+The previous split — vendor reference notes under `dev/docs/` and the
+install + Jetson notes under `setup/` — had two inconsistent
+documentation roots and made the Jetson notes hard to discover. This
+change collapses both into a single top-level `docs/` and groups the
+three Jetson notes into their own subdirectory with deduplicated
+filenames.
+
+### Move map
+
+```
+dev/docs/gps/                      → docs/gps/                       (4 PDFs + README)
+dev/docs/webrtc/                   → docs/webrtc/                    (README)
+setup/install.md                   → docs/install.md
+setup/jetson_orin_nano_setup.md    → docs/jetson_orin_nano/jetson_setup.md
+setup/jetson_orin_nano_status.md   → docs/jetson_orin_nano/jetson_status.md
+setup/orin_nano_ml_setup.md        → docs/jetson_orin_nano/ml_setup.md
+```
+
+Old `dev/docs/` and `setup/` directories are gone. The Jetson filenames
+drop the `jetson_orin_nano_` prefix since the parent directory already
+carries it.
+
+Result:
+
+```
+docs/
+├── install.md             # end-to-end install + first-run walkthrough
+├── gps/                   # u-blox ZED-F9R reference PDFs + config notes
+├── webrtc/                # unitree_webrtc_connect protocol notes
+└── jetson_orin_nano/      # Jetson hardware/OS setup + ML stack notes
+```
+
+### Reference sweep
+
+- `README.md:36` — install link `setup/install.md` → `docs/install.md`.
+- `README.md:127-145` — Layout tree restructured; `dev/docs/` and the
+  separate `setup/` line are gone, replaced by a single `docs/`
+  block listing `install.md`, `gps/`, `webrtc/`, `jetson_orin_nano/`.
+- `src/go2_survey/robot.py:47, 142` — comments now point at
+  `docs/webrtc/README.md`.
+- `docs/install.md:208-209` — Jetson cross-references updated to the
+  new path + filenames.
+- `docs/gps/README.md:378` — internal `mount/` self-reference now
+  points at `docs/gps/mount/`.
+
+### What didn't change
+
+- Historical changelog entries that mention `dev/docs/`,
+  `dev/gps_docs/`, `dev/webrtc_docs/`, or `setup/install.md` are left
+  intact — those paths were correct at the time those entries were
+  written. Append-only convention.
+- All renames went through `git mv`-equivalent staging (the user did
+  the moves manually; `git add -A` detected them as renames at 100%
+  similarity), so `git log --follow` keeps working on every PDF and
+  README.
+
+---
+
 ## 2026-04-18: Capture Bug Fix + Per-Waypoint IMU Recalibration
 
 ### Scope

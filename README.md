@@ -33,7 +33,7 @@ go2-survey discover-ip                    # find the Go2's IP on the local netwo
 ```
 
 Full walkthrough — including GPS wiring, NTRIP credentials, robot discovery,
-and troubleshooting — lives in [`setup/install.md`](setup/install.md).
+and troubleshooting — lives in [`docs/install.md`](docs/install.md).
 
 ## Creating a new mission
 
@@ -136,11 +136,12 @@ mpg-ai-edge/
 │   │   ├── 00_parking_lot/  # parking lot circuit (2 waypoints, tuned settings)
 │   │   └── 01_tennis_court/ # tennis court circuit (2 waypoints, tuned settings)
 │   ├── changelog.md       # dated log of what changed and why
-│   ├── archive/           # retired scripts and historical logs
-│   └── docs/
-│       ├── gps/           # u-blox ZED-F9R reference PDFs + config notes
-│       └── webrtc/        # unitree_webrtc_connect protocol notes
-├── setup/                 # install walkthrough + Jetson platform notes
+│   └── archive/           # retired scripts and historical logs
+├── docs/
+│   ├── install.md         # end-to-end install + first-run walkthrough
+│   ├── gps/               # u-blox ZED-F9R reference PDFs + config notes
+│   ├── webrtc/            # unitree_webrtc_connect protocol notes
+│   └── jetson_orin_nano/  # Jetson hardware/OS setup + ML stack notes
 ├── pyproject.toml         # single source of truth for deps + entry point
 └── README.md
 ```

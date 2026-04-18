@@ -205,5 +205,5 @@ Scan the local network for a Unitree Go2 by probing TCP ports 8081 and
 
 ## Jetson-specific notes
 
-See `setup/jetson_orin_nano_setup.md`, `setup/jetson_orin_nano_status.md`, and
-`setup/orin_nano_ml_setup.md` for hardware/OS setup on the Jetson Orin Nano.
+See `docs/jetson_orin_nano/jetson_setup.md`, `docs/jetson_orin_nano/jetson_status.md`, and
+`docs/jetson_orin_nano/ml_setup.md` for hardware/OS setup on the Jetson Orin Nano.

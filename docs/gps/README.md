@@ -375,7 +375,7 @@ signal during a mission."
   photograph from above, note which direction the F9R chip's X arrow
   points relative to the dog's nose. If not perfectly forward,
   calculate `IMU_MNTALG_YAW/PITCH/ROLL`.
-- **Photograph the mount** and save to `dev/docs/gps/mount/` so any
+- **Photograph the mount** and save to `docs/gps/mount/` so any
   future re-mount knows what "the correct geometry" looked like.
   Without this, every remount would require re-measuring from
   scratch.
