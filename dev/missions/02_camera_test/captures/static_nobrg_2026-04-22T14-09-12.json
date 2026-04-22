@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "captured_at_unix": 1776888552.4123933,
+  "captured_at_utc": "2026-04-22T20:09:12.412393+00:00",
+  "frame": {
+    "timestamp_unix": 1776888552.4123933,
+    "width": 1280,
+    "height": 720
+  },
+  "position": null,
+  "heading": {
+    "degrees_true": null,
+    "source": "none"
+  },
+  "mission": {
+    "mission_name": "02_camera_test",
+    "mission_dir": "/home/mpg-robodog/dev/mpg-ai-edge/dev/missions/02_camera_test",
+    "waypoint_name": "static",
+    "strategy": "frame_only",
+    "target_bearing_deg_true": null
+  }
+}
