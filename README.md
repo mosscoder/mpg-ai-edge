@@ -65,8 +65,8 @@ baud = 38400
 host       = "caster.emlid.com"
 port       = 2101
 mountpoint = "MP15774"
-username   = "u65352"
-password   = "338zca"
+username   = "u47193"
+password   = "x9kqbw"
 
 [robot]
 connection_mode = "LocalSTA"    # or "LocalAP" for the robot's own hotspot

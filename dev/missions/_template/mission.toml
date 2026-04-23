@@ -16,8 +16,8 @@ baud = 38400
 host       = "caster.emlid.com"
 port       = 2101
 mountpoint = "MP15774"
-username   = "u65352"
-password   = "338zca"
+username   = "u26787"
+password   = "492utz"
 
 [robot]
 connection_mode = "LocalSTA"
