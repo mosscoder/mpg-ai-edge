@@ -16,7 +16,10 @@ import time
 from pathlib import Path
 from typing import Iterator
 
-from go2_survey.logging_utils import WebRTCFallbackNoiseFilter
+from go2_survey.logging_utils import (
+    SportModeStateFilter,
+    WebRTCFallbackNoiseFilter,
+)
 from go2_survey.mission_runner import MissionRunner, run_mission
 
 
@@ -71,12 +74,17 @@ def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
     # Drop the unitree_webrtc_connect 'old method' fallback errors —
-    # they fire on every run but aren't real failures. Attach to
-    # handlers so records from the root logger (where the library
+    # they fire on every run but aren't real failures. Under default
+    # (non-verbose) runs also drop the 20 Hz rt/lf/sportmodestate
+    # INFO flood; -v/--verbose keeps it for diagnostic work. Attach
+    # to handlers so records from the root logger (where the library
     # emits them) are filtered out regardless.
-    noise_filter = WebRTCFallbackNoiseFilter()
+    filters: list[logging.Filter] = [WebRTCFallbackNoiseFilter()]
+    if not verbose:
+        filters.append(SportModeStateFilter())
     for handler in logging.getLogger().handlers:
-        handler.addFilter(noise_filter)
+        for f in filters:
+            handler.addFilter(f)
 
     return log_file
 

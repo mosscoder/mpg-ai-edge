@@ -48,3 +48,20 @@ class WebRTCFallbackNoiseFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         msg = record.getMessage()
         return not any(s in msg for s in self.SUPPRESSED_SUBSTRINGS)
+
+
+class SportModeStateFilter(logging.Filter):
+    """Suppress the 20 Hz rt/lf/sportmodestate message-log flood.
+
+    The unitree_webrtc_connect library emits every data-channel
+    message at INFO on the root logger. The sport-mode state topic
+    fires at ~20 Hz and dumps IMU/position/foot payloads — our code
+    already pulls the one field we care about (imu_state) via
+    Go2Robot._on_sport_state, so the raw logs are pure noise in
+    default runs. Attached by default from cli.setup_logging and
+    skipped under -v/--verbose so diagnostic runs still see the
+    full firehose.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "rt/lf/sportmodestate" not in record.getMessage()
