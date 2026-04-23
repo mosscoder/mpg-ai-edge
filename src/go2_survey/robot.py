@@ -170,6 +170,38 @@ class Go2Robot:
         self._first_frame_logged = False
         log_banner("VIDEO CHANNEL OFF", char="-", logger=logger)
 
+    async def close(self) -> None:
+        """Tear down the WebRTC peer connection.
+
+        Call from a mission's finally block after disable_video().
+        Awaits any lingering video consumer task, then hands off to
+        the library's UnitreeWebRTCConnection.disconnect(), which in
+        turn awaits pc.close() and releases the underlying
+        RTCPeerConnection — the piece missing today that produces the
+        "Task was destroyed but it is pending!" warning at process
+        exit. Safe to call more than once and when connect() never
+        completed.
+        """
+        if self._video_task is not None:
+            if not self._video_task.done():
+                self._video_task.cancel()
+            try:
+                await self._video_task
+            except asyncio.CancelledError:
+                pass
+            except Exception as e:
+                logger.debug(f"Video task raised during shutdown: {e}")
+            self._video_task = None
+
+        if self.conn is not None:
+            try:
+                await self.conn.disconnect()
+            except Exception as e:
+                logger.debug(f"conn.disconnect() raised: {e}")
+            self.conn = None
+
+        self._connected = False
+
     async def _on_video_track(self, track) -> None:
         """Library callback — spawn a consumer task for this track.
 

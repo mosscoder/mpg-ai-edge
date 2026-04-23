@@ -242,15 +242,19 @@ async def run_mission(runner: MissionRunner) -> bool:
         try:
             await robot.disable_video()
         except Exception:
-            pass
+            logger.debug("disable_video raised during teardown", exc_info=True)
         try:
             await robot.stop()
         except Exception:
-            pass
+            logger.debug("robot.stop raised during teardown", exc_info=True)
+        try:
+            await robot.close()
+        except Exception:
+            logger.debug("robot.close raised during teardown", exc_info=True)
         try:
             gps.disconnect()
         except Exception:
-            pass
+            logger.debug("gps.disconnect raised during teardown", exc_info=True)
         logger.info("Connections closed")
 
 
@@ -367,12 +371,20 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
             try:
                 await robot.disable_video()
             except Exception:
-                pass
+                logger.debug("disable_video raised during teardown", exc_info=True)
+            try:
+                await robot.stop()
+            except Exception:
+                logger.debug("robot.stop raised during teardown", exc_info=True)
+            try:
+                await robot.close()
+            except Exception:
+                logger.debug("robot.close raised during teardown", exc_info=True)
         if gps is not None:
             try:
                 gps.disconnect()
             except Exception:
-                pass
+                logger.debug("gps.disconnect raised during teardown", exc_info=True)
         logger.info("Connections closed")
 
 
@@ -442,5 +454,5 @@ async def _run_probe_gps(runner: MissionRunner, settings: MissionSettings) -> bo
         try:
             gps.disconnect()
         except Exception:
-            pass
+            logger.debug("gps.disconnect raised during teardown", exc_info=True)
         logger.info("GPS disconnected")

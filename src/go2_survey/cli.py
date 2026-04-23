@@ -16,6 +16,7 @@ import time
 from pathlib import Path
 from typing import Iterator
 
+from go2_survey.logging_utils import WebRTCFallbackNoiseFilter
 from go2_survey.mission_runner import MissionRunner, run_mission
 
 
@@ -68,6 +69,14 @@ def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
     # Quiet noisy transitive deps
     for noisy in ("aioice", "aiortc", "av"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
+
+    # Drop the unitree_webrtc_connect 'old method' fallback errors —
+    # they fire on every run but aren't real failures. Attach to
+    # handlers so records from the root logger (where the library
+    # emits them) are filtered out regardless.
+    noise_filter = WebRTCFallbackNoiseFilter()
+    for handler in logging.getLogger().handlers:
+        handler.addFilter(noise_filter)
 
     return log_file
 

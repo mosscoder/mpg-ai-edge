@@ -126,20 +126,33 @@ class EmlidNTRIPClient:
                         self.correction_count += 1
                         self.bytes_forwarded += len(rtcm_msg)
             except Exception as e:
-                logger.error(f"Error in correction worker: {e}")
+                # During an intentional disconnect() the socket is
+                # shut down from the main thread to wake a blocked
+                # recv(); don't flag that as an error.
+                if self.running:
+                    logger.error(f"Error in correction worker: {e}")
                 break
         logger.info("RTCM correction worker stopped")
 
     def disconnect(self) -> None:
         self.running = False
-        if self.correction_thread:
-            self.correction_thread.join(timeout=2.0)
+        # Shutdown the socket BEFORE joining the worker so any blocked
+        # recv() wakes up immediately with an error — otherwise the
+        # join waits up to `settimeout()` (10s) before the worker
+        # notices `running` is False. Worker's except branch is aware
+        # of the intentional-shutdown case and skips the error log.
         if self.socket:
             try:
                 self.socket.shutdown(socket.SHUT_RDWR)
             except Exception:
                 pass
-            self.socket.close()
+        if self.correction_thread:
+            self.correction_thread.join(timeout=2.0)
+        if self.socket:
+            try:
+                self.socket.close()
+            except Exception:
+                pass
         self.connected = False
         logger.info(
             f"Disconnected from NTRIP. Forwarded {self.correction_count} messages."
