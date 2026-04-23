@@ -1,5 +1,142 @@
 # Navigation Changelog
 
+## 2026-04-23: NTRIP Credential Rotation + Clean Mission Exit + Log Hygiene
+
+### Scope
+
+Three independent-but-adjacent cleanup passes landed in one session:
+rotate the Emlid NTRIP account and strip live credentials from public
+docs, fix the "process hangs after mission completes" failure mode so
+the tech doesn't have to Ctrl-C after every run, and quiet the 20 Hz
+IMU data-channel flood that was drowning the mission narrative.
+
+### 1. NTRIP credential rotation and source-code sanitization
+
+Moved the live account from `u65352` / `338zca` to `u26787` / `492utz`
+across all seven in-tree mission TOMLs. Public example blocks in
+`README.md` and `docs/install.md` now carry random placeholders
+(`u47193` / `x9kqbw`) shaped like Emlid credentials but intentionally
+non-functional, so copy-pasting from the README doesn't leak a working
+account.
+
+`src/go2_survey/gps.py:580-581` previously embedded the old credentials
+as `os.getenv()` fallback defaults, meaning the source code always
+shipped a working real account whether or not a user set env vars.
+The fallbacks are now empty strings; the existing
+`if use_ntrip and self.ntrip_config.username:` guard at
+`gps.py:594` short-circuits NTRIP when unconfigured, so there's no
+functional change for missions that provide creds via TOML.
+
+Commit: `e6ade6c`.
+
+### 2. Clean mission process exit (no more Ctrl-C after capture)
+
+**Symptom.** `02_camera_test` hardware logs (the 2026-04-22 runs Erik
+pushed) ended with `asyncio: Task was destroyed but it is pending!`
+— once 19 s after "Connections closed", once **4 minutes later** in a
+second run. The mission's captures were on disk well before the
+warning fired, but the Python process refused to exit cleanly and
+the tech had to Ctrl-C.
+
+**Root cause.** `robot.py` had no `close()` / `disconnect()` method
+at all. `disable_video()` turned the video channel off but never tore
+down the `RTCPeerConnection`. aiortc's own finalizer eventually
+scheduled a `pc.close()` coroutine; the asyncio event loop couldn't
+fully drain it before interpreter shutdown; hence the dangling-task
+warning and the exit delay.
+
+**Fix bundle** (commit `90cc1e6`):
+
+- **`Go2Robot.close()`** — new method. Cancels and **awaits** the
+  video consumer task (the existing `disable_video()` only called
+  `cancel()` without awaiting — same dangling-task shape), then
+  calls `UnitreeWebRTCConnection.disconnect()` (the library's own
+  wrapper, which internally does `await self.pc.close()` — preferred
+  over poking `.pc` directly so we don't bypass the library's track
+  and datachannel teardown). Idempotent and safe when `connect()`
+  never completed.
+- **Wired into both finally blocks** in `mission_runner.py`:
+  `run_mission` and `_run_static`. `_run_static` now also sends
+  `robot.stop()` for defensive symmetry with nav-mode teardown —
+  currently benign (no static strategy moves the robot) but will
+  matter once one does.
+- **`ntrip.disconnect()` reordered** to shut down the socket
+  **before** joining the worker thread. Prior ordering let the
+  join time out at 2 s because the blocked `recv()` wouldn't wake
+  until its 10 s socket timeout elapsed. The correction worker's
+  `except` branch is now aware of the intentional-shutdown case
+  (`self.running is False`) and skips the spurious
+  `Error in correction worker: ...` log during normal teardown.
+- **Teardown exceptions no longer silently swallowed.** The five
+  `except Exception: pass` in `mission_runner.py` finally blocks
+  became `except Exception: logger.debug("<op> raised during
+  teardown", exc_info=True)`. INFO-level runs still see a clean
+  teardown; a consistently-failing cleanup step now surfaces under
+  `-v`/`--verbose` instead of being invisible.
+
+**Hardware validation pending.** All five changes have clean dry-runs
+and unit-tested filters, but the actual "no Ctrl-C needed" test
+requires running `02_camera_test` on the Jetson + Go2 and watching
+the process exit. Next bench session.
+
+### 3. Log hygiene — two library-noise filters
+
+Two new `logging.Filter` subclasses in
+`src/go2_survey/logging_utils.py`, both attached to the root logger's
+handlers by `cli.setup_logging` so library records emitted on the
+root logger are filtered regardless of origin.
+
+**`WebRTCFallbackNoiseFilter`** — suppresses the
+`unitree_webrtc_connect` "old method" fallback error pair:
+
+```
+[ERROR] root: An error occurred: HTTPConnectionPool(host='...',
+    port=8081): Max retries exceeded with url: /offer ...
+[ERROR] root: An error occurred with the old method:
+    Failed to receive SDP Answer: No response
+```
+
+The library probes a legacy SDP endpoint on port 8081 before falling
+back to the canonical path that actually works on our Go2 firmware.
+The probe failure is harmless — the library recovers on the next
+request — but logging it at ERROR masquerades as a real problem and
+makes `grep ERROR` on mission logs useless. Filter matches on two
+substring patterns (`"Max retries exceeded with url: /offer"` and
+`"An error occurred with the old method:"`) that are distinctive
+enough to not false-positive on real library errors. Commit `90cc1e6`.
+
+**`SportModeStateFilter`** — suppresses the 20 Hz
+`rt/lf/sportmodestate` data-channel INFO flood. The library logs
+every incoming data channel message at INFO on the root logger, and
+the sport-mode-state topic alone produces ~1200 lines/minute of
+IMU/velocity/foot payloads. Our code already extracts the only field
+we consume (`imu_state` for `Go2Robot.get_yaw_degrees`) via
+`_on_sport_state`, and the per-waypoint trajectory buffer (2026-04-18
+entry) captures the structured slice you'd want for post-hoc IMU
+analysis. The raw log lines add nothing in default runs. Commit
+`ffda4b7`.
+
+**Conditional on `-v`/`--verbose`.** `SportModeStateFilter` is only
+installed when verbose logging is off — `go2-survey run <mission> -v`
+still surfaces the full firehose for diagnostic runs where you need
+to see what the robot was reporting per-tick.
+`WebRTCFallbackNoiseFilter` installs unconditionally: those messages
+are never useful, verbose or not.
+
+### What didn't change
+
+- Historical changelog mentions of the old credentials are left
+  intact — append-only convention; those describe repo state at the
+  time of writing.
+- Nav-mode `run_mission()` finally was already correct in structure
+  (sent `disable_video` + `stop` + `gps.disconnect`); we added the
+  new `close()` step and reworked the except-clauses.
+- No mission-config schema changes. Every edit is source-only or
+  test-data only; `go2-survey list` and all six navigational
+  dry-runs pass without touching mission.toml.
+
+---
+
 ## 2026-04-18: Docs Reorg — Single Top-Level `docs/`
 
 ### Scope

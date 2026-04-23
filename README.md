@@ -122,6 +122,14 @@ three-phase state machine: **calibrate IMU → turn to heading → walk**.
 Logs are written to `<mission>/logs/<name>_<timestamp>.log` alongside the
 config, so every run's history co-locates with the mission that produced it.
 
+By default the log is a human-readable narrative — phase banners, GPS fix
+status, waypoint arrivals, capture events. The 20 Hz `rt/lf/sportmodestate`
+IMU/velocity/foot stream that the Go2 emits over its WebRTC data channel is
+suppressed so it doesn't drown out the narrative; the one field we actually
+consume (`imu_state`) is cached in `Go2Robot._on_sport_state` regardless.
+Run with `-v`/`--verbose` to keep the full firehose — useful when debugging
+IMU calibration, data channel state, or library internals.
+
 ## Layout
 
 ```
