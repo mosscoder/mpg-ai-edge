@@ -1,0 +1,36 @@
+2026-04-24 14:29:34,411 [INFO] go2_survey.cli: Logging to: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/logs/00_parking_lot_2026-04-24_14-29-34.log
+2026-04-24 14:29:34,411 [INFO] go2_survey.cli: Mission dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot
+2026-04-24 14:29:34,413 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-24 14:29:34,413 [INFO] go2_survey.mission_runner: ================= MISSION: 00_parking_lot ==================
+2026-04-24 14:29:34,413 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-24 14:29:34,413 [INFO] go2_survey.mission_runner: Parking lot two-waypoint circuit (first successful autonomous run, 2026-04-01)
+2026-04-24 14:29:34,414 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-24 14:29:34,414 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-04-24 14:29:34,414 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-24 14:29:34,416 [INFO] go2_survey.waypoints: Loaded 2 waypoints from /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/waypoints.geojson
+2026-04-24 14:29:34,417 [INFO] go2_survey.mission_runner: Loaded 2 waypoint(s):
+2026-04-24 14:29:34,417 [INFO] go2_survey.mission_runner:   1. waypoint_1: (46.86164631, -113.99780057)
+2026-04-24 14:29:34,417 [INFO] go2_survey.mission_runner:   2. waypoint_2: (46.86154957, -113.99796955)
+2026-04-24 14:29:34,417 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101/MP15774 | Robot: LocalSTA
+2026-04-24 14:29:34,417 [INFO] go2_survey.mission_runner: Nav: tol=0.5m vmax=0.5m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-04-24 14:29:34,418 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-24 14:29:34,418 [INFO] go2_survey.mission_runner: ---------------- AUTO-DISCOVERING ROBOT IP -----------------
+2026-04-24 14:29:34,418 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-24 14:29:34,418 [INFO] go2_survey.mission_runner: robot.ip not set in mission.toml and ROBOT_IP env var not set; scanning local network for a Go2 (nmap ports 8081/9991)...
+2026-04-24 14:29:34,430 [INFO] go2_survey.discovery: Scanning 10.225.118.241/24 for Go2 ports 8081/9991...
+2026-04-24 14:29:37,102 [INFO] go2_survey.mission_runner: Auto-discovered Go2 at 10.225.118.5
+2026-04-24 14:29:37,103 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-24 14:29:37,104 [INFO] go2_survey.mission_runner: ----------------------- PHASE 1: GPS -----------------------
+2026-04-24 14:29:37,104 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-24 14:29:37,108 [INFO] go2_survey.gps: Connected to GPS on /dev/ttyACM0 @ 38400 baud
+2026-04-24 14:29:37,109 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-04-24 14:29:37,546 [ERROR] go2_survey.ntrip: NTRIP connection failed: 
+2026-04-24 14:29:37,547 [WARNING] go2_survey.gps: NTRIP not available, using GNSS-only mode
+2026-04-24 14:29:37,547 [INFO] go2_survey.gps: Waiting for GPS fix (min type 4)...
+2026-04-24 14:29:53,684 [INFO] go2_survey.gps: Waiting for GPS fix... (16s elapsed, type 3, 23 SVs)
+2026-04-24 14:30:09,286 [INFO] go2_survey.gps: Waiting for GPS fix... (32s elapsed, type 3, 24 SVs)
+2026-04-24 14:30:19,945 [WARNING] go2_survey.mission_runner: Mission interrupted by user
+2026-04-24 14:30:19,947 [INFO] go2_survey.robot: Stopping robot
+2026-04-24 14:30:19,947 [INFO] go2_survey.ntrip: Disconnected from NTRIP. Forwarded 0 messages.
+2026-04-24 14:30:19,949 [INFO] go2_survey.gps: GPS connection closed
+2026-04-24 14:30:19,950 [INFO] go2_survey.mission_runner: Connections closed
