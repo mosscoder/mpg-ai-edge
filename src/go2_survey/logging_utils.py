@@ -55,13 +55,23 @@ class SportModeStateFilter(logging.Filter):
 
     The unitree_webrtc_connect library emits every data-channel
     message at INFO on the root logger. The sport-mode state topic
-    fires at ~20 Hz and dumps IMU/position/foot payloads — our code
-    already pulls the one field we care about (imu_state) via
-    Go2Robot._on_sport_state, so the raw logs are pure noise in
-    default runs. Attached by default from cli.setup_logging and
-    skipped under -v/--verbose so diagnostic runs still see the
-    full firehose.
+    fires at ~20 Hz and dumps IMU/position/foot payloads. Attached to
+    the console + main.log handlers so the mission narrative stays
+    readable; the same payloads are captured separately by the
+    imu.log handler (see SportModeStateOnlyFilter).
     """
 
     def filter(self, record: logging.LogRecord) -> bool:
         return "rt/lf/sportmodestate" not in record.getMessage()
+
+
+class SportModeStateOnlyFilter(logging.Filter):
+    """Inverse of SportModeStateFilter — keeps only rt/lf/sportmodestate.
+
+    Attached to the per-run imu.log handler so the 20 Hz IMU/position/
+    foot stream is preserved on disk for post-hoc analysis without
+    polluting the main mission log.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "rt/lf/sportmodestate" in record.getMessage()

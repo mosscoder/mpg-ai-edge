@@ -20,6 +20,7 @@ from typing import Iterator
 from go2_survey import __version__
 from go2_survey.logging_utils import (
     SportModeStateFilter,
+    SportModeStateOnlyFilter,
     WebRTCFallbackNoiseFilter,
 )
 from go2_survey.mission_runner import MissionRunner, run_mission
@@ -73,45 +74,67 @@ def resolve_mission_dir(arg: str) -> Path | None:
 
 
 def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
-    """Configure root logging to console + <mission_dir>/logs/<name>_<ts>.log."""
-    log_dir = mission_dir / "logs"
-    log_dir.mkdir(parents=True, exist_ok=True)
+    """Configure logging to a per-run directory under <mission_dir>/logs/.
+
+    Layout: ``<mission_dir>/logs/<name>_<TIMESTAMP>/{main.log, imu.log}``.
+    ``main.log`` and the console mirror the mission narrative (everything
+    EXCEPT the 20 Hz rt/lf/sportmodestate flood). ``imu.log`` captures
+    that flood by itself, regardless of ``-v``, so post-hoc analysis
+    has the full IMU/position/foot history without requiring a verbose
+    re-run.
+
+    Returns the run directory.
+    """
     timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-    log_file = log_dir / f"{mission_dir.name}_{timestamp}.log"
+    run_dir = mission_dir / "logs" / f"{mission_dir.name}_{timestamp}"
+    run_dir.mkdir(parents=True, exist_ok=True)
+    main_log = run_dir / "main.log"
+    imu_log = run_dir / "imu.log"
 
     level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
-        handlers=[
-            logging.StreamHandler(sys.stdout),
-            logging.FileHandler(log_file),
-        ],
-    )
+    fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    root = logging.getLogger()
+    root.setLevel(level)
+    # Clear any handlers a prior call (e.g. test harness) installed.
+    for h in list(root.handlers):
+        root.removeHandler(h)
+
+    # Console + main.log: drop the 20 Hz IMU flood and the
+    # unitree_webrtc_connect legacy-SDP-probe errors so the mission
+    # narrative stays readable.
+    main_filters: list[logging.Filter] = [
+        SportModeStateFilter(),
+        WebRTCFallbackNoiseFilter(),
+    ]
+    for handler in (
+        logging.StreamHandler(sys.stdout),
+        logging.FileHandler(main_log),
+    ):
+        handler.setFormatter(fmt)
+        for f in main_filters:
+            handler.addFilter(f)
+        root.addHandler(handler)
+
+    # imu.log: capture ONLY the rt/lf/sportmodestate stream. Always on
+    # at DEBUG so an INFO root level still records the IMU history.
+    imu_handler = logging.FileHandler(imu_log)
+    imu_handler.setFormatter(fmt)
+    imu_handler.addFilter(SportModeStateOnlyFilter())
+    imu_handler.setLevel(logging.DEBUG)
+    root.addHandler(imu_handler)
+
     # Quiet noisy transitive deps
     for noisy in ("aioice", "aiortc", "av"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
 
-    # Drop the unitree_webrtc_connect 'old method' fallback errors —
-    # they fire on every run but aren't real failures. Under default
-    # (non-verbose) runs also drop the 20 Hz rt/lf/sportmodestate
-    # INFO flood; -v/--verbose keeps it for diagnostic work. Attach
-    # to handlers so records from the root logger (where the library
-    # emits them) are filtered out regardless.
-    filters: list[logging.Filter] = [WebRTCFallbackNoiseFilter()]
-    if not verbose:
-        filters.append(SportModeStateFilter())
-    for handler in logging.getLogger().handlers:
-        for f in filters:
-            handler.addFilter(f)
-
     # Version banner — first line in every log so post-mortems can pin
     # the run to a specific build.
     logging.getLogger(__name__).info(
-        f"go2-survey v{__version__} | git {_git_short_sha()} | log: {log_file}"
+        f"go2-survey v{__version__} | git {_git_short_sha()} "
+        f"| run dir: {run_dir}"
     )
 
-    return log_file
+    return run_dir
 
 
 def cmd_run(args: argparse.Namespace) -> int:
@@ -125,9 +148,9 @@ def cmd_run(args: argparse.Namespace) -> int:
         )
         return 1
 
-    log_file = setup_logging(mission_dir, verbose=args.verbose)
+    run_dir = setup_logging(mission_dir, verbose=args.verbose)
     logger = logging.getLogger(__name__)
-    logger.info(f"Logging to: {log_file}")
+    logger.info(f"Logging to: {run_dir}/main.log (+ imu.log)")
     logger.info(f"Mission dir: {mission_dir}")
 
     if args.capture_images:
@@ -235,7 +258,11 @@ def build_parser() -> argparse.ArgumentParser:
         help="[placeholder] capture a frame at each waypoint (not wired)",
     )
     run_parser.add_argument(
-        "-v", "--verbose", action="store_true", help="enable debug logging"
+        "-v",
+        "--verbose",
+        action="store_true",
+        help="set root log level to DEBUG (the IMU stream goes to imu.log "
+        "regardless)",
     )
     run_parser.set_defaults(func=cmd_run)
 
