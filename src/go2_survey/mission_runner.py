@@ -17,7 +17,6 @@ from go2_survey.discovery import find_robot_ips
 from go2_survey.gps import GPSManager, RTKPosition
 from go2_survey.logging_utils import log_banner
 from go2_survey.navigator import WaypointNavigator
-from go2_survey.ntrip import NTRIPConfig
 from go2_survey.probes import run_f9r_probe
 from go2_survey.robot import Go2Robot
 from go2_survey.waypoints import Waypoint, load_waypoints
@@ -76,7 +75,8 @@ async def run_mission(runner: MissionRunner) -> bool:
 
     logger.info(
         f"GPS: {settings.gps.port} @ {settings.gps.baud} | "
-        f"NTRIP: {settings.ntrip.host}:{settings.ntrip.port}/{settings.ntrip.mountpoint} | "
+        f"NTRIP: {settings.ntrip.host}:{settings.ntrip.port} "
+        f"mountpoints={settings.ntrip.mountpoints} | "
         f"Robot: {settings.robot.connection_mode}"
         + (f" ip={settings.robot.ip}" if settings.robot.ip else "")
     )
@@ -92,17 +92,10 @@ async def run_mission(runner: MissionRunner) -> bool:
         log_banner("DRY RUN — not connecting to hardware", logger=logger)
         return True
 
-    ntrip_cfg = NTRIPConfig(
-        host=settings.ntrip.host,
-        port=settings.ntrip.port,
-        mountpoint=settings.ntrip.mountpoint,
-        username=settings.ntrip.username,
-        password=settings.ntrip.password,
-    )
     gps = GPSManager(
         port=settings.gps.port,
         baudrate=settings.gps.baud,
-        ntrip_config=ntrip_cfg,
+        ntrip_settings=settings.ntrip,
     )
 
     robot_ip = settings.robot.ip
@@ -158,7 +151,7 @@ async def run_mission(runner: MissionRunner) -> bool:
 
     try:
         log_banner("PHASE 1: GPS", char="-", logger=logger)
-        if not gps.connect(use_ntrip=bool(settings.ntrip.username)):
+        if not gps.connect(use_ntrip=bool(settings.ntrip.mountpoints)):
             logger.error("Failed to connect to GPS")
             return False
 
@@ -283,20 +276,13 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
 
     try:
         if use_gps:
-            ntrip_cfg = NTRIPConfig(
-                host=settings.ntrip.host,
-                port=settings.ntrip.port,
-                mountpoint=settings.ntrip.mountpoint,
-                username=settings.ntrip.username,
-                password=settings.ntrip.password,
-            )
             gps = GPSManager(
                 port=settings.gps.port,
                 baudrate=settings.gps.baud,
-                ntrip_config=ntrip_cfg,
+                ntrip_settings=settings.ntrip,
             )
             log_banner("PHASE 1: GPS", char="-", logger=logger)
-            if not gps.connect(use_ntrip=bool(settings.ntrip.username)):
+            if not gps.connect(use_ntrip=bool(settings.ntrip.mountpoints)):
                 logger.error("Failed to connect to GPS")
                 return False
             if not gps.wait_for_fix(
@@ -394,7 +380,8 @@ async def _run_probe_gps(runner: MissionRunner, settings: MissionSettings) -> bo
 
     logger.info(
         f"GPS: {settings.gps.port} @ {settings.gps.baud} | "
-        f"NTRIP: {settings.ntrip.host}:{settings.ntrip.port}/{settings.ntrip.mountpoint}"
+        f"NTRIP: {settings.ntrip.host}:{settings.ntrip.port} "
+        f"mountpoints={settings.ntrip.mountpoints}"
     )
     logger.info(
         f"Probe: duration={settings.probe.duration_sec:.0f}s "
@@ -406,22 +393,15 @@ async def _run_probe_gps(runner: MissionRunner, settings: MissionSettings) -> bo
         log_banner("DRY RUN — not connecting to hardware", logger=logger)
         return True
 
-    ntrip_cfg = NTRIPConfig(
-        host=settings.ntrip.host,
-        port=settings.ntrip.port,
-        mountpoint=settings.ntrip.mountpoint,
-        username=settings.ntrip.username,
-        password=settings.ntrip.password,
-    )
     gps = GPSManager(
         port=settings.gps.port,
         baudrate=settings.gps.baud,
-        ntrip_config=ntrip_cfg,
+        ntrip_settings=settings.ntrip,
     )
 
     try:
         log_banner("PHASE 1: GPS", char="-", logger=logger)
-        if not gps.connect(use_ntrip=bool(settings.ntrip.username)):
+        if not gps.connect(use_ntrip=bool(settings.ntrip.mountpoints)):
             logger.error("Failed to connect to GPS")
             return False
 

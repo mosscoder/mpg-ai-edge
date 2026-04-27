@@ -13,11 +13,13 @@ port = "/dev/ttyACM0"
 baud = 38400
 
 [ntrip]
-host       = "caster.emlid.com"
-port       = 2101
-mountpoint = "MP15774"
-username   = "u26787"
-password   = "492utz"
+host        = "caster.emlid.com"
+port        = 2101
+# Parallel lists: index 0 is primary, subsequent indices are tried in
+# order on failure. All three lists must have the same length.
+mountpoints = ["MP22385", "MP22385a"]
+usernames   = ["u26787",  "u26787"]
+passwords   = ["492utz",  "492utz"]
 
 [robot]
 connection_mode = "LocalSTA"

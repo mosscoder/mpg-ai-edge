@@ -8,6 +8,7 @@ from dataclasses import dataclass
 
 import serial
 
+from go2_survey.config import NTRIPSettings
 from go2_survey.logging_utils import log_banner
 from go2_survey.ntrip import EmlidNTRIPClient, NTRIPConfig
 
@@ -556,52 +557,78 @@ class UBloxRTKGPS:
 
 
 class GPSManager:
-    """High-level GPS manager with NTRIP support.
+    """High-level GPS manager with NTRIP fallback support.
 
-    Explicit args take precedence. If port/baudrate/ntrip_config are
-    omitted, the constructor falls back to GPS_PORT / GPS_BAUD / EMLID_*
-    environment variables for backward compatibility.
+    Takes an `NTRIPSettings` describing one or more endpoints (parallel
+    `mountpoints` / `usernames` / `passwords` lists). On `connect()`,
+    endpoints are tried in order; the first one that succeeds streams
+    RTCM. Logs narrate every attempt.
     """
 
     def __init__(
         self,
         port: str | None = None,
         baudrate: int | None = None,
-        ntrip_config: NTRIPConfig | None = None,
+        ntrip_settings: NTRIPSettings | None = None,
     ):
         self.port = port or os.getenv("GPS_PORT", "/dev/ttyACM0")
         self.baudrate = baudrate or int(os.getenv("GPS_BAUD", "38400"))
-
-        if ntrip_config is None:
-            ntrip_config = NTRIPConfig(
-                host=os.getenv("EMLID_NTRIP_HOST", "caster.emlid.com"),
-                port=int(os.getenv("EMLID_NTRIP_PORT", "2101")),
-                mountpoint=os.getenv("EMLID_MOUNTPOINT", "MP15774"),
-                username=os.getenv("EMLID_USERNAME", ""),
-                password=os.getenv("EMLID_PASSWORD", ""),
-            )
-        self.ntrip_config = ntrip_config
+        self.ntrip_settings = ntrip_settings or NTRIPSettings()
 
         self.gps = UBloxRTKGPS(port=self.port, baudrate=self.baudrate)
-        self.ntrip = EmlidNTRIPClient(ntrip_config)
+        self.ntrip: EmlidNTRIPClient | None = None
         self._connected = False
 
     def connect(self, use_ntrip: bool = True) -> bool:
-        """Connect to GPS and optionally start NTRIP corrections."""
+        """Connect to GPS and optionally start NTRIP corrections.
+
+        If NTRIP is requested but every configured endpoint fails, the
+        manager logs a warning and falls back to GNSS-only mode (still
+        returns True — the GPS itself is usable without RTK).
+        """
         if not self.gps.connect():
             return False
 
-        if use_ntrip and self.ntrip_config.username:
-            if self.ntrip.connect():
+        if use_ntrip and self.ntrip_settings.mountpoints:
+            self.ntrip = self._connect_ntrip_with_fallback()
+            if self.ntrip is not None:
                 self.ntrip.start_correction_stream(self.gps)
             else:
-                logger.warning("NTRIP not available, using GNSS-only mode")
+                n = len(self.ntrip_settings.mountpoints)
+                logger.warning(
+                    f"NTRIP not available (all {n} endpoint(s) failed), "
+                    f"using GNSS-only mode"
+                )
 
         self._connected = True
         return True
 
+    def _connect_ntrip_with_fallback(self) -> EmlidNTRIPClient | None:
+        s = self.ntrip_settings
+        endpoints = list(zip(s.mountpoints, s.usernames, s.passwords))
+        total = len(endpoints)
+        for idx, (mp, user, pw) in enumerate(endpoints):
+            label = "primary" if idx == 0 else f"fallback #{idx}"
+            logger.info(
+                f"NTRIP: trying {label} mountpoint {mp} ({idx + 1}/{total})"
+            )
+            cfg = NTRIPConfig(
+                host=s.host,
+                port=s.port,
+                mountpoint=mp,
+                username=user,
+                password=pw,
+            )
+            client = EmlidNTRIPClient(cfg)
+            if client.connect():
+                logger.info(f"NTRIP: connected via {label} mountpoint {mp}")
+                return client
+            logger.warning(f"NTRIP: {label} mountpoint {mp} failed")
+        return None
+
     def disconnect(self) -> None:
-        self.ntrip.disconnect()
+        if self.ntrip is not None:
+            self.ntrip.disconnect()
         self.gps.disconnect()
         self._connected = False
 

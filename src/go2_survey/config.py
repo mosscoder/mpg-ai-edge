@@ -7,10 +7,11 @@ A mission is a directory containing at minimum:
 Precedence (lowest to highest):
     1. Dataclass defaults
     2. mission.toml fields
-    3. Environment variables (GPS_PORT, EMLID_USERNAME, ...)
+    3. Environment variables (GPS_PORT, EMLID_USERNAMES, ...)
 """
 
 import os
+import sys
 from dataclasses import dataclass, field, fields
 from pathlib import Path
 
@@ -28,11 +29,18 @@ class GPSSettings:
 
 @dataclass
 class NTRIPSettings:
+    """NTRIP caster settings with parallel-list endpoint fallback.
+
+    `mountpoints[i]`, `usernames[i]`, `passwords[i]` together describe
+    endpoint `i`. Index 0 is the primary; subsequent indices are tried
+    in order on failure. All three lists must be the same length.
+    """
+
     host: str = "caster.emlid.com"
     port: int = 2101
-    mountpoint: str = "MP15774"
-    username: str = ""
-    password: str = ""
+    mountpoints: list[str] = field(default_factory=list)
+    usernames: list[str] = field(default_factory=list)
+    passwords: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -110,18 +118,58 @@ def _apply_env_overrides(cfg: MissionSettings) -> None:
         cfg.ntrip.host = env["EMLID_NTRIP_HOST"]
     if "EMLID_NTRIP_PORT" in env:
         cfg.ntrip.port = int(env["EMLID_NTRIP_PORT"])
-    if "EMLID_MOUNTPOINT" in env:
-        cfg.ntrip.mountpoint = env["EMLID_MOUNTPOINT"]
-    if "EMLID_USERNAME" in env:
-        cfg.ntrip.username = env["EMLID_USERNAME"]
-    if "EMLID_PASSWORD" in env:
-        cfg.ntrip.password = env["EMLID_PASSWORD"]
+    if "EMLID_MOUNTPOINTS" in env:
+        cfg.ntrip.mountpoints = _split_csv(env["EMLID_MOUNTPOINTS"])
+    if "EMLID_USERNAMES" in env:
+        cfg.ntrip.usernames = _split_csv(env["EMLID_USERNAMES"])
+    if "EMLID_PASSWORDS" in env:
+        cfg.ntrip.passwords = _split_csv(env["EMLID_PASSWORDS"])
     if "CONNECTION_MODE" in env:
         cfg.robot.connection_mode = env["CONNECTION_MODE"]
     if "ROBOT_IP" in env:
         cfg.robot.ip = env["ROBOT_IP"]
     if "ROBOT_SERIAL" in env:
         cfg.robot.serial = env["ROBOT_SERIAL"]
+
+
+def _split_csv(value: str) -> list[str]:
+    return [item.strip() for item in value.split(",") if item.strip()]
+
+
+_LEGACY_NTRIP_KEYS = {
+    "mountpoint": "mountpoints (list)",
+    "username": "usernames (list)",
+    "password": "passwords (list)",
+}
+
+
+def _check_ntrip_legacy(ntrip_section: dict, mission_file: Path) -> None:
+    """Fail fast if a TOML still uses the pre-fallback scalar keys."""
+    found = [k for k in _LEGACY_NTRIP_KEYS if k in ntrip_section]
+    if not found:
+        return
+    rename_hints = "\n".join(
+        f"  - rename `{k}` to `{_LEGACY_NTRIP_KEYS[k]}`" for k in found
+    )
+    raise ValueError(
+        f"NTRIP config in {mission_file} uses legacy scalar keys "
+        f"({', '.join(found)}); the schema now expects parallel lists.\n"
+        f"{rename_hints}"
+    )
+
+
+def _validate_ntrip(ntrip: NTRIPSettings, mission_file: Path) -> None:
+    """Ensure the three endpoint lists are length-aligned."""
+    n_mp, n_u, n_p = len(ntrip.mountpoints), len(ntrip.usernames), len(ntrip.passwords)
+    if n_mp == n_u == n_p:
+        return
+    msg = (
+        f"NTRIP config invalid in {mission_file}:\n"
+        f"  mountpoints has {n_mp} entries, usernames has {n_u}, passwords has {n_p}.\n"
+        f"  Each list must have the same length (one entry per endpoint)."
+    )
+    print(msg, file=sys.stderr)
+    raise ValueError(msg)
 
 
 def load_mission_config(mission_dir: Path) -> MissionSettings:
@@ -135,10 +183,13 @@ def load_mission_config(mission_dir: Path) -> MissionSettings:
     cfg.description = data.get("description", "")
     cfg.mode = data.get("mode", "nav")
     _apply_section(cfg.gps, data.get("gps", {}))
-    _apply_section(cfg.ntrip, data.get("ntrip", {}))
+    ntrip_section = data.get("ntrip", {})
+    _check_ntrip_legacy(ntrip_section, toml_path)
+    _apply_section(cfg.ntrip, ntrip_section)
     _apply_section(cfg.robot, data.get("robot", {}))
     _apply_section(cfg.navigation, data.get("navigation", {}))
     _apply_section(cfg.probe, data.get("probe", {}))
     _apply_section(cfg.capture, data.get("capture", {}))
     _apply_env_overrides(cfg)
+    _validate_ntrip(cfg.ntrip, toml_path)
     return cfg

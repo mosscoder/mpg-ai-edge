@@ -6,11 +6,11 @@ port = "/dev/ttyACM0"
 baud = 38400
 
 [ntrip]
-host       = "caster.emlid.com"
-port       = 2101
-mountpoint = "MP15774"
-username   = "u26787"
-password   = "492utz"
+host        = "caster.emlid.com"
+port        = 2101
+mountpoints = ["MP22385", "MP22385a"]
+usernames   = ["u26787",  "u26787"]
+passwords   = ["492utz",  "492utz"]
 
 [robot]
 connection_mode = "LocalSTA"
