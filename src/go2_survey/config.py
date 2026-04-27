@@ -158,8 +158,38 @@ def _check_ntrip_legacy(ntrip_section: dict, mission_file: Path) -> None:
     )
 
 
-def _validate_ntrip(ntrip: NTRIPSettings, mission_file: Path) -> None:
-    """Ensure the three endpoint lists are length-aligned."""
+def _coerce_endpoint_list(value, field_name: str, mission_file: Path) -> list[str]:
+    """Accept either a list of strings or a single string (treated as length-1).
+
+    A bare string in TOML (`mountpoints = "MP22385"`) is the natural way
+    to write a single-endpoint config, so we silently wrap it. Anything
+    else (number, bool, list-of-non-strings, ...) raises with a clear
+    message instead of being mishandled downstream.
+    """
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list) and all(isinstance(x, str) for x in value):
+        return value
+    raise TypeError(
+        f"NTRIP config in {mission_file}: `{field_name}` must be a string "
+        f"or a list of strings, got {type(value).__name__} ({value!r})."
+    )
+
+
+def _validate_ntrip(
+    ntrip: NTRIPSettings, mission_file: Path
+) -> None:
+    """Coerce scalar strings to length-1 lists, then check lengths align."""
+    ntrip.mountpoints = _coerce_endpoint_list(
+        ntrip.mountpoints, "mountpoints", mission_file
+    )
+    ntrip.usernames = _coerce_endpoint_list(
+        ntrip.usernames, "usernames", mission_file
+    )
+    ntrip.passwords = _coerce_endpoint_list(
+        ntrip.passwords, "passwords", mission_file
+    )
+
     n_mp, n_u, n_p = len(ntrip.mountpoints), len(ntrip.usernames), len(ntrip.passwords)
     if n_mp == n_u == n_p:
         return
