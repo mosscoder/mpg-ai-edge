@@ -1,5 +1,148 @@
 # Navigation Changelog
 
+## 2026-04-27: v0.4.0 — NTRIP Fallback + Version Banner + Split IMU Log
+
+### Scope
+
+Three independent improvements to the mission runner, plus a coordinated
+change to the on-disk mountpoint. Field deployment moves from `MP15774`
+to the new Emlid base station `MP22385`, with `MP22385a` registered as
+an automatic fallback. Every run log now carries a version banner so
+post-mortems can pin a captured artifact to a specific build. The 20 Hz
+`rt/lf/sportmodestate` IMU stream — previously discarded outside `-v`
+runs — is now preserved by default in a separate `imu.log` artifact.
+
+This is the first changelog entry tagged with a package version. From
+here, every code commit bumps `__version__` (in
+`src/go2_survey/__init__.py` and `pyproject.toml`) so the banner in a
+log file uniquely identifies the build that produced it. Docs-only
+commits (this one included) do not bump.
+
+### 1. NTRIP fallback via parallel mountpoint/credential lists
+
+The single-mountpoint `[ntrip]` schema is replaced with three parallel
+lists. Index 0 is the primary; subsequent indices are tried in order on
+failure. Field crews can now register N caster endpoints without code
+changes, and an outage on the primary base station no longer drops the
+mission to GNSS-only when a working alternative is configured.
+
+```toml
+[ntrip]
+host        = "caster.emlid.com"
+port        = 2101
+mountpoints = ["MP22385", "MP22385a"]
+usernames   = ["u26787",  "u26787"]
+passwords   = ["492utz",  "492utz"]
+```
+
+Fallback orchestration lives in `GPSManager._connect_ntrip_with_fallback`
+(`src/go2_survey/gps.py`). `EmlidNTRIPClient` itself stays
+single-mountpoint — one client = one connection — so each attempt logs
+cleanly and the working client is the one that ends up streaming RTCM:
+
+```
+NTRIP: trying primary mountpoint MP22385 (1/2)
+NTRIP: primary mountpoint MP22385 failed
+NTRIP: trying fallback #1 mountpoint MP22385a (2/2)
+NTRIP: connected via fallback #1 mountpoint MP22385a
+```
+
+If every endpoint fails, `GPSManager` logs `NTRIP not available (all N
+endpoint(s) failed), using GNSS-only mode` and continues — the GPS
+itself is usable without RTK, so the mission isn't aborted on caster
+unavailability.
+
+**Schema is a hard cutover.** `load_mission_config` raises `ValueError`
+if a TOML still uses the legacy scalar keys (`mountpoint` / `username` /
+`password`), naming the file and the rename. A second validator
+(`_validate_ntrip` in `src/go2_survey/config.py`) checks that the three
+lists are length-aligned and reports the mismatch with all three
+lengths so a wrong-length list isn't silently truncated:
+
+```
+NTRIP config invalid in dev/missions/00_parking_lot/mission.toml:
+  mountpoints has 2 entries, usernames has 1, passwords has 2.
+  Each list must have the same length (one entry per endpoint).
+```
+
+The error is printed to stderr (the runtime logger isn't set up at
+config-load time) and raised, so the mission aborts before any GPS or
+NTRIP work begins.
+
+**Env-var overrides** switch to comma-separated lists:
+`EMLID_MOUNTPOINTS="MP22385,MP22385a"`,
+`EMLID_USERNAMES="u26787,u26787"`,
+`EMLID_PASSWORDS="492utz,492utz"`. Old unsuffixed `EMLID_MOUNTPOINT` /
+`EMLID_USERNAME` / `EMLID_PASSWORD` are removed; the same length-mismatch
+validator runs after env vars merge in.
+
+All seven in-tree mission TOMLs were migrated in this commit; the
+`_template/mission.toml` now ships the new schema with explanatory
+comments. `02_camera_test` has no `[ntrip]` section and is unaffected.
+
+Commit: `fb3a72f`.
+
+### 2. Version + git SHA banner at the top of every log
+
+A new helper `_git_short_sha()` in `src/go2_survey/cli.py` runs
+`git rev-parse --short HEAD` (subprocess, 2 s timeout) and falls back
+to `"unknown"` on failure. `setup_logging` emits the banner as the
+first log line:
+
+```
+2026-04-27 08:32:43,379 [INFO] go2_survey.cli: go2-survey v0.4.0 |
+    git df6eb18 | run dir: dev/missions/00_parking_lot/logs/
+    00_parking_lot_2026-04-27_08-32-43
+```
+
+This makes log post-mortems self-describing — no cross-referencing
+file timestamps against `git log`, and no ambiguity about which build
+produced which artifact when running off a tagged release vs. a dirty
+working tree.
+
+Commit: `b7d63da`.
+
+### 3. Per-run log directory: `main.log` + `imu.log`
+
+Replaces the flat `logs/<name>_<TIMESTAMP>.log` file with a per-run
+directory holding two streams:
+
+```
+dev/missions/00_parking_lot/logs/
+└── 00_parking_lot_2026-04-27_08-32-43/
+    ├── main.log    # mission narrative (was: <name>_<ts>.log)
+    └── imu.log     # rt/lf/sportmodestate stream, on by default
+```
+
+`main.log` (and the console mirror) drop the 20 Hz `rt/lf/sportmodestate`
+flood and the `unitree_webrtc_connect` legacy-SDP-probe errors, same as
+before. `imu.log` is new: a dedicated `FileHandler` whose
+`SportModeStateOnlyFilter` (`src/go2_survey/logging_utils.py`) is the
+inverse of `SportModeStateFilter`. It captures only the IMU/position/
+foot stream, runs at DEBUG regardless of root level, and writes whether
+or not `-v` is set.
+
+**Why split the artifacts** rather than gating on `-v`: the prior
+behavior (set up in commit `ffda4b7` on 2026-04-23) discarded the IMU
+stream entirely on default runs, so any post-hoc analysis that wanted
+it — calibration drift checks, gait diagnostics, foot-contact timing —
+required a verbose re-run. With the split, the data is on disk for
+every mission; only the human-readable narrative is filtered.
+
+**`-v`/`--verbose` semantics** narrow as a result: it now controls only
+the root log level (`INFO` → `DEBUG`). The IMU stream is no longer
+gated by it. Help text in `cli.build_parser()` updated accordingly.
+
+Commit: `df6eb18`.
+
+### Hardware validation pending
+
+The NTRIP fallback can only be exercised end-to-end on the robot in the
+field — local dry-runs only confirm config loading and call wiring. The
+log split and version banner are fully verified locally.
+
+---
+
 ## 2026-04-23: NTRIP Credential Rotation + Clean Mission Exit + Log Hygiene
 
 ### Scope
