@@ -11,16 +11,35 @@ Usage:
 import argparse
 import asyncio
 import logging
+import subprocess
 import sys
 import time
 from pathlib import Path
 from typing import Iterator
 
+from go2_survey import __version__
 from go2_survey.logging_utils import (
     SportModeStateFilter,
     WebRTCFallbackNoiseFilter,
 )
 from go2_survey.mission_runner import MissionRunner, run_mission
+
+
+def _git_short_sha() -> str:
+    """Return the current git SHA (short form), or 'unknown' on failure."""
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=_find_repo_root(),
+            capture_output=True,
+            text=True,
+            timeout=2,
+        )
+        if result.returncode == 0:
+            return result.stdout.strip() or "unknown"
+    except (OSError, subprocess.SubprocessError):
+        pass
+    return "unknown"
 
 
 def _find_repo_root(start: Path | None = None) -> Path:
@@ -85,6 +104,12 @@ def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
     for handler in logging.getLogger().handlers:
         for f in filters:
             handler.addFilter(f)
+
+    # Version banner — first line in every log so post-mortems can pin
+    # the run to a specific build.
+    logging.getLogger(__name__).info(
+        f"go2-survey v{__version__} | git {_git_short_sha()} | log: {log_file}"
+    )
 
     return log_file
 
