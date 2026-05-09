@@ -1,3 +1,3 @@
 """go2_survey — Autonomous waypoint navigation for the Unitree Go2 with RTK GPS."""
 
-__version__ = "0.4.1"
+__version__ = "0.5.0"

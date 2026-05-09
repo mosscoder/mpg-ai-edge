@@ -4,6 +4,7 @@ import base64
 import logging
 import socket
 import threading
+import time
 from collections import Counter
 from dataclasses import dataclass
 
@@ -34,6 +35,15 @@ class EmlidNTRIPClient:
         self.correction_count = 0
         self.bytes_forwarded = 0
         self.rtcm_types: Counter = Counter()
+        # Liveness signals for the surrounding system. `connection_alive`
+        # flips False when the worker's recv() returns empty (caster
+        # closed the socket), independent of `connected`/`running` so
+        # GPSManager can detect mid-mission stalls. `last_rtcm_at` is
+        # the monotonic clock at the moment the most recent RTCM frame
+        # was forwarded — pair it with seconds_since_last_rtcm() to
+        # distinguish "corrections flowing" from "receiver float-coast".
+        self.connection_alive = False
+        self.last_rtcm_at: float | None = None
 
     def connect(self) -> bool:
         try:
@@ -51,12 +61,19 @@ class EmlidNTRIPClient:
             if "ICY 200 OK" in response or "200 OK" in response:
                 logger.info(f"Connected to NTRIP mountpoint: {self.config.mountpoint}")
                 self.connected = True
+                self.connection_alive = True
                 return True
             logger.error(f"NTRIP connection failed: {response.strip()}")
             return False
         except Exception as e:
             logger.error(f"Failed to connect to NTRIP caster: {e}")
             return False
+
+    def seconds_since_last_rtcm(self) -> float | None:
+        """How long since we forwarded a frame to the receiver, or None if never."""
+        if self.last_rtcm_at is None:
+            return None
+        return time.monotonic() - self.last_rtcm_at
 
     def _build_ntrip_request(self) -> str:
         auth_string = f"{self.config.username}:{self.config.password}"
@@ -94,6 +111,7 @@ class EmlidNTRIPClient:
                 data = self.socket.recv(4096)
                 if not data:
                     logger.warning("NTRIP connection lost")
+                    self.connection_alive = False
                     break
                 buffer += data
 
@@ -125,17 +143,20 @@ class EmlidNTRIPClient:
                         self.gps_receiver.serial_conn.flush()
                         self.correction_count += 1
                         self.bytes_forwarded += len(rtcm_msg)
+                        self.last_rtcm_at = time.monotonic()
             except Exception as e:
                 # During an intentional disconnect() the socket is
                 # shut down from the main thread to wake a blocked
                 # recv(); don't flag that as an error.
                 if self.running:
                     logger.error(f"Error in correction worker: {e}")
+                self.connection_alive = False
                 break
         logger.info("RTCM correction worker stopped")
 
     def disconnect(self) -> None:
         self.running = False
+        self.connection_alive = False
         # Shutdown the socket BEFORE joining the worker so any blocked
         # recv() wakes up immediately with an error — otherwise the
         # join waits up to `settimeout()` (10s) before the worker

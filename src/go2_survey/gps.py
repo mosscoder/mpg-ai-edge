@@ -3,6 +3,7 @@
 import logging
 import os
 import struct
+import threading
 import time
 from dataclasses import dataclass
 
@@ -11,6 +12,12 @@ import serial
 from go2_survey.config import NTRIPSettings
 from go2_survey.logging_utils import log_banner
 from go2_survey.ntrip import EmlidNTRIPClient, NTRIPConfig
+
+# How many times to retry each NTRIP endpoint before moving on. Each
+# attempt holds the EmlidNTRIPClient's 10s socket timeout, so 3 attempts
+# = up to 30s per endpoint. Across primary + secondary that's ~60s
+# worst-case before we declare NTRIP unavailable.
+NTRIP_ATTEMPTS_PER_ENDPOINT = 3
 
 logger = logging.getLogger(__name__)
 
@@ -557,12 +564,27 @@ class UBloxRTKGPS:
 
 
 class GPSManager:
-    """High-level GPS manager with NTRIP fallback support.
+    """High-level GPS manager with NTRIP fallback + RTCM-freshness state.
 
     Takes an `NTRIPSettings` describing one or more endpoints (parallel
     `mountpoints` / `usernames` / `passwords` lists). On `connect()`,
-    endpoints are tried in order; the first one that succeeds streams
-    RTCM. Logs narrate every attempt.
+    each endpoint is tried in order with up to NTRIP_ATTEMPTS_PER_ENDPOINT
+    retries; the first one that succeeds streams RTCM. Logs narrate
+    every attempt.
+
+    Tracks `state` and `has_active_corrections()` so the navigator can
+    distinguish a real RTK fix (corrections flowing) from receiver
+    float-coast (corrections stale, fix_type still high).
+
+    state transitions:
+      disabled       — no NTRIP configured (mountpoints == [])
+      connecting     — startup, attempting endpoints
+      connected      — actively streaming RTCM, frames recent
+      degraded       — streaming but RTCM age > max_rtcm_age_s (transient)
+      lost           — worker thread exited or never reconnected
+      gnss_only      — all endpoints exhausted, on_unavailable=warn_continue
+      aborted        — all endpoints exhausted, on_unavailable=abort
+      reconnecting   — async reconnect in progress
     """
 
     def __init__(
@@ -570,21 +592,31 @@ class GPSManager:
         port: str | None = None,
         baudrate: int | None = None,
         ntrip_settings: NTRIPSettings | None = None,
+        max_rtcm_age_s: float = 5.0,
     ):
         self.port = port or os.getenv("GPS_PORT", "/dev/ttyACM0")
         self.baudrate = baudrate or int(os.getenv("GPS_BAUD", "38400"))
         self.ntrip_settings = ntrip_settings or NTRIPSettings()
+        self.max_rtcm_age_s = max_rtcm_age_s
 
         self.gps = UBloxRTKGPS(port=self.port, baudrate=self.baudrate)
         self.ntrip: EmlidNTRIPClient | None = None
         self._connected = False
+        self.state: str = (
+            "disabled" if not self.ntrip_settings.mountpoints else "connecting"
+        )
+        self._reconnect_thread: threading.Thread | None = None
+        self._reconnect_lock = threading.Lock()
 
     def connect(self, use_ntrip: bool = True) -> bool:
         """Connect to GPS and optionally start NTRIP corrections.
 
-        If NTRIP is requested but every configured endpoint fails, the
-        manager logs a warning and falls back to GNSS-only mode (still
-        returns True — the GPS itself is usable without RTK).
+        Behavior when every endpoint exhausts its retry budget depends
+        on `ntrip_settings.on_unavailable`:
+          - "warn_continue": log a banner and continue in GNSS-only
+            mode (returns True; mission proceeds).
+          - "abort":         log a fatal banner and return False so the
+            mission aborts before connecting to the robot.
         """
         if not self.gps.connect():
             return False
@@ -593,38 +625,126 @@ class GPSManager:
             self.ntrip = self._connect_ntrip_with_fallback()
             if self.ntrip is not None:
                 self.ntrip.start_correction_stream(self.gps)
+                self.state = "connected"
             else:
-                n = len(self.ntrip_settings.mountpoints)
-                logger.warning(
-                    f"NTRIP not available (all {n} endpoint(s) failed), "
-                    f"using GNSS-only mode"
+                if self.ntrip_settings.on_unavailable == "abort":
+                    self.state = "aborted"
+                    log_banner(
+                        f"NTRIP UNAVAILABLE | "
+                        f"{len(self.ntrip_settings.mountpoints)} endpoint(s) "
+                        f"× {NTRIP_ATTEMPTS_PER_ENDPOINT} attempts exhausted | "
+                        f"Mission aborted (on_unavailable=abort)",
+                        level="error",
+                        char="!",
+                        logger=logger,
+                    )
+                    return False
+                self.state = "gnss_only"
+                log_banner(
+                    f"NTRIP UNAVAILABLE | "
+                    f"{len(self.ntrip_settings.mountpoints)} endpoint(s) "
+                    f"× {NTRIP_ATTEMPTS_PER_ENDPOINT} attempts exhausted | "
+                    f"GNSS-only mode | Float readings will be treated as suspect",
+                    level="warning",
+                    char="!",
+                    logger=logger,
                 )
 
         self._connected = True
         return True
 
     def _connect_ntrip_with_fallback(self) -> EmlidNTRIPClient | None:
+        """Try every endpoint with retries; return first successful client."""
         s = self.ntrip_settings
         endpoints = list(zip(s.mountpoints, s.usernames, s.passwords))
         total = len(endpoints)
+        start = time.monotonic()
+        total_attempts = 0
+
         for idx, (mp, user, pw) in enumerate(endpoints):
             label = "primary" if idx == 0 else f"fallback #{idx}"
-            logger.info(
-                f"NTRIP: trying {label} mountpoint {mp} ({idx + 1}/{total})"
+            for attempt in range(1, NTRIP_ATTEMPTS_PER_ENDPOINT + 1):
+                total_attempts += 1
+                logger.info(
+                    f"NTRIP: trying {label} mountpoint {mp} "
+                    f"({idx + 1}/{total}, attempt {attempt}/"
+                    f"{NTRIP_ATTEMPTS_PER_ENDPOINT})"
+                )
+                cfg = NTRIPConfig(
+                    host=s.host,
+                    port=s.port,
+                    mountpoint=mp,
+                    username=user,
+                    password=pw,
+                )
+                client = EmlidNTRIPClient(cfg)
+                if client.connect():
+                    elapsed = time.monotonic() - start
+                    logger.info(
+                        f"NTRIP: connected via {label} mountpoint {mp} "
+                        f"(took {elapsed:.0f}s, {total_attempts} attempt(s))"
+                    )
+                    return client
+                logger.warning(f"NTRIP: {label} mountpoint {mp} failed")
+            logger.warning(
+                f"NTRIP: {label} mountpoint {mp} exhausted after "
+                f"{NTRIP_ATTEMPTS_PER_ENDPOINT} attempts"
             )
-            cfg = NTRIPConfig(
-                host=s.host,
-                port=s.port,
-                mountpoint=mp,
-                username=user,
-                password=pw,
-            )
-            client = EmlidNTRIPClient(cfg)
-            if client.connect():
-                logger.info(f"NTRIP: connected via {label} mountpoint {mp}")
-                return client
-            logger.warning(f"NTRIP: {label} mountpoint {mp} failed")
         return None
+
+    def has_active_corrections(self) -> bool:
+        """True iff RTCM is actively flowing within max_rtcm_age_s."""
+        if self.ntrip is None or not self.ntrip.connection_alive:
+            return False
+        age = self.ntrip.seconds_since_last_rtcm()
+        if age is None:
+            return False
+        return age < self.max_rtcm_age_s
+
+    def reconnect_ntrip_async(self) -> None:
+        """Kick off NTRIP reconnect in a daemon thread.
+
+        Idempotent: a second call while a reconnect is in flight is a
+        no-op. The navigator calls this when it detects stale RTCM
+        mid-mission so it can keep polling fix without blocking on the
+        retry budget.
+        """
+        with self._reconnect_lock:
+            if self._reconnect_thread is not None and self._reconnect_thread.is_alive():
+                return
+            if self.state in ("aborted", "disabled"):
+                return
+            prior_state = self.state
+            self.state = "reconnecting"
+
+        def _worker() -> None:
+            try:
+                if self.ntrip is not None:
+                    try:
+                        self.ntrip.disconnect()
+                    except Exception:
+                        logger.debug("ntrip.disconnect raised during reconnect", exc_info=True)
+                logger.info("NTRIP reconnect: starting retry loop")
+                client = self._connect_ntrip_with_fallback()
+                if client is not None:
+                    client.start_correction_stream(self.gps)
+                    self.ntrip = client
+                    self.state = "connected"
+                    logger.info("NTRIP reconnect: stream restored")
+                else:
+                    self.state = "lost" if prior_state == "connected" else "gnss_only"
+                    logger.warning(
+                        "NTRIP reconnect: all endpoints exhausted; "
+                        "remaining in GNSS-only mode"
+                    )
+            except Exception:
+                logger.error("NTRIP reconnect worker crashed", exc_info=True)
+                self.state = "lost"
+
+        self._reconnect_thread = threading.Thread(
+            target=_worker, daemon=True, name="ntrip-reconnect"
+        )
+        self._reconnect_thread.start()
 
     def disconnect(self) -> None:
         if self.ntrip is not None:

@@ -34,6 +34,13 @@ class NTRIPSettings:
     `mountpoints[i]`, `usernames[i]`, `passwords[i]` together describe
     endpoint `i`. Index 0 is the primary; subsequent indices are tried
     in order on failure. All three lists must be the same length.
+
+    `on_unavailable` controls behavior when every endpoint exhausts its
+    retry budget (3 attempts each):
+      - "warn_continue": loud warning, mission proceeds in GNSS-only
+        mode with a tightened quality gate (Float treated as suspect).
+      - "abort":         mission aborts before the robot connects.
+        Use for production survey runs that require RTK precision.
     """
 
     host: str = "caster.emlid.com"
@@ -41,6 +48,7 @@ class NTRIPSettings:
     mountpoints: list[str] = field(default_factory=list)
     usernames: list[str] = field(default_factory=list)
     passwords: list[str] = field(default_factory=list)
+    on_unavailable: str = "warn_continue"
 
 
 @dataclass
@@ -58,6 +66,15 @@ class NavigationSettings:
     min_fix_type: int = 4
     max_hacc: float = 0.10
     gps_fix_timeout: int = 300
+    # Mid-mission tolerance for a degraded fix before aborting the leg.
+    # Shorter than gps_fix_timeout because a stationary robot in the
+    # field is a worse failure mode than a longer initial wait.
+    mid_mission_fix_timeout: int = 60
+    # Maximum age of incoming RTCM frames (seconds) before we treat the
+    # receiver's RTK fix as "coasting" — the F9P/F9R holds Float for
+    # ~30-60s after corrections stop, but those readings are increasingly
+    # stale. Below this threshold, RTK readings are trusted.
+    max_rtcm_age_s: float = 5.0
     # Refresh the IMU→true-north offset on each waypoint arrival using
     # GPS+IMU samples already collected during the walk leg. Disable to
     # preserve the legacy single-shot calibration set on the first leg.
@@ -176,6 +193,9 @@ def _coerce_endpoint_list(value, field_name: str, mission_file: Path) -> list[st
     )
 
 
+_VALID_ON_UNAVAILABLE = ("warn_continue", "abort")
+
+
 def _validate_ntrip(
     ntrip: NTRIPSettings, mission_file: Path
 ) -> None:
@@ -191,15 +211,23 @@ def _validate_ntrip(
     )
 
     n_mp, n_u, n_p = len(ntrip.mountpoints), len(ntrip.usernames), len(ntrip.passwords)
-    if n_mp == n_u == n_p:
-        return
-    msg = (
-        f"NTRIP config invalid in {mission_file}:\n"
-        f"  mountpoints has {n_mp} entries, usernames has {n_u}, passwords has {n_p}.\n"
-        f"  Each list must have the same length (one entry per endpoint)."
-    )
-    print(msg, file=sys.stderr)
-    raise ValueError(msg)
+    if n_mp != n_u or n_mp != n_p:
+        msg = (
+            f"NTRIP config invalid in {mission_file}:\n"
+            f"  mountpoints has {n_mp} entries, usernames has {n_u}, passwords has {n_p}.\n"
+            f"  Each list must have the same length (one entry per endpoint)."
+        )
+        print(msg, file=sys.stderr)
+        raise ValueError(msg)
+
+    if ntrip.on_unavailable not in _VALID_ON_UNAVAILABLE:
+        msg = (
+            f"NTRIP config invalid in {mission_file}:\n"
+            f"  on_unavailable = {ntrip.on_unavailable!r} is not one of "
+            f"{list(_VALID_ON_UNAVAILABLE)}."
+        )
+        print(msg, file=sys.stderr)
+        raise ValueError(msg)
 
 
 def load_mission_config(mission_dir: Path) -> MissionSettings:

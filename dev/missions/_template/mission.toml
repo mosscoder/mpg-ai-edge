@@ -16,10 +16,17 @@ baud = 38400
 host        = "caster.emlid.com"
 port        = 2101
 # Parallel lists: index 0 is primary, subsequent indices are tried in
-# order on failure. All three lists must have the same length.
+# order on failure (3 attempts per endpoint before moving on). All
+# three lists must have the same length.
 mountpoints = ["MP22385", "MP22385a"]
 usernames   = ["u26787",  "u26787"]
 passwords   = ["492utz",  "492utz"]
+# What to do when every endpoint exhausts its retry budget:
+#   "warn_continue" (default) — proceed in GNSS-only mode with a
+#       tightened quality gate (Float treated as suspect)
+#   "abort"                   — refuse to start the mission. Use for
+#       production survey runs that require RTK precision.
+# on_unavailable = "abort"
 
 [robot]
 connection_mode = "LocalSTA"
@@ -27,9 +34,11 @@ connection_mode = "LocalSTA"
 # serial = "..."              # optional; alternative to ip
 
 [navigation]
-arrival_tolerance = 0.5    # meters — stop when within this distance of a waypoint
-max_velocity      = 0.5    # m/s   — forward speed cap
-rotation_rate     = 0.8    # rad/s — rotation speed during turns
-min_fix_type      = 4      # 4=GNSS+DR, 5=RTK Float, 6=RTK Fixed
-max_hacc          = 0.10   # meters — pause nav if hAcc degrades above this
-gps_fix_timeout   = 300    # seconds — max wait for initial fix
+arrival_tolerance       = 0.5    # meters — stop when within this distance of a waypoint
+max_velocity            = 0.5    # m/s   — forward speed cap
+rotation_rate           = 0.8    # rad/s — rotation speed during turns
+min_fix_type            = 4      # 4=GNSS+DR, 5=RTK Float, 6=RTK Fixed
+max_hacc                = 0.10   # meters — pause nav if hAcc degrades above this
+gps_fix_timeout         = 300    # seconds — max wait for INITIAL fix
+mid_mission_fix_timeout = 60     # seconds — max pause once underway before aborting the leg
+max_rtcm_age_s          = 5.0    # seconds — beyond this, RTK readings are treated as "coasting"

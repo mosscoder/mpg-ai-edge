@@ -96,6 +96,7 @@ async def run_mission(runner: MissionRunner) -> bool:
         port=settings.gps.port,
         baudrate=settings.gps.baud,
         ntrip_settings=settings.ntrip,
+        max_rtcm_age_s=settings.navigation.max_rtcm_age_s,
     )
 
     robot_ip = settings.robot.ip
@@ -146,6 +147,7 @@ async def run_mission(runner: MissionRunner) -> bool:
         arrival_tolerance=settings.navigation.arrival_tolerance,
         min_fix_type=settings.navigation.min_fix_type,
         max_hacc=settings.navigation.max_hacc,
+        gps_timeout=settings.navigation.mid_mission_fix_timeout,
         imu_recalibrate_on_arrival=settings.navigation.imu_recalibrate_on_arrival,
     )
 
@@ -397,6 +399,7 @@ async def _run_probe_gps(runner: MissionRunner, settings: MissionSettings) -> bo
         port=settings.gps.port,
         baudrate=settings.gps.baud,
         ntrip_settings=settings.ntrip,
+        max_rtcm_age_s=settings.navigation.max_rtcm_age_s,
     )
 
     try:
