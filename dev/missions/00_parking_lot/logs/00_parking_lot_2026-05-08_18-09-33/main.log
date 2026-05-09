@@ -1,0 +1,52 @@
+2026-05-08 18:09:33,888 [INFO] go2_survey.cli: go2-survey v0.4.1 | git db97fc2 | run dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/logs/00_parking_lot_2026-05-08_18-09-33
+2026-05-08 18:09:33,888 [INFO] go2_survey.cli: Logging to: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/logs/00_parking_lot_2026-05-08_18-09-33/main.log (+ imu.log)
+2026-05-08 18:09:33,888 [INFO] go2_survey.cli: Mission dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot
+2026-05-08 18:09:33,891 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-08 18:09:33,891 [INFO] go2_survey.mission_runner: ================= MISSION: 00_parking_lot ==================
+2026-05-08 18:09:33,891 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-08 18:09:33,891 [INFO] go2_survey.mission_runner: Parking lot two-waypoint circuit (first successful autonomous run, 2026-04-01)
+2026-05-08 18:09:33,892 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:09:33,892 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-05-08 18:09:33,892 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:09:33,894 [INFO] go2_survey.waypoints: Loaded 2 waypoints from /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/waypoints.geojson
+2026-05-08 18:09:33,894 [INFO] go2_survey.mission_runner: Loaded 2 waypoint(s):
+2026-05-08 18:09:33,894 [INFO] go2_survey.mission_runner:   1. waypoint_1: (46.86164631, -113.99780057)
+2026-05-08 18:09:33,894 [INFO] go2_survey.mission_runner:   2. waypoint_2: (46.86154957, -113.99796955)
+2026-05-08 18:09:33,895 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101 mountpoints=['MP22385', 'MP22385a'] | Robot: LocalSTA
+2026-05-08 18:09:33,895 [INFO] go2_survey.mission_runner: Nav: tol=0.5m vmax=0.5m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-05-08 18:09:33,895 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:09:33,895 [INFO] go2_survey.mission_runner: ---------------- AUTO-DISCOVERING ROBOT IP -----------------
+2026-05-08 18:09:33,895 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:09:33,895 [INFO] go2_survey.mission_runner: robot.ip not set in mission.toml and ROBOT_IP env var not set; scanning local network for a Go2 (nmap ports 8081/9991)...
+2026-05-08 18:09:33,904 [INFO] go2_survey.discovery: Scanning 10.11.160.241/24 for Go2 ports 8081/9991...
+2026-05-08 18:09:36,471 [INFO] go2_survey.mission_runner: Auto-discovered Go2 at 10.11.160.5
+2026-05-08 18:09:36,472 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:09:36,472 [INFO] go2_survey.mission_runner: ----------------------- PHASE 1: GPS -----------------------
+2026-05-08 18:09:36,472 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:09:36,476 [INFO] go2_survey.gps: Connected to GPS on /dev/ttyACM0 @ 38400 baud
+2026-05-08 18:09:36,476 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2)
+2026-05-08 18:09:36,477 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-08 18:09:44,220 [INFO] go2_survey.ntrip: Connected to NTRIP mountpoint: MP22385
+2026-05-08 18:09:44,221 [INFO] go2_survey.gps: NTRIP: connected via primary mountpoint MP22385
+2026-05-08 18:09:44,222 [INFO] go2_survey.ntrip: Started RTCM correction stream
+2026-05-08 18:09:44,222 [INFO] go2_survey.gps: Waiting for GPS fix (min type 4)...
+2026-05-08 18:09:55,900 [INFO] go2_survey.gps: RTK Float achieved! Lat: 46.86164010, Lon: -113.99791970, h: 964.36m, hMSL: 982.02m hAcc: 0.133m pDOP: 1.28
+2026-05-08 18:09:55,900 [INFO] go2_survey.gps: ============================================================
+2026-05-08 18:09:55,901 [INFO] go2_survey.gps: ===== GPS RTK Float ACHIEVED | hAcc: 0.133m pDOP: 1.28 =====
+2026-05-08 18:09:55,901 [INFO] go2_survey.gps: ============================================================
+2026-05-08 18:09:56,113 [INFO] go2_survey.mission_runner: Start position: (46.86164000, -113.99791970) hAcc: 0.121m
+2026-05-08 18:09:56,114 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:09:56,114 [INFO] go2_survey.mission_runner: ---------------------- PHASE 2: ROBOT ----------------------
+2026-05-08 18:09:56,114 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:09:56,114 [INFO] go2_survey.robot: Connecting via LocalSTA (IP: 10.11.160.5)
+2026-05-08 18:09:56,259 [INFO] root: Creating offer...
+2026-05-08 18:09:56,282 [INFO] root: Trying to send SDP using the old method...
+2026-05-08 18:09:56,305 [INFO] root: Falling back to the new method...
+2026-05-08 18:09:59,283 [ERROR] root: An error occurred: ('Connection aborted.', RemoteDisconnected('Remote end closed connection without response'))
+2026-05-08 18:09:59,285 [ERROR] root: New method failed to send SDP.
+2026-05-08 18:09:59,285 [INFO] go2_survey.robot: Stopping robot
+2026-05-08 18:09:59,340 [WARNING] go2_survey.ntrip: NTRIP connection lost
+2026-05-08 18:09:59,341 [INFO] go2_survey.ntrip: RTCM correction worker stopped
+2026-05-08 18:09:59,342 [INFO] go2_survey.ntrip: Disconnected from NTRIP. Forwarded 34 messages.
+2026-05-08 18:09:59,344 [INFO] go2_survey.gps: GPS connection closed
+2026-05-08 18:09:59,344 [INFO] go2_survey.mission_runner: Connections closed

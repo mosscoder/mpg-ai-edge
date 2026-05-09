@@ -1,0 +1,476 @@
+2026-05-08 18:10:21,132 [INFO] go2_survey.cli: go2-survey v0.4.1 | git db97fc2 | run dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/logs/00_parking_lot_2026-05-08_18-10-21
+2026-05-08 18:10:21,133 [INFO] go2_survey.cli: Logging to: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/logs/00_parking_lot_2026-05-08_18-10-21/main.log (+ imu.log)
+2026-05-08 18:10:21,133 [INFO] go2_survey.cli: Mission dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot
+2026-05-08 18:10:21,135 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-08 18:10:21,135 [INFO] go2_survey.mission_runner: ================= MISSION: 00_parking_lot ==================
+2026-05-08 18:10:21,136 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-08 18:10:21,136 [INFO] go2_survey.mission_runner: Parking lot two-waypoint circuit (first successful autonomous run, 2026-04-01)
+2026-05-08 18:10:21,136 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:10:21,136 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-05-08 18:10:21,136 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:10:21,137 [INFO] go2_survey.waypoints: Loaded 2 waypoints from /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/waypoints.geojson
+2026-05-08 18:10:21,137 [INFO] go2_survey.mission_runner: Loaded 2 waypoint(s):
+2026-05-08 18:10:21,137 [INFO] go2_survey.mission_runner:   1. waypoint_1: (46.86164631, -113.99780057)
+2026-05-08 18:10:21,137 [INFO] go2_survey.mission_runner:   2. waypoint_2: (46.86154957, -113.99796955)
+2026-05-08 18:10:21,137 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101 mountpoints=['MP22385', 'MP22385a'] | Robot: LocalSTA
+2026-05-08 18:10:21,137 [INFO] go2_survey.mission_runner: Nav: tol=0.5m vmax=0.5m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-05-08 18:10:21,137 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:10:21,138 [INFO] go2_survey.mission_runner: ---------------- AUTO-DISCOVERING ROBOT IP -----------------
+2026-05-08 18:10:21,138 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:10:21,138 [INFO] go2_survey.mission_runner: robot.ip not set in mission.toml and ROBOT_IP env var not set; scanning local network for a Go2 (nmap ports 8081/9991)...
+2026-05-08 18:10:21,146 [INFO] go2_survey.discovery: Scanning 10.11.160.241/24 for Go2 ports 8081/9991...
+2026-05-08 18:10:23,449 [INFO] go2_survey.mission_runner: Auto-discovered Go2 at 10.11.160.5
+2026-05-08 18:10:23,451 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:10:23,455 [INFO] go2_survey.mission_runner: ----------------------- PHASE 1: GPS -----------------------
+2026-05-08 18:10:23,455 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:10:23,457 [INFO] go2_survey.gps: Connected to GPS on /dev/ttyACM0 @ 38400 baud
+2026-05-08 18:10:23,457 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2)
+2026-05-08 18:10:23,458 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-08 18:10:33,809 [ERROR] go2_survey.ntrip: Failed to connect to NTRIP caster: timed out
+2026-05-08 18:10:33,811 [WARNING] go2_survey.gps: NTRIP: primary mountpoint MP22385 failed
+2026-05-08 18:10:33,811 [INFO] go2_survey.gps: NTRIP: trying fallback #1 mountpoint MP22385a (2/2)
+2026-05-08 18:10:33,813 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-08 18:10:41,707 [ERROR] go2_survey.ntrip: Failed to connect to NTRIP caster: [Errno 104] Connection reset by peer
+2026-05-08 18:10:41,708 [WARNING] go2_survey.gps: NTRIP: fallback #1 mountpoint MP22385a failed
+2026-05-08 18:10:41,709 [WARNING] go2_survey.gps: NTRIP not available (all 2 endpoint(s) failed), using GNSS-only mode
+2026-05-08 18:10:41,710 [INFO] go2_survey.gps: Waiting for GPS fix (min type 4)...
+2026-05-08 18:10:42,898 [INFO] go2_survey.gps: RTK Float achieved! Lat: 46.86164200, Lon: -113.99791930, h: 960.44m, hMSL: 978.10m hAcc: 0.052m pDOP: 1.28
+2026-05-08 18:10:42,899 [INFO] go2_survey.gps: ============================================================
+2026-05-08 18:10:42,900 [INFO] go2_survey.gps: ===== GPS RTK Float ACHIEVED | hAcc: 0.052m pDOP: 1.28 =====
+2026-05-08 18:10:42,900 [INFO] go2_survey.gps: ============================================================
+2026-05-08 18:10:43,106 [INFO] go2_survey.mission_runner: Start position: (46.86164200, -113.99791930) hAcc: 0.052m
+2026-05-08 18:10:43,106 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:10:43,106 [INFO] go2_survey.mission_runner: ---------------------- PHASE 2: ROBOT ----------------------
+2026-05-08 18:10:43,107 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:10:43,107 [INFO] go2_survey.robot: Connecting via LocalSTA (IP: 10.11.160.5)
+2026-05-08 18:10:43,182 [INFO] root: Creating offer...
+2026-05-08 18:10:43,201 [INFO] root: Trying to send SDP using the old method...
+2026-05-08 18:10:43,214 [INFO] root: Falling back to the new method...
+2026-05-08 18:10:43,521 [INFO] root: SDP successfully sent using the new method.
+2026-05-08 18:10:43,540 [INFO] root: Track recieved: audio
+2026-05-08 18:10:43,541 [INFO] root: Track recieved: video
+2026-05-08 18:10:43,735 [INFO] root: Received message on data channel: {"type":"validation","data":"00i6bG8o9eIN7VoJCxp"}
+2026-05-08 18:10:43,736 [INFO] root: Data channel opened
+2026-05-08 18:10:43,737 [INFO] root: > message sent: {"type": "validation", "topic": "", "data": "sLpp8XBPzBUAxfUeG3EA+Q=="}
+2026-05-08 18:10:43,745 [INFO] root: Received message on data channel: {"type":"validation", "data":"Validation Ok."}
+2026-05-08 18:10:43,745 [INFO] root: Validation succeed
+2026-05-08 18:10:43,747 [INFO] root: Received message on data channel: {"type":"errors","data":[]}
+2026-05-08 18:10:43,843 [INFO] go2_survey.robot: WebRTC connected
+2026-05-08 18:10:43,844 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 168983454, "api_id": 1001}}, "parameter": ""}}
+2026-05-08 18:10:43,867 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1001,"id":168983454},"status":{"code":0}},"data":"{\"form\":\"0\",\"name\":\"mcf\"}"}}
+2026-05-08 18:10:43,868 [INFO] go2_survey.robot: Robot API ready
+2026-05-08 18:10:43,869 [INFO] go2_survey.robot: Subscribed to sport mode state (IMU)
+2026-05-08 18:10:43,869 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 168983697, "api_id": 1001}}, "parameter": ""}}
+2026-05-08 18:10:43,884 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1001,"id":168983697},"status":{"code":0}},"data":"{\"form\":\"0\",\"name\":\"mcf\"}"}}
+2026-05-08 18:10:43,884 [INFO] go2_survey.robot: Current motion mode: mcf
+2026-05-08 18:10:43,885 [INFO] go2_survey.robot: Switching to normal mode...
+2026-05-08 18:10:43,885 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 168983881, "api_id": 1002}}, "parameter": "{\"name\": \"normal\"}"}}
+2026-05-08 18:10:43,893 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1002,"id":168983881},"status":{"code":7004}},"data":""}}
+2026-05-08 18:10:44,747 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "4937a894-315e-4c04-ae44-b343b5dd035f"}}
+2026-05-08 18:10:44,755 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"4937a894-315e-4c04-ae44-b343b5dd035f"}}
+2026-05-08 18:10:44,755 [INFO] root: Network status message received.
+2026-05-08 18:10:45,256 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "af7d1759-56fe-4d8b-bfd3-6f2980aade78"}}
+2026-05-08 18:10:45,264 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"af7d1759-56fe-4d8b-bfd3-6f2980aade78"}}
+2026-05-08 18:10:45,264 [INFO] root: Network status message received.
+2026-05-08 18:10:45,746 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:10:45", "timeInNum": 1778285445}}
+2026-05-08 18:10:45,755 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:10:45,755 [INFO] root: Heartbeat response received.
+2026-05-08 18:10:45,766 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "26eb7290-ad22-4cd6-904b-b31798db59b2"}}
+2026-05-08 18:10:45,774 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"26eb7290-ad22-4cd6-904b-b31798db59b2"}}
+2026-05-08 18:10:45,774 [INFO] root: Network status message received.
+2026-05-08 18:10:46,276 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "df5cc60b-a663-4c31-9ca4-52ed6e4fed1e"}}
+2026-05-08 18:10:46,285 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"df5cc60b-a663-4c31-9ca4-52ed6e4fed1e"}}
+2026-05-08 18:10:46,286 [INFO] root: Network status message received.
+2026-05-08 18:10:46,788 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "4a01773c-941d-4a95-a691-1c69e2ec8b84"}}
+2026-05-08 18:10:46,796 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"4a01773c-941d-4a95-a691-1c69e2ec8b84"}}
+2026-05-08 18:10:46,797 [INFO] root: Network status message received.
+2026-05-08 18:10:47,298 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "45735b6a-3bdb-43d4-ae34-278071a1f46f"}}
+2026-05-08 18:10:47,332 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"NetworkStatus.ON_WIFI_CONNECTED","uuid":"45735b6a-3bdb-43d4-ae34-278071a1f46f"}}
+2026-05-08 18:10:47,333 [INFO] root: Network status message received.
+2026-05-08 18:10:47,748 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:10:47", "timeInNum": 1778285447}}
+2026-05-08 18:10:47,760 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:10:47,760 [INFO] root: Heartbeat response received.
+2026-05-08 18:10:48,894 [INFO] go2_survey.robot: BalanceStand...
+2026-05-08 18:10:48,895 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168989329, "api_id": 1002}}, "parameter": ""}}
+2026-05-08 18:10:48,906 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":168989329},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:49,749 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:10:49", "timeInNum": 1778285449}}
+2026-05-08 18:10:49,757 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:10:49,758 [INFO] root: Heartbeat response received.
+2026-05-08 18:10:49,908 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:10:49,908 [INFO] go2_survey.mission_runner: ------------- PHASE 3: NAVIGATE 2 WAYPOINT(S) --------------
+2026-05-08 18:10:49,908 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-08 18:10:49,908 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-08 18:10:49,909 [INFO] go2_survey.mission_runner: ================= WAYPOINT 1/2: waypoint_1 =================
+2026-05-08 18:10:49,909 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-08 18:10:49,909 [INFO] go2_survey.navigator: Navigating to waypoint_1: (46.86164631, -113.99780057)
+2026-05-08 18:10:49,909 [INFO] go2_survey.navigator: ============================================================
+2026-05-08 18:10:49,909 [INFO] go2_survey.navigator: ================= NAVIGATING TO waypoint_1 =================
+2026-05-08 18:10:49,910 [INFO] go2_survey.navigator: ============================================================
+2026-05-08 18:10:49,910 [INFO] go2_survey.robot: BalanceStand...
+2026-05-08 18:10:49,910 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168989980, "api_id": 1002}}, "parameter": ""}}
+2026-05-08 18:10:49,919 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":168989980},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:50,920 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-08 18:10:50,921 [INFO] go2_survey.navigator: --------------------- CALIBRATING IMU ----------------------
+2026-05-08 18:10:50,921 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-08 18:10:51,105 [INFO] go2_survey.navigator: IMU calibration started (hAcc: 0.048m) - walking forward to calibrate...
+2026-05-08 18:10:51,106 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-08 18:10:51,106 [INFO] go2_survey.navigator: ----------------- IMU CALIBRATION STARTED ------------------
+2026-05-08 18:10:51,106 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-08 18:10:51,107 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168991373, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-08 18:10:51,116 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":168991373},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:51,265 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778285451,"uuid":"7f54c3f2-1fc8-40ef-82e9-0c0a75f026d8"}}
+2026-05-08 18:10:51,266 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778285451, "uuid": "7f54c3f2-1fc8-40ef-82e9-0c0a75f026d8"}}
+2026-05-08 18:10:51,496 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168991463, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-08 18:10:51,507 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":168991463},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:51,896 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168991429, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-08 18:10:51,898 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:10:51", "timeInNum": 1778285451}}
+2026-05-08 18:10:51,905 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:10:51,906 [INFO] root: Heartbeat response received.
+2026-05-08 18:10:51,907 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":168991429},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:52,295 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168992484, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-08 18:10:52,304 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":168992484},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:52,695 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168992437, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-08 18:10:52,704 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":168992437},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:53,104 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168992933, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-08 18:10:53,115 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":168992933},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:53,495 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168993872, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-08 18:10:53,506 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":168993872},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:53,896 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168994322, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-08 18:10:53,900 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:10:53", "timeInNum": 1778285453}}
+2026-05-08 18:10:53,906 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":168994322},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:53,908 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:10:53,908 [INFO] root: Heartbeat response received.
+2026-05-08 18:10:54,294 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168994214, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-08 18:10:54,306 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":168994214},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:54,695 [INFO] go2_survey.navigator: IMU calibrated! Offset: 73.7° (GPS bearing: 113.1°, IMU yaw: -39.4°, hAcc: 0.049m, disp: 1.56m)
+2026-05-08 18:10:54,696 [INFO] go2_survey.navigator: ============================================================
+2026-05-08 18:10:54,696 [INFO] go2_survey.navigator: ============ IMU CALIBRATED | Offset: 73.7 deg =============
+2026-05-08 18:10:54,696 [INFO] go2_survey.navigator: ============================================================
+2026-05-08 18:10:54,697 [INFO] go2_survey.robot: Stopping robot
+2026-05-08 18:10:54,697 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168994896, "api_id": 1003}}, "parameter": ""}}
+2026-05-08 18:10:54,706 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":168994896},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:54,706 [INFO] go2_survey.robot: BalanceStand...
+2026-05-08 18:10:54,707 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168994780, "api_id": 1002}}, "parameter": ""}}
+2026-05-08 18:10:54,716 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":168994780},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:55,896 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-08 18:10:55,897 [INFO] go2_survey.navigator: ------------------- TURNING TO WAYPOINT --------------------
+2026-05-08 18:10:55,897 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-08 18:10:55,897 [INFO] go2_survey.navigator: Turn direction: CCW (heading=112.5° bearing=82.1° error=-30.3°)
+2026-05-08 18:10:55,897 [INFO] go2_survey.robot: BalanceStand...
+2026-05-08 18:10:55,898 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168996103, "api_id": 1002}}, "parameter": ""}}
+2026-05-08 18:10:55,902 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:10:55", "timeInNum": 1778285455}}
+2026-05-08 18:10:55,908 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":168996103},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:55,909 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:10:55,910 [INFO] root: Heartbeat response received.
+2026-05-08 18:10:57,102 [INFO] go2_survey.navigator: [turn] hdg=112.4° brg=82.3° err=-30.2°
+2026-05-08 18:10:57,103 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168997139, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": 0.8}"}}
+2026-05-08 18:10:57,111 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":168997139},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:57,298 [INFO] go2_survey.robot: Stopping robot
+2026-05-08 18:10:57,299 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168997392, "api_id": 1003}}, "parameter": ""}}
+2026-05-08 18:10:57,308 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":168997392},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:57,309 [INFO] go2_survey.navigator: Aligned to waypoint — heading: 111.3° (error: -28.9°)
+2026-05-08 18:10:57,309 [INFO] go2_survey.robot: BalanceStand...
+2026-05-08 18:10:57,309 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168996798, "api_id": 1002}}, "parameter": ""}}
+2026-05-08 18:10:57,317 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":168996798},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:57,903 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:10:57", "timeInNum": 1778285457}}
+2026-05-08 18:10:57,910 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:10:57,910 [INFO] root: Heartbeat response received.
+2026-05-08 18:10:58,318 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-08 18:10:58,318 [INFO] go2_survey.navigator: ------------------- WALKING TO WAYPOINT --------------------
+2026-05-08 18:10:58,318 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-08 18:10:58,492 [WARNING] go2_survey.navigator: GPS fix lost or degraded (type 3, hAcc 0.064m), pausing robot...
+2026-05-08 18:10:58,493 [WARNING] go2_survey.navigator: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+2026-05-08 18:10:58,493 [WARNING] go2_survey.navigator: !!!! GPS FIX LOST | type 3, hAcc 0.064m | robot paused !!!!!
+2026-05-08 18:10:58,493 [WARNING] go2_survey.navigator: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+2026-05-08 18:10:58,493 [INFO] go2_survey.robot: Stopping robot
+2026-05-08 18:10:58,494 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 168998725, "api_id": 1003}}, "parameter": ""}}
+2026-05-08 18:10:58,504 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":168998725},"status":{"code":0}},"data":""}}
+2026-05-08 18:10:59,904 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:10:59", "timeInNum": 1778285459}}
+2026-05-08 18:10:59,911 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:10:59,911 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:01,906 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:01", "timeInNum": 1778285461}}
+2026-05-08 18:11:01,913 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:01,914 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:03,907 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:03", "timeInNum": 1778285463}}
+2026-05-08 18:11:03,913 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:03,913 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:05,910 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:05", "timeInNum": 1778285465}}
+2026-05-08 18:11:05,919 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:05,919 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:07,911 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:07", "timeInNum": 1778285467}}
+2026-05-08 18:11:07,919 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:07,919 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:09,913 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:09", "timeInNum": 1778285469}}
+2026-05-08 18:11:09,920 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:09,920 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:11,274 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778285471,"uuid":"f7799d32-8c7f-4e24-8c3e-2d430762c388"}}
+2026-05-08 18:11:11,275 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778285471, "uuid": "f7799d32-8c7f-4e24-8c3e-2d430762c388"}}
+2026-05-08 18:11:11,914 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:11", "timeInNum": 1778285471}}
+2026-05-08 18:11:11,923 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:11,923 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:13,915 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:13", "timeInNum": 1778285473}}
+2026-05-08 18:11:13,923 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:13,924 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:14,102 [INFO] go2_survey.navigator: GPS fix lost -- still waiting... (16s / 300s timeout)
+2026-05-08 18:11:15,916 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:15", "timeInNum": 1778285475}}
+2026-05-08 18:11:15,925 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:15,925 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:17,917 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:17", "timeInNum": 1778285477}}
+2026-05-08 18:11:17,925 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:17,925 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:19,918 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:19", "timeInNum": 1778285479}}
+2026-05-08 18:11:19,926 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:19,926 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:21,919 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:21", "timeInNum": 1778285481}}
+2026-05-08 18:11:21,927 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:21,927 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:23,921 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:23", "timeInNum": 1778285483}}
+2026-05-08 18:11:23,929 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:23,930 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:25,922 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:25", "timeInNum": 1778285485}}
+2026-05-08 18:11:25,930 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:25,930 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:27,925 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:27", "timeInNum": 1778285487}}
+2026-05-08 18:11:27,932 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:27,933 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:29,689 [INFO] go2_survey.navigator: GPS fix lost -- still waiting... (31s / 300s timeout)
+2026-05-08 18:11:29,926 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:29", "timeInNum": 1778285489}}
+2026-05-08 18:11:29,934 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:29,934 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:31,282 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778285491,"uuid":"b2ddc290-ea79-4b24-82b8-94f055db2282"}}
+2026-05-08 18:11:31,282 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778285491, "uuid": "b2ddc290-ea79-4b24-82b8-94f055db2282"}}
+2026-05-08 18:11:31,926 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:31", "timeInNum": 1778285491}}
+2026-05-08 18:11:31,934 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:31,935 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:33,928 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:33", "timeInNum": 1778285493}}
+2026-05-08 18:11:33,937 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:33,937 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:35,929 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:35", "timeInNum": 1778285495}}
+2026-05-08 18:11:35,937 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:35,937 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:37,932 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:37", "timeInNum": 1778285497}}
+2026-05-08 18:11:37,939 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:37,940 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:39,933 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:39", "timeInNum": 1778285499}}
+2026-05-08 18:11:39,941 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:39,941 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:41,935 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:41", "timeInNum": 1778285501}}
+2026-05-08 18:11:41,943 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:41,944 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:43,936 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:43", "timeInNum": 1778285503}}
+2026-05-08 18:11:43,944 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:43,945 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:44,689 [INFO] go2_survey.navigator: GPS fix lost -- still waiting... (46s / 300s timeout)
+2026-05-08 18:11:45,937 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:45", "timeInNum": 1778285505}}
+2026-05-08 18:11:45,946 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:45,946 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:47,938 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:47", "timeInNum": 1778285507}}
+2026-05-08 18:11:47,946 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:47,946 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:49,940 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:49", "timeInNum": 1778285509}}
+2026-05-08 18:11:49,947 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:49,947 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:51,295 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778285511,"uuid":"ef185c32-cd65-4c0f-9de6-75d4476ce202"}}
+2026-05-08 18:11:51,296 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778285511, "uuid": "ef185c32-cd65-4c0f-9de6-75d4476ce202"}}
+2026-05-08 18:11:51,942 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:51", "timeInNum": 1778285511}}
+2026-05-08 18:11:51,950 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:51,951 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:53,943 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:53", "timeInNum": 1778285513}}
+2026-05-08 18:11:53,951 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:53,951 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:55,945 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:55", "timeInNum": 1778285515}}
+2026-05-08 18:11:55,953 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:55,953 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:57,948 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:57", "timeInNum": 1778285517}}
+2026-05-08 18:11:57,954 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:57,955 [INFO] root: Heartbeat response received.
+2026-05-08 18:11:59,949 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:11:59", "timeInNum": 1778285519}}
+2026-05-08 18:11:59,956 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:11:59,957 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:00,287 [INFO] go2_survey.navigator: GPS fix lost -- still waiting... (62s / 300s timeout)
+2026-05-08 18:12:01,952 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:01", "timeInNum": 1778285521}}
+2026-05-08 18:12:01,959 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:01,959 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:03,953 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:03", "timeInNum": 1778285523}}
+2026-05-08 18:12:03,961 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:03,962 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:05,954 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:05", "timeInNum": 1778285525}}
+2026-05-08 18:12:05,962 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:05,963 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:07,955 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:07", "timeInNum": 1778285527}}
+2026-05-08 18:12:07,963 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:07,964 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:09,956 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:09", "timeInNum": 1778285529}}
+2026-05-08 18:12:09,964 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:09,964 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:11,291 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778285531,"uuid":"2aca4069-92fa-41ed-8b4b-b1dba31f0ec9"}}
+2026-05-08 18:12:11,292 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778285531, "uuid": "2aca4069-92fa-41ed-8b4b-b1dba31f0ec9"}}
+2026-05-08 18:12:11,957 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:11", "timeInNum": 1778285531}}
+2026-05-08 18:12:11,964 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:11,964 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:13,958 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:13", "timeInNum": 1778285533}}
+2026-05-08 18:12:13,966 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:13,967 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:15,885 [INFO] go2_survey.navigator: GPS fix lost -- still waiting... (77s / 300s timeout)
+2026-05-08 18:12:15,959 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:15", "timeInNum": 1778285535}}
+2026-05-08 18:12:15,967 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:15,967 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:17,960 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:17", "timeInNum": 1778285537}}
+2026-05-08 18:12:17,970 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:17,970 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:19,962 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:19", "timeInNum": 1778285539}}
+2026-05-08 18:12:19,971 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:19,972 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:21,963 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:21", "timeInNum": 1778285541}}
+2026-05-08 18:12:21,970 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:21,971 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:23,965 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:23", "timeInNum": 1778285543}}
+2026-05-08 18:12:23,972 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:23,973 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:25,966 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:25", "timeInNum": 1778285545}}
+2026-05-08 18:12:25,972 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:25,973 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:27,968 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:27", "timeInNum": 1778285547}}
+2026-05-08 18:12:27,979 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:27,979 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:29,969 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:29", "timeInNum": 1778285549}}
+2026-05-08 18:12:29,977 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:29,977 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:30,889 [INFO] go2_survey.navigator: GPS fix lost -- still waiting... (92s / 300s timeout)
+2026-05-08 18:12:31,293 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778285551,"uuid":"ea479727-30cf-4cb9-8007-0692a2f93a0e"}}
+2026-05-08 18:12:31,294 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778285551, "uuid": "ea479727-30cf-4cb9-8007-0692a2f93a0e"}}
+2026-05-08 18:12:31,971 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:31", "timeInNum": 1778285551}}
+2026-05-08 18:12:31,980 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:31,980 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:33,972 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:33", "timeInNum": 1778285553}}
+2026-05-08 18:12:33,979 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:33,979 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:35,973 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:35", "timeInNum": 1778285555}}
+2026-05-08 18:12:35,981 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:35,981 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:37,974 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:37", "timeInNum": 1778285557}}
+2026-05-08 18:12:37,982 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:37,982 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:39,976 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:39", "timeInNum": 1778285559}}
+2026-05-08 18:12:39,984 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:39,985 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:41,977 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:41", "timeInNum": 1778285561}}
+2026-05-08 18:12:41,984 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:41,985 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:43,978 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:43", "timeInNum": 1778285563}}
+2026-05-08 18:12:44,093 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:44,093 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:45,980 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:45", "timeInNum": 1778285565}}
+2026-05-08 18:12:45,986 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:45,987 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:46,483 [INFO] go2_survey.navigator: GPS fix lost -- still waiting... (108s / 300s timeout)
+2026-05-08 18:12:47,981 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:47", "timeInNum": 1778285567}}
+2026-05-08 18:12:47,989 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:47,990 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:50,093 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:50", "timeInNum": 1778285570}}
+2026-05-08 18:12:50,100 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:50,101 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:51,295 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778285571,"uuid":"9bc23881-8ce6-416e-a164-060c5ff5951e"}}
+2026-05-08 18:12:51,296 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778285571, "uuid": "9bc23881-8ce6-416e-a164-060c5ff5951e"}}
+2026-05-08 18:12:52,094 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:52", "timeInNum": 1778285572}}
+2026-05-08 18:12:52,101 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:52,102 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:54,096 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:54", "timeInNum": 1778285574}}
+2026-05-08 18:12:54,103 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:54,103 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:56,099 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:56", "timeInNum": 1778285576}}
+2026-05-08 18:12:56,107 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:56,107 [INFO] root: Heartbeat response received.
+2026-05-08 18:12:58,100 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:12:58", "timeInNum": 1778285578}}
+2026-05-08 18:12:58,108 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:12:58,109 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:00,101 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:00", "timeInNum": 1778285580}}
+2026-05-08 18:13:00,115 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:00,116 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:02,090 [INFO] go2_survey.navigator: GPS fix lost -- still waiting... (124s / 300s timeout)
+2026-05-08 18:13:02,103 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:02", "timeInNum": 1778285582}}
+2026-05-08 18:13:02,111 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:02,112 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:04,104 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:04", "timeInNum": 1778285584}}
+2026-05-08 18:13:04,112 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:04,112 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:06,106 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:06", "timeInNum": 1778285586}}
+2026-05-08 18:13:06,113 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:06,114 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:08,108 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:08", "timeInNum": 1778285588}}
+2026-05-08 18:13:08,118 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:08,119 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:10,109 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:10", "timeInNum": 1778285590}}
+2026-05-08 18:13:10,117 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:10,117 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:11,298 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778285591,"uuid":"d3b3be46-9ffe-4b4d-b599-6cc8790ea669"}}
+2026-05-08 18:13:11,299 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778285591, "uuid": "d3b3be46-9ffe-4b4d-b599-6cc8790ea669"}}
+2026-05-08 18:13:12,111 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:12", "timeInNum": 1778285592}}
+2026-05-08 18:13:12,118 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:12,119 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:14,112 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:14", "timeInNum": 1778285594}}
+2026-05-08 18:13:14,120 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:14,120 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:16,113 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:16", "timeInNum": 1778285596}}
+2026-05-08 18:13:16,119 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:16,120 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:17,680 [INFO] go2_survey.navigator: GPS fix lost -- still waiting... (139s / 300s timeout)
+2026-05-08 18:13:18,114 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:18", "timeInNum": 1778285598}}
+2026-05-08 18:13:18,123 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:18,123 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:20,116 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:20", "timeInNum": 1778285600}}
+2026-05-08 18:13:20,123 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:20,124 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:22,117 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:22", "timeInNum": 1778285602}}
+2026-05-08 18:13:22,124 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:22,124 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:24,119 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:24", "timeInNum": 1778285604}}
+2026-05-08 18:13:24,128 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:24,128 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:26,120 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:26", "timeInNum": 1778285606}}
+2026-05-08 18:13:26,128 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:26,128 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:28,122 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:28", "timeInNum": 1778285608}}
+2026-05-08 18:13:28,129 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:28,129 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:30,123 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:30", "timeInNum": 1778285610}}
+2026-05-08 18:13:30,131 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:30,131 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:31,299 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778285611,"uuid":"337d1816-cc3c-4160-b766-f5fcd669e38a"}}
+2026-05-08 18:13:31,300 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778285611, "uuid": "337d1816-cc3c-4160-b766-f5fcd669e38a"}}
+2026-05-08 18:13:32,124 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-08 18:13:32", "timeInNum": 1778285612}}
+2026-05-08 18:13:32,131 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-08 18:13:32,132 [INFO] root: Heartbeat response received.
+2026-05-08 18:13:32,853 [INFO] go2_survey.robot: Stopping robot
+2026-05-08 18:13:32,854 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 169152676, "api_id": 1003}}, "parameter": ""}}
+2026-05-08 18:13:32,856 [ERROR] asyncio: Task exception was never retrieved
+future: <Task finished name='Task-3669' coro=<RTCSctpTransport._data_channel_flush() done, defined at /home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py:1654> exception=ConnectionError('Cannot send encrypted data, not connected')>
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 636, in run_until_complete
+    self.run_forever()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 603, in run_forever
+    self._run_once()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 1871, in _run_once
+    event_list = self._selector.select(timeout)
+  File "/usr/lib/python3.10/selectors.py", line 469, in select
+    fd_event_list = self._selector.poll(timeout, max_ev)
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1685, in _data_channel_flush
+    await self._send(
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1340, in _send
+    await self._transmit()
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1566, in _transmit
+    await self._send_chunk(chunk)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1347, in _send_chunk
+    await self.__transport._send_data(
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 701, in _send_data
+    raise ConnectionError("Cannot send encrypted data, not connected")
+ConnectionError: Cannot send encrypted data, not connected
+2026-05-08 18:13:32,873 [INFO] root: Data channel closed
+2026-05-08 18:13:40,108 [WARNING] go2_survey.cli: Interrupted
