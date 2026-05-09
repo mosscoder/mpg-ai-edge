@@ -1,5 +1,176 @@
 # Navigation Changelog
 
+## 2026-05-09: v0.7.0 — RTK Observability (retry, gps.log sidecar, cause-attributed banners)
+
+### Scope
+
+The 2026-05-08 parking-lot run
+(`dev/missions/00_parking_lot/logs/00_parking_lot_2026-05-08_18-10-21/`)
+exposed three structural gaps in the v0.4.x NTRIP/RTK pipeline:
+
+1. **Single-attempt endpoints.** Each mountpoint got one 10s socket
+   try; a transient cellular blip flipped straight to fallback (or
+   all the way to GNSS-only) when 30s of retry would have ridden
+   through it.
+2. **Float-coast trusted as RTK.** The F9P/F9R holds `fix_type=5`
+   (Float) for 30-60s after corrections stop. With both NTRIP
+   endpoints failed at startup, the receiver still reported Float at
+   `hAcc 0.052m`; the system trusted it, started navigation, and
+   174 ms after the walking-leg banner the fix dropped to type 3
+   with the robot stuck for 139s before the tech Ctrl-C'd.
+3. **No mid-mission RTCM-loss signal, no cause attribution.** When
+   corrections stop flowing, the prior code only learned about it
+   indirectly when `fix_type` finally degraded. A tech reading
+   `main.log` couldn't tell whether a paused robot was waiting on
+   cell network or sky view.
+
+This release closes all three. Three code commits + a docs commit
+land additively (no breaking schema changes — the new TOML fields are
+optional with safe defaults). End state: `0.4.1 → 0.7.0`.
+
+### 1. NTRIP retry + RTCM freshness + mid-mission reconnect (`5303095`)
+
+Each endpoint is now retried up to `NTRIP_ATTEMPTS_PER_ENDPOINT` (=3)
+times before moving on, so the worst-case startup budget is roughly
+`3 attempts × 10s socket × 2 endpoints ≈ 60s` before declaring NTRIP
+unavailable. Per-attempt and per-endpoint exhaustion are logged
+explicitly:
+
+```
+NTRIP: trying primary mountpoint MP22385 (1/2, attempt 1/3)
+NTRIP: primary mountpoint MP22385 failed (timed out)
+NTRIP: trying primary mountpoint MP22385 (1/2, attempt 2/3)
+NTRIP: connected via primary mountpoint MP22385 (took 21s, 2 attempts)
+```
+
+`EmlidNTRIPClient` (`src/go2_survey/ntrip.py`) gains two liveness
+signals: `last_rtcm_at` (monotonic clock, updated each successful
+RTCM frame forward) and `connection_alive` (False when the worker's
+`recv()` returns empty). `seconds_since_last_rtcm()` exposes the
+freshness signal upstream.
+
+`GPSManager` (`src/go2_survey/gps.py`) grows a `state` enum
+(`disabled / connecting / connected / degraded / lost / gnss_only /
+aborted / reconnecting`) and a `has_active_corrections()` predicate
+that combines liveness with `rtcm_age < max_rtcm_age_s` (default
+`5.0s`). `reconnect_ntrip_async()` runs the same retry loop in a
+daemon thread so the navigator can keep polling fix during a
+mid-mission reconnect — fire-and-forget, idempotent.
+
+When every endpoint exhausts, behavior branches on the new
+`[ntrip] on_unavailable` field:
+
+- `"warn_continue"` (default) — log a banner, continue in GNSS-only
+  mode with a tightened quality gate (Float treated as suspect).
+  Existing missions inherit this without TOML edits.
+- `"abort"` — log an ERROR banner and return False so the mission
+  aborts before the robot is connected. For production survey runs
+  where RTK precision is mandatory.
+
+`[navigation]` gains two new fields:
+
+- `mid_mission_fix_timeout = 60` — separate from `gps_fix_timeout`
+  (initial wait, default 300s). A stationary robot mid-leg is a
+  worse failure mode than a longer initial wait, so the in-flight
+  timeout is shorter. **This also fixes a latent bug** where the
+  prior `WaypointNavigator(gps_timeout=...)` was hardcoded to the
+  300s constructor default and ignored the TOML.
+- `max_rtcm_age_s = 5.0` — beyond this, RTK readings are treated as
+  coasting.
+
+### 2. `gps.log` sidecar at 1 Hz (`4c7235e`)
+
+A third per-run log artifact alongside `main.log` and `imu.log`,
+mirroring the `imu.log` mechanism committed in `df6eb18`. The
+motivating gap: yesterday's post-mortem couldn't reconstruct the
+precise `rtcm_age` timeline that would have explained the
+float-coast behavior. `main.log` narrated `"fix lost type 3"` but
+not `"rtcm went stale 5s before that"`.
+
+Layout becomes:
+
+```
+dev/missions/<name>/logs/<name>_<ts>/
+├── main.log    # human-readable mission narrative
+├── imu.log     # 20 Hz rt/lf/sportmodestate stream (since v0.4.0)
+└── gps.log     # 1 Hz GPS+RTK telemetry, JSON-per-line
+```
+
+`logging_utils.py` adds `GPSTelemetryFilter` (drops telemetry from
+`main.log` / console) and `GPSTelemetryOnlyFilter` (keeps it in
+`gps.log`) — same filter-pair pattern as `SportModeStateFilter`.
+`cli.setup_logging` adds the `gps.log` `FileHandler` at DEBUG level,
+filtered to only the `go2_survey.gps.telemetry` logger. Always on
+regardless of `-v`.
+
+`GPSManager.get_position` is wrapped with a monotonic-clock-throttled
+emission that decimates to 1 Hz. The navigator polls
+`get_position()` at ~5 Hz during navigation and `wait_for_rtk_fix`
+loops at 1 Hz during PHASE 1, so the throttle never misses a fix
+transition. Each record is one JSON line:
+
+```json
+{"t":"2026-05-09T10:00:21.900","fix":6,"hAcc":0.014,"vAcc":0.022,
+ "pdop":1.18,"sats":14,"lat":46.86164,"lon":-113.99780,"hMSL":982.02,
+ "corr_age_bin":1,
+ "ntrip":{"state":"connected","mountpoint":"MP22385",
+          "msgs":142,"bytes":18934,"rtcm_age_s":0.4}}
+```
+
+`corr_age_bin` is the receiver's quantized view (already on
+`RTKPosition`); `rtcm_age_s` is our TCP-socket view. Together they
+distinguish a network blip we recovered from (both small) from
+float-coast (bin growing, age large) at post-mortem time.
+
+### 3. Float-coast refused; cause-attributed banners (`11baa78`)
+
+`GPSManager.wait_for_fix` is no longer a one-line delegate to the
+receiver's gate. It owns the fix-wait loop and accepts only when:
+
+```
+pos.fix_type >= min_fix_type
+AND (pos.fix_type <= 4  OR  self.has_active_corrections())
+```
+
+A reported RTK fix with no active corrections is rejected; a one-shot
+`RTK FLOAT SUSPECT` banner fires the first time the receiver claims
+Float without RTCM, and the loop keeps waiting. Periodic 15s
+progress logs include `rtcm_age` so the tech can see the timeline.
+On timeout, the multi-line `GPS FIX TIMEOUT` banner names the likely
+cause:
+
+```
+GPS FIX TIMEOUT | 300s | never reached type 5 |
+Last: type 3 hAcc 0.480m sats 10 |
+NTRIP healthy (msgs=872) |
+Likely cause: poor sky view / multipath
+```
+
+`WaypointNavigator` (`src/go2_survey/navigator.py`) replaces its
+bare quality check with `_is_quality_acceptable(pos,
+corrections_active)`, which incorporates `has_active_corrections()`
+the same way. `_fix_lost_diagnostics` produces a cause-attribution
+string ("NTRIP corrections stale" vs. "receiver fix degraded" vs.
+"hAcc out of band") that goes into the `GPS FIX LOST` banner. When
+the cause is stale corrections AND NTRIP was previously connected,
+the navigator fires `gps.reconnect_ntrip_async()` so the manager
+retries endpoints in a daemon thread while the navigator keeps
+polling.
+
+`GPS FIX RESTORED`, `GPS PAUSE TIMEOUT`, and the periodic
+still-waiting log now all carry NTRIP state too. Yesterday's run
+would have read `Cause: NTRIP corrections stale (state=gnss_only);
+reported 5 but coasting` instead of just `type 3 hAcc 0.064m`.
+
+### Hardware validation pending
+
+Local dry-runs verified config plumbing, log-artifact creation, and
+banner formatting. End-to-end RTK behavior (retry budget under real
+cellular blip, mid-mission reconnect, `on_unavailable=abort`
+short-circuit) requires field hardware on the robot.
+
+---
+
 ## 2026-04-27: v0.4.0 — NTRIP Fallback + Version Banner + Split IMU Log
 
 ### Scope
