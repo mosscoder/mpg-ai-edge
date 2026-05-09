@@ -75,3 +75,30 @@ class SportModeStateOnlyFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         return "rt/lf/sportmodestate" in record.getMessage()
+
+
+GPS_TELEMETRY_LOGGER_NAME = "go2_survey.gps.telemetry"
+
+
+class GPSTelemetryFilter(logging.Filter):
+    """Drop dense GPS telemetry records — they belong in gps.log only.
+
+    Attached to console + main.log handlers so the mission narrative
+    stays readable while the per-second JSON snapshots are routed to
+    the dedicated gps.log handler.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return not record.name.startswith(GPS_TELEMETRY_LOGGER_NAME)
+
+
+class GPSTelemetryOnlyFilter(logging.Filter):
+    """Inverse of GPSTelemetryFilter — keeps only GPS telemetry records.
+
+    Attached to the per-run gps.log handler so the dense JSON-per-line
+    feed is preserved on disk while the rest of the mission log stays
+    out of the file.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.name.startswith(GPS_TELEMETRY_LOGGER_NAME)

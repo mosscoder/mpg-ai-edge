@@ -19,6 +19,8 @@ from typing import Iterator
 
 from go2_survey import __version__
 from go2_survey.logging_utils import (
+    GPSTelemetryFilter,
+    GPSTelemetryOnlyFilter,
     SportModeStateFilter,
     SportModeStateOnlyFilter,
     WebRTCFallbackNoiseFilter,
@@ -76,12 +78,17 @@ def resolve_mission_dir(arg: str) -> Path | None:
 def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
     """Configure logging to a per-run directory under <mission_dir>/logs/.
 
-    Layout: ``<mission_dir>/logs/<name>_<TIMESTAMP>/{main.log, imu.log}``.
-    ``main.log`` and the console mirror the mission narrative (everything
-    EXCEPT the 20 Hz rt/lf/sportmodestate flood). ``imu.log`` captures
-    that flood by itself, regardless of ``-v``, so post-hoc analysis
-    has the full IMU/position/foot history without requiring a verbose
-    re-run.
+    Layout: ``<mission_dir>/logs/<name>_<TIMESTAMP>/{main.log, imu.log, gps.log}``.
+
+    - ``main.log`` and the console carry the mission narrative
+      (everything EXCEPT the 20 Hz IMU flood and the dense per-second
+      GPS telemetry).
+    - ``imu.log`` captures the rt/lf/sportmodestate stream by itself.
+    - ``gps.log`` captures dense JSON-per-line GPS/RTK telemetry at 1 Hz
+      so post-hoc analysis can reconstruct fix transitions, hAcc, NTRIP
+      state, and RTCM-age timelines without requiring a verbose re-run.
+
+    All three sidecars are always on regardless of ``-v``.
 
     Returns the run directory.
     """
@@ -90,6 +97,7 @@ def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
     run_dir.mkdir(parents=True, exist_ok=True)
     main_log = run_dir / "main.log"
     imu_log = run_dir / "imu.log"
+    gps_log = run_dir / "gps.log"
 
     level = logging.DEBUG if verbose else logging.INFO
     fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -99,11 +107,12 @@ def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
     for h in list(root.handlers):
         root.removeHandler(h)
 
-    # Console + main.log: drop the 20 Hz IMU flood and the
-    # unitree_webrtc_connect legacy-SDP-probe errors so the mission
-    # narrative stays readable.
+    # Console + main.log: drop the 20 Hz IMU flood, the dense GPS
+    # telemetry, and the unitree_webrtc_connect legacy-SDP-probe errors
+    # so the mission narrative stays readable.
     main_filters: list[logging.Filter] = [
         SportModeStateFilter(),
+        GPSTelemetryFilter(),
         WebRTCFallbackNoiseFilter(),
     ]
     for handler in (
@@ -122,6 +131,16 @@ def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
     imu_handler.addFilter(SportModeStateOnlyFilter())
     imu_handler.setLevel(logging.DEBUG)
     root.addHandler(imu_handler)
+
+    # gps.log: capture ONLY the dense GPS/RTK telemetry stream emitted
+    # at 1 Hz from GPSManager.get_position. Always on at DEBUG so the
+    # JSON-per-line feed is preserved for post-hoc analysis regardless
+    # of root level.
+    gps_handler = logging.FileHandler(gps_log)
+    gps_handler.setFormatter(fmt)
+    gps_handler.addFilter(GPSTelemetryOnlyFilter())
+    gps_handler.setLevel(logging.DEBUG)
+    root.addHandler(gps_handler)
 
     # Quiet noisy transitive deps
     for noisy in ("aioice", "aiortc", "av"):
@@ -150,7 +169,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     run_dir = setup_logging(mission_dir, verbose=args.verbose)
     logger = logging.getLogger(__name__)
-    logger.info(f"Logging to: {run_dir}/main.log (+ imu.log)")
+    logger.info(f"Logging to: {run_dir}/main.log (+ imu.log, gps.log)")
     logger.info(f"Mission dir: {mission_dir}")
 
     if args.capture_images:

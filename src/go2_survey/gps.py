@@ -1,5 +1,7 @@
 """u-blox ZED-F9P/F9R GPS interface and high-level manager."""
 
+import datetime as _dt
+import json
 import logging
 import os
 import struct
@@ -10,8 +12,10 @@ from dataclasses import dataclass
 import serial
 
 from go2_survey.config import NTRIPSettings
-from go2_survey.logging_utils import log_banner
+from go2_survey.logging_utils import GPS_TELEMETRY_LOGGER_NAME, log_banner
 from go2_survey.ntrip import EmlidNTRIPClient, NTRIPConfig
+
+_telemetry_logger = logging.getLogger(GPS_TELEMETRY_LOGGER_NAME)
 
 # How many times to retry each NTRIP endpoint before moving on. Each
 # attempt holds the EmlidNTRIPClient's 10s socket timeout, so 3 attempts
@@ -607,6 +611,7 @@ class GPSManager:
         )
         self._reconnect_thread: threading.Thread | None = None
         self._reconnect_lock = threading.Lock()
+        self._last_telemetry_at: float = 0.0
 
     def connect(self, use_ntrip: bool = True) -> bool:
         """Connect to GPS and optionally start NTRIP corrections.
@@ -753,7 +758,57 @@ class GPSManager:
         self._connected = False
 
     def get_position(self) -> RTKPosition | None:
-        return self.gps.get_position()
+        pos = self.gps.get_position()
+        self._maybe_emit_telemetry(pos)
+        return pos
+
+    def _maybe_emit_telemetry(self, pos: RTKPosition | None) -> None:
+        """Emit one JSON line of GPS+NTRIP state to gps.log, throttled to 1 Hz.
+
+        Called on every get_position() (the navigator polls at ~5 Hz);
+        the internal monotonic-clock throttle decimates to 1 record/s.
+        Records go to the dedicated `go2_survey.gps.telemetry` logger,
+        which the cli.setup_logging handler routes only to gps.log.
+        """
+        now = time.monotonic()
+        if now - self._last_telemetry_at < 1.0:
+            return
+        self._last_telemetry_at = now
+
+        ntrip_block: dict
+        if self.ntrip is None:
+            ntrip_block = {"state": self.state}
+        else:
+            age = self.ntrip.seconds_since_last_rtcm()
+            ntrip_block = {
+                "state": self.state,
+                "mountpoint": self.ntrip.config.mountpoint,
+                "msgs": self.ntrip.correction_count,
+                "bytes": self.ntrip.bytes_forwarded,
+                "rtcm_age_s": round(age, 3) if age is not None else None,
+            }
+
+        if pos is None:
+            payload = {
+                "t": _dt.datetime.now().isoformat(timespec="milliseconds"),
+                "fix": None,
+                "ntrip": ntrip_block,
+            }
+        else:
+            payload = {
+                "t": _dt.datetime.now().isoformat(timespec="milliseconds"),
+                "fix": pos.fix_type,
+                "hAcc": round(pos.accuracy_horizontal, 4),
+                "vAcc": round(pos.accuracy_vertical, 4),
+                "pdop": pos.pdop,
+                "sats": pos.satellites_used,
+                "lat": pos.latitude,
+                "lon": pos.longitude,
+                "hMSL": pos.altitude_msl,
+                "corr_age_bin": pos.correction_age_bin,
+                "ntrip": ntrip_block,
+            }
+        _telemetry_logger.info(json.dumps(payload))
 
     def wait_for_fix(self, timeout: float = 300.0, min_fix_type: int = 4) -> bool:
         return self.gps.wait_for_rtk_fix(timeout=timeout, min_fix_type=min_fix_type)
