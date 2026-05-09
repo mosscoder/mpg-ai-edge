@@ -89,6 +89,71 @@ class WaypointNavigator:
         # uses only leg N's samples.
         self._traj_buf: deque = deque(maxlen=self.RECAL_BUFFER_MAXLEN)
 
+    def _is_quality_acceptable(
+        self, pos: RTKPosition | None, corrections_active: bool
+    ) -> bool:
+        """Quality gate that doesn't trust receiver float-coast.
+
+        Combines the bare receiver check (fix_type, hAcc) with NTRIP
+        corrections freshness: a reported RTK fix (Float / Fixed) is
+        only acceptable when corrections are actually flowing. This
+        catches the F9P/F9R holding Float for 30-60s after RTCM stops,
+        which the system would otherwise navigate on.
+
+        For low-tier fixes (type <= 4 / GNSS-only), corrections are
+        not expected and the receiver gate alone applies.
+        """
+        if pos is None:
+            return False
+        if pos.fix_type < self.min_fix_type:
+            return False
+        if pos.accuracy_horizontal > self.max_hacc:
+            return False
+        # RTK-tier reading without corrections: float-coast, reject.
+        if pos.fix_type >= 5 and not corrections_active:
+            return False
+        return True
+
+    def _fix_lost_diagnostics(
+        self, pos: RTKPosition | None, corrections_active: bool
+    ) -> tuple[str, str]:
+        """Return (fix_info, cause) strings for the GPS FIX LOST banner.
+
+        `fix_info` summarizes the receiver state. `cause` attributes
+        the loss to either stale corrections, degraded receiver
+        signal, or absent position — so post-mortems can tell whether
+        the robot was waiting on cellular network or sky view.
+        """
+        if pos is None:
+            return "no position", "receiver returned no fix"
+        age = (
+            self.gps.ntrip.seconds_since_last_rtcm()
+            if self.gps.ntrip
+            else None
+        )
+        age_str = f" rtcm_age={age:.1f}s" if age is not None else ""
+        fix_info = (
+            f"type {pos.fix_type} hAcc={pos.accuracy_horizontal:.3f}m{age_str}"
+        )
+        if pos.fix_type >= 5 and not corrections_active:
+            cause = (
+                f"NTRIP corrections stale (state={self.gps.state}); "
+                f"reported {pos.fix_type} but coasting"
+            )
+        elif pos.fix_type < self.min_fix_type:
+            cause = (
+                f"receiver fix degraded to type {pos.fix_type} "
+                f"(min {self.min_fix_type})"
+            )
+        elif pos.accuracy_horizontal > self.max_hacc:
+            cause = (
+                f"hAcc {pos.accuracy_horizontal:.3f}m exceeds limit "
+                f"{self.max_hacc:.3f}m"
+            )
+        else:
+            cause = "see receiver state above"
+        return fix_info, cause
+
     async def navigate_to(self, waypoint: Waypoint, timeout: float = 300.0) -> bool:
         """Drive the robot to a single waypoint. Returns True on success."""
         logger.info(
@@ -242,23 +307,18 @@ class WaypointNavigator:
                 return False
 
             pos = self.gps.get_position()
+            corrections_active = self.gps.has_active_corrections()
 
-            if (
-                not pos
-                or pos.fix_type < self.min_fix_type
-                or pos.accuracy_horizontal > self.max_hacc
-            ):
+            if not self._is_quality_acceptable(pos, corrections_active):
+                fix_info, cause = self._fix_lost_diagnostics(pos, corrections_active)
                 if not self._paused:
-                    fix_info = (
-                        f"type {pos.fix_type}, hAcc {pos.accuracy_horizontal:.3f}m"
-                        if pos
-                        else "no position"
-                    )
                     logger.warning(
                         f"GPS fix lost or degraded ({fix_info}), pausing robot..."
                     )
                     log_banner(
-                        f"GPS FIX LOST | {fix_info} | robot paused",
+                        f"GPS FIX LOST | {fix_info} | "
+                        f"Cause: {cause} | "
+                        f"robot paused | mid-mission timeout {self.gps_timeout:.0f}s",
                         level="warning",
                         char="!",
                         logger=logger,
@@ -267,6 +327,14 @@ class WaypointNavigator:
                     self._paused = True
                     self._pause_start = time.time()
                     self._pause_last_progress = time.time()
+                    # Kick off async NTRIP reconnect when corrections
+                    # are the cause and the manager has a stream to
+                    # repair (i.e. NTRIP was previously connected).
+                    if (
+                        not corrections_active
+                        and self.gps.state in ("connected", "degraded", "lost")
+                    ):
+                        self.gps.reconnect_ntrip_async()
                 elif time.time() - self._pause_start > self.gps_timeout:
                     pause_elapsed = time.time() - self._pause_start
                     logger.error(
@@ -275,7 +343,9 @@ class WaypointNavigator:
                         f"aborting navigation to {waypoint.name}"
                     )
                     log_banner(
-                        f"GPS PAUSE TIMEOUT | {pause_elapsed:.0f}s | aborting",
+                        f"GPS PAUSE TIMEOUT | {pause_elapsed:.0f}s exhausted | "
+                        f"Cause: {cause} | "
+                        f"Aborting navigation to {waypoint.name}",
                         level="error",
                         char="!",
                         logger=logger,
@@ -288,7 +358,8 @@ class WaypointNavigator:
                         pause_elapsed = now - self._pause_start
                         logger.info(
                             f"GPS fix lost -- still waiting... "
-                            f"({pause_elapsed:.0f}s / {self.gps_timeout:.0f}s timeout)"
+                            f"({pause_elapsed:.0f}s/{self.gps_timeout:.0f}s | "
+                            f"NTRIP state={self.gps.state})"
                         )
                         self._pause_last_progress = now
                 await asyncio.sleep(0.5)
@@ -296,12 +367,22 @@ class WaypointNavigator:
 
             if self._paused:
                 pause_duration = time.time() - self._pause_start
+                age = (
+                    self.gps.ntrip.seconds_since_last_rtcm()
+                    if self.gps.ntrip
+                    else None
+                )
+                age_str = (
+                    f" rtcm_age={age:.1f}s" if age is not None else ""
+                )
                 logger.info(
                     f"GPS fix restored (type {pos.fix_type}), resuming navigation"
                 )
                 log_banner(
                     f"GPS FIX RESTORED | type {pos.fix_type} "
-                    f"| paused {pause_duration:.0f}s",
+                    f"hAcc {pos.accuracy_horizontal:.3f}m | "
+                    f"paused {pause_duration:.0f}s | "
+                    f"NTRIP state={self.gps.state}{age_str}",
                     logger=logger,
                 )
                 self._paused = False

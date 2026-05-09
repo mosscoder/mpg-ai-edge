@@ -811,7 +811,152 @@ class GPSManager:
         _telemetry_logger.info(json.dumps(payload))
 
     def wait_for_fix(self, timeout: float = 300.0, min_fix_type: int = 4) -> bool:
-        return self.gps.wait_for_rtk_fix(timeout=timeout, min_fix_type=min_fix_type)
+        """Block until a TRUSTED fix is achieved, or until timeout.
+
+        Stricter than the bare receiver gate: a reported RTK fix
+        (Float / Fixed) is only accepted when active corrections are
+        flowing within max_rtcm_age_s. Without that check the receiver
+        will hold Float for 30-60s after corrections stop and the
+        rest of the system trusts it (the 2026-05-08 float-coast bug).
+
+        For low-tier fixes (type <= 4 / GNSS-only), corrections are
+        not expected and the receiver gate alone is sufficient.
+
+        On timeout, emits a multi-line banner that names the likely
+        cause based on NTRIP state at the moment of timeout.
+        """
+        logger.info(
+            f"Waiting for GPS fix (min type {min_fix_type}, "
+            f"NTRIP state={self.state})..."
+        )
+        fix_names = {3: "3D Fix", 4: "GNSS+DR", 5: "RTK Float", 6: "RTK Fixed"}
+        start = time.time()
+        last_progress = start
+        last_pos: RTKPosition | None = None
+        suspect_logged = False
+
+        while time.time() - start < timeout:
+            pos = self.get_position()
+            if pos:
+                last_pos = pos
+            corrections_active = self.has_active_corrections()
+            rtk_claimed = pos is not None and pos.fix_type >= 5
+            rtk_trusted = rtk_claimed and corrections_active
+
+            if pos and pos.fix_type >= min_fix_type and (pos.fix_type <= 4 or rtk_trusted):
+                fix_label = fix_names.get(pos.fix_type, "Fix")
+                msl_str = (
+                    f" hMSL: {pos.altitude_msl:.2f}m"
+                    if pos.altitude_msl is not None
+                    else ""
+                )
+                pdop_str = f" pDOP: {pos.pdop:.2f}" if pos.pdop is not None else ""
+                age = (
+                    self.ntrip.seconds_since_last_rtcm() if self.ntrip else None
+                )
+                age_str = (
+                    f" rtcm_age={age:.1f}s" if age is not None else " rtcm_age=n/a"
+                )
+                msgs_str = (
+                    f" msgs={self.ntrip.correction_count}"
+                    if self.ntrip
+                    else ""
+                )
+                logger.info(
+                    f"{fix_label} achieved! "
+                    f"Lat: {pos.latitude:.8f}, Lon: {pos.longitude:.8f}, "
+                    f"h: {pos.altitude:.2f}m,{msl_str} "
+                    f"hAcc: {pos.accuracy_horizontal:.3f}m{pdop_str}"
+                )
+                log_banner(
+                    f"GPS {fix_label} ACHIEVED | "
+                    f"hAcc: {pos.accuracy_horizontal:.3f}m{pdop_str}"
+                    f" |{age_str}{msgs_str}",
+                    logger=logger,
+                )
+                return True
+
+            # One-time "RTK FLOAT SUSPECT" warning when receiver claims
+            # RTK without active corrections — the float-coast scenario.
+            if rtk_claimed and not corrections_active and not suspect_logged:
+                age = (
+                    self.ntrip.seconds_since_last_rtcm() if self.ntrip else None
+                )
+                age_str = (
+                    f"rtcm_age={age:.1f}s" if age is not None else "rtcm_age=∞"
+                )
+                logger.warning(
+                    f"Receiver reports type {pos.fix_type} ({fix_names[pos.fix_type]}) "
+                    f"but {age_str} — treating as coasting; will not accept this fix"
+                )
+                log_banner(
+                    f"RTK FLOAT SUSPECT | no active corrections ({age_str}) | "
+                    f"NTRIP state={self.state}",
+                    level="warning",
+                    char="!",
+                    logger=logger,
+                )
+                suspect_logged = True
+
+            now = time.time()
+            if now - last_progress >= 15.0:
+                elapsed = now - start
+                fix_repr = pos.fix_type if pos else "?"
+                num_sv = pos.satellites_used if pos else "?"
+                hacc = (
+                    f"{pos.accuracy_horizontal:.3f}m"
+                    if pos
+                    else "n/a"
+                )
+                age = (
+                    self.ntrip.seconds_since_last_rtcm() if self.ntrip else None
+                )
+                age_str = (
+                    f"rtcm_age={age:.1f}s" if age is not None else "rtcm_age=n/a"
+                )
+                logger.info(
+                    f"Waiting... ({elapsed:.0f}s/{timeout:.0f}s | "
+                    f"type {fix_repr} hAcc {hacc} | {num_sv} SVs | {age_str})"
+                )
+                last_progress = now
+            time.sleep(1.0)
+
+        elapsed = time.time() - start
+        # Cause attribution: NTRIP healthy → sky issue, NTRIP dead → corrections
+        if self.has_active_corrections():
+            cause = "Likely cause: poor sky view / multipath"
+            ntrip_summary = (
+                f"NTRIP healthy (msgs={self.ntrip.correction_count})"
+                if self.ntrip
+                else "NTRIP healthy"
+            )
+        elif self.state in ("disabled",):
+            cause = "Likely cause: NTRIP disabled (RTK unreachable by design)"
+            ntrip_summary = "NTRIP disabled"
+        elif self.state in ("gnss_only", "lost", "aborted"):
+            cause = "Likely cause: NTRIP unavailable; not in RTK-capable mode"
+            ntrip_summary = f"NTRIP {self.state}"
+        else:
+            cause = "Likely cause: see NTRIP attempts above"
+            ntrip_summary = f"NTRIP state={self.state}"
+        last_str = (
+            f"type {last_pos.fix_type} hAcc {last_pos.accuracy_horizontal:.3f}m "
+            f"sats {last_pos.satellites_used}"
+            if last_pos
+            else "no position"
+        )
+        logger.error(
+            f"GPS fix timeout after {elapsed:.0f}s; "
+            f"never reached min type {min_fix_type}"
+        )
+        log_banner(
+            f"GPS FIX TIMEOUT | {elapsed:.0f}s | never reached type {min_fix_type} | "
+            f"Last: {last_str} | {ntrip_summary} | {cause}",
+            level="error",
+            char="!",
+            logger=logger,
+        )
+        return False
 
     def average_position(
         self,
