@@ -1,0 +1,150 @@
+2026-05-15 13:41:37,293 [INFO] go2_survey.cli: go2-survey v0.8.3 | git 0916902 | run dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/03_static_geotag/logs/03_static_geotag_2026-05-15_13-41-37
+2026-05-15 13:41:37,294 [INFO] go2_survey.cli: Logging to: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/03_static_geotag/logs/03_static_geotag_2026-05-15_13-41-37/main.log (+ imu.log, gps.log)
+2026-05-15 13:41:37,294 [INFO] go2_survey.cli: Mission dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/03_static_geotag
+2026-05-15 13:41:37,299 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-15 13:41:37,300 [INFO] go2_survey.mission_runner: ================ MISSION: 03_static_geotag =================
+2026-05-15 13:41:37,300 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-15 13:41:37,300 [INFO] go2_survey.mission_runner: Static RTK + capture + sidecar pipeline test. Robot stands in place; one forward capture; full EXIF + sidecar. Rotation debuts in 05.
+2026-05-15 13:41:37,300 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:41:37,300 [INFO] go2_survey.mission_runner: ------------------- MODE: static_geotag --------------------
+2026-05-15 13:41:37,300 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:41:37,301 [INFO] go2_survey.mission_runner: Static mode: static_geotag | capture strategy: waypoint_forward
+2026-05-15 13:41:37,301 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:41:37,301 [INFO] go2_survey.mission_runner: ----------------------- PHASE 1: GPS -----------------------
+2026-05-15 13:41:37,301 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:41:37,303 [INFO] go2_survey.gps: Connected to GPS on /dev/ttyACM0 @ 38400 baud
+2026-05-15 13:41:37,304 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2, attempt 1/3)
+2026-05-15 13:41:37,304 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-15 13:41:37,736 [INFO] go2_survey.ntrip: Connected to NTRIP mountpoint: MP22385
+2026-05-15 13:41:37,737 [INFO] go2_survey.gps: NTRIP: connected via primary mountpoint MP22385 (took 0s, 1 attempt(s))
+2026-05-15 13:41:37,738 [INFO] go2_survey.ntrip: Started RTCM correction stream
+2026-05-15 13:41:37,738 [INFO] go2_survey.gps: Waiting for GPS fix (min type 6, NTRIP state=connected)...
+2026-05-15 13:41:53,660 [INFO] go2_survey.gps: Waiting... (16s/300s | type 5 hAcc 0.047m | 31 SVs | rtcm_age=0.1s)
+2026-05-15 13:42:01,860 [INFO] go2_survey.gps: RTK Fixed achieved! Lat: 46.67380960, Lon: -114.01619480, h: 1090.16m, hMSL: 1107.89m hAcc: 0.014m pDOP: 1.03
+2026-05-15 13:42:01,861 [INFO] go2_survey.gps: ============================================================
+2026-05-15 13:42:01,861 [INFO] go2_survey.gps:  GPS RTK Fixed ACHIEVED | hAcc: 0.014m pDOP: 1.03 | rtcm_age=1.4s msgs=52 
+2026-05-15 13:42:01,861 [INFO] go2_survey.gps: ============================================================
+2026-05-15 13:42:01,861 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:42:01,861 [INFO] go2_survey.mission_runner: ------------- PHASE 2: GPS STABILIZATION (60s) -------------
+2026-05-15 13:42:01,861 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:42:01,862 [INFO] go2_survey.gps: ------------------------------------------------------------
+2026-05-15 13:42:01,862 [INFO] go2_survey.gps: -------- DWELL: 60s — robot stationary, RTK soaking --------
+2026-05-15 13:42:01,862 [INFO] go2_survey.gps: ------------------------------------------------------------
+2026-05-15 13:42:17,260 [INFO] go2_survey.gps: [stabilization] 15/60s | fix=6 hAcc=0.014m sats=32 | rtcm_age=0.9s
+2026-05-15 13:42:32,459 [INFO] go2_survey.gps: [stabilization] 30/60s | fix=6 hAcc=0.014m sats=32 | rtcm_age=2.1s
+2026-05-15 13:42:48,069 [INFO] go2_survey.gps: [stabilization] 46/60s | fix=6 hAcc=0.014m sats=32 | rtcm_age=1.8s
+2026-05-15 13:43:02,860 [INFO] go2_survey.gps: ============================================================
+2026-05-15 13:43:02,861 [INFO] go2_survey.gps:  DWELL COMPLETE | best=RTK Fixed min_hAcc=0.014m | mean hAcc=0.014m sats=31.7 | TTFloat=0s TTFixed=0s 
+2026-05-15 13:43:02,862 [INFO] go2_survey.gps: ============================================================
+2026-05-15 13:43:02,862 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:43:02,862 [INFO] go2_survey.mission_runner:  AUTO-DISCOVERING ROBOT IP (up to 4 attempts, 10s between) -
+2026-05-15 13:43:02,862 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:43:02,863 [INFO] go2_survey.mission_runner: Discovery attempt 1/4: scanning for Go2 on ports 8081/9991...
+2026-05-15 13:43:02,876 [INFO] go2_survey.discovery: Scanning 10.163.85.241/24 for Go2 ports 8081/9991...
+2026-05-15 13:43:05,587 [INFO] go2_survey.mission_runner: Discovery attempt 1: found Go2 at 10.163.85.5
+2026-05-15 13:43:05,588 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:43:05,588 [INFO] go2_survey.mission_runner: ------------ ROBOT IP DISCOVERED | 10.163.85.5 -------------
+2026-05-15 13:43:05,588 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:43:05,588 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:43:05,589 [INFO] go2_survey.mission_runner: ---------------------- PHASE 3: ROBOT ----------------------
+2026-05-15 13:43:05,589 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:43:05,589 [INFO] go2_survey.robot: Connecting via LocalSTA (IP: 10.163.85.5)
+2026-05-15 13:43:05,668 [INFO] root: Creating offer...
+2026-05-15 13:43:05,697 [INFO] root: Trying to send SDP using the old method...
+2026-05-15 13:43:05,717 [INFO] root: Falling back to the new method...
+2026-05-15 13:43:06,025 [INFO] root: SDP successfully sent using the new method.
+2026-05-15 13:43:06,046 [INFO] root: Track recieved: audio
+2026-05-15 13:43:06,046 [INFO] root: Track recieved: video
+2026-05-15 13:43:06,317 [INFO] root: Received message on data channel: {"type":"validation","data":"Mb3XqJWJFxcUccdzyku"}
+2026-05-15 13:43:06,319 [INFO] root: Data channel opened
+2026-05-15 13:43:06,320 [INFO] root: > message sent: {"type": "validation", "topic": "", "data": "Y83xiIhM7VlfzI+4TgaOlg=="}
+2026-05-15 13:43:06,328 [INFO] root: Received message on data channel: {"type":"validation", "data":"Validation Ok."}
+2026-05-15 13:43:06,328 [INFO] root: Validation succeed
+2026-05-15 13:43:06,329 [INFO] root: Received message on data channel: {"type":"errors","data":[]}
+2026-05-15 13:43:06,350 [INFO] go2_survey.robot: WebRTC connected
+2026-05-15 13:43:06,351 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 757726510, "api_id": 1001}}, "parameter": ""}}
+2026-05-15 13:43:06,369 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1001,"id":757726510},"status":{"code":0}},"data":"{\"form\":\"0\",\"name\":\"mcf\"}"}}
+2026-05-15 13:43:06,370 [INFO] go2_survey.robot: Robot API ready
+2026-05-15 13:43:06,371 [INFO] go2_survey.robot: Subscribed to sport mode state (IMU)
+2026-05-15 13:43:06,371 [INFO] go2_survey.robot: ------------------------------------------------------------
+2026-05-15 13:43:06,371 [INFO] go2_survey.robot: ------------------ ENABLING VIDEO CHANNEL ------------------
+2026-05-15 13:43:06,371 [INFO] go2_survey.robot: ------------------------------------------------------------
+2026-05-15 13:43:06,372 [INFO] root: > message sent: {"type": "vid", "topic": "", "data": "on"}
+2026-05-15 13:43:06,372 [INFO] go2_survey.robot: Video channel turned on; waiting for first frame
+2026-05-15 13:43:06,372 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:43:06,372 [INFO] go2_survey.mission_runner: -------- PHASE 4: STATIC CAPTURE (waypoint_forward) --------
+2026-05-15 13:43:06,373 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:43:06,472 [INFO] go2_survey.capture: ------------------------------------------------------------
+2026-05-15 13:43:06,472 [INFO] go2_survey.capture: ----------- CAPTURE @ static | waypoint_forward ------------
+2026-05-15 13:43:06,472 [INFO] go2_survey.capture: ------------------------------------------------------------
+2026-05-15 13:43:06,472 [INFO] go2_survey.capture: Settling for 2.0s
+2026-05-15 13:43:06,645 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-15 13:43:06,690 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-15 13:43:06,764 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-15 13:43:06,873 [INFO] root: Receiving video frame
+2026-05-15 13:43:06,873 [INFO] go2_survey.robot: Video track attached; starting frame consumer
+2026-05-15 13:43:06,927 [INFO] go2_survey.robot: First video frame decoded | 1280x720 BGR
+2026-05-15 13:43:07,330 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "2f38cd4c-27bd-4e28-8451-0f9e89e83942"}}
+2026-05-15 13:43:07,348 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"2f38cd4c-27bd-4e28-8451-0f9e89e83942"}}
+2026-05-15 13:43:07,349 [INFO] root: Network status message received.
+2026-05-15 13:43:07,701 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778874187,"uuid":"41d5fa91-4886-4a08-a5b1-a3103e652c29"}}
+2026-05-15 13:43:07,703 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778874187, "uuid": "41d5fa91-4886-4a08-a5b1-a3103e652c29"}}
+2026-05-15 13:43:07,851 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "dbe8509a-91e3-45d7-8437-af87d70c775f"}}
+2026-05-15 13:43:07,861 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"dbe8509a-91e3-45d7-8437-af87d70c775f"}}
+2026-05-15 13:43:07,862 [INFO] root: Network status message received.
+2026-05-15 13:43:08,330 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-15 13:43:08", "timeInNum": 1778874188}}
+2026-05-15 13:43:08,341 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-15 13:43:08,341 [INFO] root: Heartbeat response received.
+2026-05-15 13:43:08,364 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "90cd728b-bfe5-4443-9af1-858483f1c447"}}
+2026-05-15 13:43:08,373 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"90cd728b-bfe5-4443-9af1-858483f1c447"}}
+2026-05-15 13:43:08,374 [INFO] root: Network status message received.
+2026-05-15 13:43:11,652 [INFO] go2_survey.gps: ------------------------------------------------------------
+2026-05-15 13:43:11,653 [INFO] go2_survey.gps:  GPS AVERAGED | 9 samples | hAcc_worst=0.014m | pDOP_worst=1.03 
+2026-05-15 13:43:11,653 [INFO] go2_survey.gps: ------------------------------------------------------------
+2026-05-15 13:43:11,656 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-15 13:43:11", "timeInNum": 1778874191}}
+2026-05-15 13:43:11,660 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "3bcdb6bd-fb5e-4c6c-bc3a-11b7d1bb1359"}}
+2026-05-15 13:43:11,709 [INFO] go2_survey.vision.frames: Captured frame | 1280x720 | age=0.002s
+2026-05-15 13:43:11,834 [INFO] go2_survey.vision.geotag: Wrote geotagged capture: static_nobrg_2026-05-15T13-43-11.jpg + static_nobrg_2026-05-15T13-43-11.json
+2026-05-15 13:43:11,836 [INFO] go2_survey.capture: ------------------------------------------------------------
+2026-05-15 13:43:11,836 [INFO] go2_survey.capture: ------------- CAPTURE DONE @ static | 1 frame --------------
+2026-05-15 13:43:11,836 [INFO] go2_survey.capture: ------------------------------------------------------------
+2026-05-15 13:43:11,836 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-15 13:43:11,836 [INFO] go2_survey.mission_runner: ============== STATIC CAPTURE DONE | 1 frames ==============
+2026-05-15 13:43:11,836 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-15 13:43:11,837 [INFO] root: > message sent: {"type": "vid", "topic": "", "data": "off"}
+2026-05-15 13:43:11,837 [INFO] go2_survey.robot: ------------------------------------------------------------
+2026-05-15 13:43:11,837 [INFO] go2_survey.robot: -------------------- VIDEO CHANNEL OFF ---------------------
+2026-05-15 13:43:11,837 [INFO] go2_survey.robot: ------------------------------------------------------------
+2026-05-15 13:43:11,838 [INFO] go2_survey.robot: Stopping robot
+2026-05-15 13:43:11,838 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 757731678, "api_id": 1003}}, "parameter": ""}}
+2026-05-15 13:43:13,657 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-15 13:43:13", "timeInNum": 1778874193}}
+2026-05-15 13:43:15,661 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-15 13:43:15", "timeInNum": 1778874195}}
+2026-05-15 13:43:15,678 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-15 13:43:15,678 [INFO] root: Heartbeat response received.
+2026-05-15 13:43:15,679 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"NetworkStatus.ON_WIFI_CONNECTED","uuid":"3bcdb6bd-fb5e-4c6c-bc3a-11b7d1bb1359"}}
+2026-05-15 13:43:15,680 [INFO] root: Network status message received.
+2026-05-15 13:43:15,683 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":757731678},"status":{"code":0}},"data":""}}
+2026-05-15 13:43:15,692 [ERROR] asyncio: Exception in callback AsyncIOEventEmitter._emit_run.<locals>.callback(<Task finishe...StreamError()>) at /home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/asyncio.py:97
+handle: <Handle AsyncIOEventEmitter._emit_run.<locals>.callback(<Task finishe...StreamError()>) at /home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/asyncio.py:97>
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/asyncio/events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/asyncio.py", line 105, in callback
+    self.emit("error", exc)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/asyncio.py", line 70, in emit
+    return super().emit(event, *args, **kwargs)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/base.py", line 223, in emit
+    self._emit_handle_potential_error(event, args[0] if args else None)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/base.py", line 181, in _emit_handle_potential_error
+    raise error
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/unitree_webrtc_connect/webrtc_driver.py", line 166, in on_track
+    frame = await track.recv()
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcrtpreceiver.py", line 209, in recv
+    raise MediaStreamError
+aiortc.mediastreams.MediaStreamError
+2026-05-15 13:43:15,702 [INFO] root: Data channel closed
+2026-05-15 13:43:15,706 [WARNING] go2_survey.ntrip: NTRIP connection lost
+2026-05-15 13:43:15,707 [INFO] go2_survey.ntrip: RTCM correction worker stopped
+2026-05-15 13:43:15,707 [INFO] go2_survey.ntrip: Disconnected from NTRIP. Forwarded 216 messages.
+2026-05-15 13:43:15,709 [INFO] go2_survey.gps: GPS connection closed
+2026-05-15 13:43:15,709 [INFO] go2_survey.mission_runner: Connections closed
