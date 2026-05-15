@@ -17,7 +17,7 @@ passwords   = ["492utz",  "492utz"]
 connection_mode = "LocalSTA"
 
 [navigation]
-arrival_tolerance = 0.5
+arrival_tolerance = 0.25
 max_velocity      = 0.5
 rotation_rate     = 0.8
 min_fix_type      = 4

@@ -1,4 +1,4 @@
-![logo](go2_survey_logo.png)
+<img src="go2_survey_logo.png" alt="logo" width="691">
 
 # go2_survey
 

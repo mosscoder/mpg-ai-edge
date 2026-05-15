@@ -7,6 +7,7 @@ attached to the MissionRunner. Every mission runs through this function
 """
 
 import logging
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Awaitable, Callable
@@ -23,9 +24,62 @@ from go2_survey.waypoints import Waypoint, load_waypoints
 
 logger = logging.getLogger(__name__)
 
+# Discovery retry budget. Robot can take a moment to associate with
+# the Pixel hotspot after power-on; the 2026-05-14 session had two
+# discovery failures before a third call ten minutes later succeeded.
+# 4 attempts * 10s sleep ≈ 30s of patience before declaring "no Go2".
+ROBOT_DISCOVERY_ATTEMPTS = 4
+ROBOT_DISCOVERY_DELAY_S = 10.0
+
 
 WaypointHook = Callable[[Waypoint, RTKPosition], Awaitable[None]]
 PositionHook = Callable[[RTKPosition], Awaitable[None]]
+
+
+def _discover_robot_ip_with_retry() -> str | None:
+    """Auto-discover the Go2 on the local network, retrying on empty result.
+
+    A transient empty result (no host on ports 8081/9991) usually means
+    the robot is still booting or its wifi hasn't associated yet.
+    Re-scanning after a short wait typically recovers without operator
+    intervention. A `RuntimeError` from the discovery layer (e.g. no
+    `ip route` output to figure out the subnet) is a config problem,
+    not transient — fails fast.
+
+    Returns the first IP found, or None if every attempt was empty.
+    Caller is responsible for emitting the surrounding phase banner and
+    the final error log on `None`.
+    """
+    for attempt in range(1, ROBOT_DISCOVERY_ATTEMPTS + 1):
+        logger.info(
+            f"Discovery attempt {attempt}/{ROBOT_DISCOVERY_ATTEMPTS}: "
+            f"scanning for Go2 on ports 8081/9991..."
+        )
+        ips = find_robot_ips()
+        if ips:
+            chosen = ips[0]
+            if len(ips) > 1:
+                logger.warning(
+                    f"Discovery attempt {attempt}: multiple candidates "
+                    f"({ips}); using {chosen}"
+                )
+            else:
+                logger.info(
+                    f"Discovery attempt {attempt}: found Go2 at {chosen}"
+                )
+            return chosen
+        if attempt < ROBOT_DISCOVERY_ATTEMPTS:
+            logger.warning(
+                f"Discovery attempt {attempt} found no Go2; "
+                f"waiting {ROBOT_DISCOVERY_DELAY_S:.0f}s before retry "
+                f"(robot may still be booting / associating with hotspot)..."
+            )
+            time.sleep(ROBOT_DISCOVERY_DELAY_S)
+        else:
+            logger.warning(
+                f"Discovery attempt {attempt} found no Go2 — retry budget exhausted"
+            )
+    return None
 
 
 @dataclass
@@ -105,13 +159,19 @@ async def run_mission(runner: MissionRunner) -> bool:
         and settings.robot.serial is None
         and settings.robot.connection_mode == "LocalSTA"
     ):
-        log_banner("AUTO-DISCOVERING ROBOT IP", char="-", logger=logger)
+        log_banner(
+            f"AUTO-DISCOVERING ROBOT IP "
+            f"(up to {ROBOT_DISCOVERY_ATTEMPTS} attempts, "
+            f"{ROBOT_DISCOVERY_DELAY_S:.0f}s between)",
+            char="-",
+            logger=logger,
+        )
         logger.info(
             "robot.ip not set in mission.toml and ROBOT_IP env var not set; "
             "scanning local network for a Go2 (nmap ports 8081/9991)..."
         )
         try:
-            ips = find_robot_ips()
+            robot_ip = _discover_robot_ip_with_retry()
         except RuntimeError as e:
             logger.error(f"Robot IP auto-discovery failed: {e}")
             logger.error(
@@ -119,20 +179,19 @@ async def run_mission(runner: MissionRunner) -> bool:
                 "environment, or run `go2-survey discover-ip` to diagnose."
             )
             return False
-        if not ips:
+        if robot_ip is None:
             logger.error(
-                "Robot IP auto-discovery found no Go2 on the local network. "
-                "Set [robot] ip in mission.toml, set ROBOT_IP in the "
-                "environment, or run `go2-survey discover-ip` to diagnose."
+                f"Robot IP auto-discovery found no Go2 after "
+                f"{ROBOT_DISCOVERY_ATTEMPTS} attempts. "
+                f"Set [robot] ip in mission.toml, set ROBOT_IP in the "
+                f"environment, or run `go2-survey discover-ip` to diagnose."
             )
             return False
-        robot_ip = ips[0]
-        if len(ips) > 1:
-            logger.warning(
-                f"Multiple candidates found; using {robot_ip} (others: {ips[1:]})"
-            )
-        else:
-            logger.info(f"Auto-discovered Go2 at {robot_ip}")
+        log_banner(
+            f"ROBOT IP DISCOVERED | {robot_ip}",
+            char="-",
+            logger=logger,
+        )
 
     robot = Go2Robot(
         connection_mode=settings.robot.connection_mode,
@@ -172,7 +231,14 @@ async def run_mission(runner: MissionRunner) -> bool:
                 f"hAcc: {initial_pos.accuracy_horizontal:.3f}m"
             )
 
-        log_banner("PHASE 2: ROBOT", char="-", logger=logger)
+        log_banner(
+            f"PHASE 2: GPS STABILIZATION ({settings.navigation.stabilization_period_s}s)",
+            char="-",
+            logger=logger,
+        )
+        gps.stabilization_dwell(settings.navigation.stabilization_period_s)
+
+        log_banner("PHASE 3: ROBOT", char="-", logger=logger)
         if not await robot.connect():
             logger.error("Failed to connect to robot")
             return False
@@ -188,7 +254,7 @@ async def run_mission(runner: MissionRunner) -> bool:
             await robot.enable_video()
 
         log_banner(
-            f"PHASE 3: NAVIGATE {len(waypoints)} WAYPOINT(S)",
+            f"PHASE 4: NAVIGATE {len(waypoints)} WAYPOINT(S)",
             char="-",
             logger=logger,
         )
@@ -293,6 +359,12 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
             ):
                 logger.error("GPS fix timeout")
                 return False
+            log_banner(
+                f"PHASE 2: GPS STABILIZATION ({settings.navigation.stabilization_period_s}s)",
+                char="-",
+                logger=logger,
+            )
+            gps.stabilization_dwell(settings.navigation.stabilization_period_s)
 
         robot_ip = settings.robot.ip
         if (
@@ -300,24 +372,41 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
             and settings.robot.serial is None
             and settings.robot.connection_mode == "LocalSTA"
         ):
-            log_banner("AUTO-DISCOVERING ROBOT IP", char="-", logger=logger)
+            log_banner(
+                f"AUTO-DISCOVERING ROBOT IP "
+                f"(up to {ROBOT_DISCOVERY_ATTEMPTS} attempts, "
+                f"{ROBOT_DISCOVERY_DELAY_S:.0f}s between)",
+                char="-",
+                logger=logger,
+            )
             try:
-                ips = find_robot_ips()
+                robot_ip = _discover_robot_ip_with_retry()
             except RuntimeError as e:
                 logger.error(f"Robot IP auto-discovery failed: {e}")
                 return False
-            if not ips:
-                logger.error("Robot IP auto-discovery found no Go2")
+            if robot_ip is None:
+                logger.error(
+                    f"Robot IP auto-discovery found no Go2 after "
+                    f"{ROBOT_DISCOVERY_ATTEMPTS} attempts"
+                )
                 return False
-            robot_ip = ips[0]
-            logger.info(f"Auto-discovered Go2 at {robot_ip}")
+            log_banner(
+                f"ROBOT IP DISCOVERED | {robot_ip}",
+                char="-",
+                logger=logger,
+            )
 
         robot = Go2Robot(
             connection_mode=settings.robot.connection_mode,
             robot_ip=robot_ip,
             robot_serial=settings.robot.serial,
         )
-        log_banner("PHASE 2: ROBOT", char="-", logger=logger)
+        # Phase numbering: if GPS was used we inserted a stabilization phase,
+        # so ROBOT is PHASE 3 and CAPTURE is PHASE 4. Otherwise (no GPS) keep
+        # the legacy PHASE 2 / PHASE 3 numbering.
+        robot_phase = "PHASE 3" if use_gps else "PHASE 2"
+        capture_phase = "PHASE 4" if use_gps else "PHASE 3"
+        log_banner(f"{robot_phase}: ROBOT", char="-", logger=logger)
         if not await robot.connect():
             logger.error("Failed to connect to robot")
             return False
@@ -326,7 +415,7 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
 
         capture_strategy = build_strategy(settings.capture)
         log_banner(
-            f"PHASE 3: STATIC CAPTURE ({settings.capture.strategy})",
+            f"{capture_phase}: STATIC CAPTURE ({settings.capture.strategy})",
             char="-",
             logger=logger,
         )

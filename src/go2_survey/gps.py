@@ -810,6 +810,110 @@ class GPSManager:
             }
         _telemetry_logger.info(json.dumps(payload))
 
+    def stabilization_dwell(
+        self,
+        duration_s: float,
+        progress_interval_s: float = 15.0,
+    ) -> dict:
+        """Poll GPS for `duration_s` seconds without moving the robot.
+
+        Soak-time between the initial fix and the start of navigation.
+        Lets the F9P's carrier-phase ambiguity resolution complete
+        (Float -> Fixed typically takes 30-60 s) and captures a clean
+        quality baseline in gps.log. Polls get_position() at ~1 Hz,
+        which feeds the telemetry sidecar for free.
+
+        Returns a summary dict with best_fix_type, mean_hacc, min_hacc,
+        mean_sats, tt_first_float, tt_first_fixed.
+        """
+        if duration_s <= 0:
+            return {}
+
+        start = time.monotonic()
+        last_progress = start
+        best_fix_type = 0
+        hacc_samples: list[float] = []
+        sats_samples: list[int] = []
+        tt_first_float: float | None = None
+        tt_first_fixed: float | None = None
+        fix_names = {3: "3D", 4: "GNSS+DR", 5: "RTK Float", 6: "RTK Fixed"}
+
+        log_banner(
+            f"DWELL: {duration_s:.0f}s — robot stationary, RTK soaking",
+            char="-",
+            logger=logger,
+        )
+
+        while True:
+            elapsed = time.monotonic() - start
+            if elapsed >= duration_s:
+                break
+            pos = self.get_position()
+            if pos is not None:
+                if pos.fix_type > best_fix_type:
+                    best_fix_type = pos.fix_type
+                if pos.fix_type >= 5 and tt_first_float is None:
+                    tt_first_float = elapsed
+                if pos.fix_type >= 6 and tt_first_fixed is None:
+                    tt_first_fixed = elapsed
+                hacc_samples.append(pos.accuracy_horizontal)
+                sats_samples.append(pos.satellites_used)
+
+            now = time.monotonic()
+            if now - last_progress >= progress_interval_s:
+                age = (
+                    self.ntrip.seconds_since_last_rtcm()
+                    if self.ntrip
+                    else None
+                )
+                age_str = (
+                    f"rtcm_age={age:.1f}s" if age is not None else "rtcm_age=n/a"
+                )
+                fix_repr = pos.fix_type if pos else "?"
+                hacc_repr = (
+                    f"{pos.accuracy_horizontal:.3f}m" if pos else "n/a"
+                )
+                sats_repr = pos.satellites_used if pos else "?"
+                logger.info(
+                    f"[stabilization] {elapsed:.0f}/{duration_s:.0f}s | "
+                    f"fix={fix_repr} hAcc={hacc_repr} sats={sats_repr} | {age_str}"
+                )
+                last_progress = now
+            time.sleep(1.0)
+
+        # Final summary
+        mean_hacc = (
+            sum(hacc_samples) / len(hacc_samples) if hacc_samples else float("nan")
+        )
+        min_hacc = min(hacc_samples) if hacc_samples else float("nan")
+        mean_sats = (
+            sum(sats_samples) / len(sats_samples) if sats_samples else float("nan")
+        )
+        best_label = fix_names.get(best_fix_type, f"type {best_fix_type}")
+        tt_float_str = (
+            f"{tt_first_float:.0f}s" if tt_first_float is not None else "—"
+        )
+        tt_fixed_str = (
+            f"{tt_first_fixed:.0f}s" if tt_first_fixed is not None else "—"
+        )
+
+        log_banner(
+            f"DWELL COMPLETE | best={best_label} min_hAcc={min_hacc:.3f}m | "
+            f"mean hAcc={mean_hacc:.3f}m sats={mean_sats:.1f} | "
+            f"TTFloat={tt_float_str} TTFixed={tt_fixed_str}",
+            char="=",
+            logger=logger,
+        )
+        return {
+            "best_fix_type": best_fix_type,
+            "min_hacc": min_hacc,
+            "mean_hacc": mean_hacc,
+            "mean_sats": mean_sats,
+            "tt_first_float": tt_first_float,
+            "tt_first_fixed": tt_first_fixed,
+            "samples": len(hacc_samples),
+        }
+
     def wait_for_fix(self, timeout: float = 300.0, min_fix_type: int = 4) -> bool:
         """Block until a TRUSTED fix is achieved, or until timeout.
 
@@ -878,6 +982,7 @@ class GPSManager:
 
             # One-time "RTK FLOAT SUSPECT" warning when receiver claims
             # RTK without active corrections — the float-coast scenario.
+            # Distinguish "stream died" from "stream alive but stale".
             if rtk_claimed and not corrections_active and not suspect_logged:
                 age = (
                     self.ntrip.seconds_since_last_rtcm() if self.ntrip else None
@@ -885,12 +990,20 @@ class GPSManager:
                 age_str = (
                     f"rtcm_age={age:.1f}s" if age is not None else "rtcm_age=∞"
                 )
+                if self.ntrip is not None and not self.ntrip.connection_alive:
+                    sub_cause = "NTRIP stream died (worker exited)"
+                else:
+                    sub_cause = (
+                        f"RTCM stale (age={age_str.split('=')[-1]} "
+                        f"> max={self.max_rtcm_age_s:.1f}s)"
+                    )
                 logger.warning(
                     f"Receiver reports type {pos.fix_type} ({fix_names[pos.fix_type]}) "
-                    f"but {age_str} — treating as coasting; will not accept this fix"
+                    f"but {sub_cause} — treating as coasting; "
+                    f"will not accept this fix"
                 )
                 log_banner(
-                    f"RTK FLOAT SUSPECT | no active corrections ({age_str}) | "
+                    f"RTK FLOAT SUSPECT | {sub_cause} | "
                     f"NTRIP state={self.state}",
                     level="warning",
                     char="!",
