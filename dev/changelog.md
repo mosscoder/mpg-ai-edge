@@ -1,5 +1,70 @@
 # Navigation Changelog
 
+## 2026-05-15: v0.8.3 — Robot IP Discovery Retry
+
+### Scope
+
+The 2026-05-14 session at the parking lot logged two consecutive
+"Robot IP auto-discovery found no Go2 on the local network" aborts at
+19:41:47 and 19:42:14 — same subnet (`10.123.195.0/24`) that a third
+call at 19:52:27 found the robot on in 3 seconds. Diagnostic
+post-mortem from the cross-session IP comparison (`.5` always; subnet
+varies with hotspot DHCP pool) made clear the robot was just slow to
+associate with the Pixel hotspot after power on. The discovery code
+was working; the tech was just calling it too early.
+
+This commit lets discovery ride through that transient state instead
+of aborting the mission.
+
+### Change (`1b6c4a3`)
+
+New `_discover_robot_ip_with_retry` helper in
+`src/go2_survey/mission_runner.py` wraps `find_robot_ips()` in a
+retry loop:
+
+- **`ROBOT_DISCOVERY_ATTEMPTS = 4`** total attempts
+- **`ROBOT_DISCOVERY_DELAY_S = 10.0`** seconds between attempts
+- Worst case ≈ 30 s of sleeps + 4× ~3 s scans = ~42 s before
+  declaring "no Go2"
+
+Only an empty result triggers a retry (the transient boot pattern).
+`RuntimeError` from the discovery layer (no `ip route` output,
+malformed CIDR, etc.) is a config bug and still fails fast — no
+retry.
+
+Verbose progress logs at every step so the tech can see what's
+happening during the phase:
+
+```
+------------------------------------------------------------
+-- AUTO-DISCOVERING ROBOT IP (up to 4 attempts, 10s between) --
+------------------------------------------------------------
+robot.ip not set in mission.toml and ROBOT_IP env var not set;
+    scanning local network for a Go2 (nmap ports 8081/9991)...
+Discovery attempt 1/4: scanning for Go2 on ports 8081/9991...
+Discovery attempt 1 found no Go2; waiting 10s before retry
+    (robot may still be booting / associating with hotspot)...
+Discovery attempt 2/4: scanning for Go2 on ports 8081/9991...
+Discovery attempt 2: found Go2 at 10.123.195.5
+------------------------------------------------------------
+---------- ROBOT IP DISCOVERED | 10.123.195.5 --------------
+------------------------------------------------------------
+```
+
+Applied to both `run_mission` and `_run_static` call sites.
+
+Bumps `0.8.2 → 0.8.3`.
+
+### Hardware validation pending
+
+Unit-tested via mock `find_robot_ips`: first-try success, found-on-third
+with two sleeps, exhausted-budget returns None, RuntimeError propagates
+without retry. Field validation: power on robot and immediately run
+`go2-survey run`; expect discovery to ride through the boot-associate
+window without aborting.
+
+---
+
 ## 2026-05-15: v0.8.2 — GPS Stabilization Phase, Tighter Arrival Tolerance, Cause-Attribution Fix
 
 ### Scope
