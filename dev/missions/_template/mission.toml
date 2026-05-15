@@ -34,7 +34,7 @@ connection_mode = "LocalSTA"
 # serial = "..."              # optional; alternative to ip
 
 [navigation]
-arrival_tolerance       = 0.5    # meters — stop when within this distance of a waypoint
+arrival_tolerance       = 0.25   # meters — stop when within this distance of a waypoint
 max_velocity            = 0.5    # m/s   — forward speed cap
 rotation_rate           = 0.8    # rad/s — rotation speed during turns
 min_fix_type            = 4      # 4=GNSS+DR, 5=RTK Float, 6=RTK Fixed

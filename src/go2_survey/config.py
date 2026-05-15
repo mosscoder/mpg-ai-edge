@@ -60,7 +60,7 @@ class RobotSettings:
 
 @dataclass
 class NavigationSettings:
-    arrival_tolerance: float = 0.5
+    arrival_tolerance: float = 0.25
     max_velocity: float = 0.5
     rotation_rate: float = 0.8
     min_fix_type: int = 4
