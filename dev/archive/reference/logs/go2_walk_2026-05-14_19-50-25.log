@@ -1,0 +1,709 @@
+2026-05-14 19:50:25,746 [DEBUG] asyncio: Using selector: EpollSelector
+2026-05-14 19:50:25,747 [INFO] __main__: ============================================================
+2026-05-14 19:50:25,748 [INFO] __main__: Go2 Walk Forward
+2026-05-14 19:50:25,748 [INFO] __main__: Logging to: /home/mpg-robodog/dev/mpg-ai-edge/dev/archive/reference/logs/go2_walk_2026-05-14_19-50-25.log
+2026-05-14 19:50:25,748 [INFO] __main__: CONNECTION_MODE=LocalSTA ROBOT_IP=10.123.195.5 ROBOT_SERIAL=None
+2026-05-14 19:50:25,748 [INFO] __main__: Distance: 5.0m | Velocity: 0.5m/s
+2026-05-14 19:50:25,748 [INFO] __main__: ============================================================
+2026-05-14 19:50:25,748 [INFO] __main__: Using LocalSTA mode (IP: 10.123.195.5)
+2026-05-14 19:50:25,826 [INFO] root: Creating offer...
+2026-05-14 19:50:25,830 [DEBUG] aiortc.rtcpeerconnection: RTCPeerConnection() setLocalDescription(offer)
+v=0
+o=- 3987798625 3987798625 IN IP4 0.0.0.0
+s=-
+t=0 0
+a=group:BUNDLE 0 1 2
+a=msid-semantic:WMS *
+m=audio 9 UDP/TLS/RTP/SAVPF 96 9 0 8
+c=IN IP4 0.0.0.0
+a=sendrecv
+a=extmap:1 urn:ietf:params:rtp-hdrext:sdes:mid
+a=extmap:2 urn:ietf:params:rtp-hdrext:ssrc-audio-level
+a=mid:0
+a=msid:4d3be5ad-3650-439e-96be-20efbd792f69 648bd81f-aaf8-4207-81a1-382f64ace7da
+a=rtcp:9 IN IP4 0.0.0.0
+a=rtcp-mux
+a=ssrc:1395805565 cname:61e77a8c-eb02-4896-833f-8b4d01c19e84
+a=rtpmap:96 opus/48000/2
+a=rtpmap:9 G722/8000
+a=rtpmap:0 PCMU/8000
+a=rtpmap:8 PCMA/8000
+a=ice-ufrag:1xJa
+a=ice-pwd:3XeNp0dg3bBeTFXGjOYp6z
+a=fingerprint:sha-256 5E:54:1A:86:72:3E:AB:F3:CE:98:86:39:CE:F1:0E:E5:98:58:DB:EA:7E:D1:F1:28:B9:02:24:29:36:0B:58:B4
+a=setup:actpass
+m=video 9 UDP/TLS/RTP/SAVPF 97 98 99 100 101 102
+c=IN IP4 0.0.0.0
+a=recvonly
+a=extmap:1 urn:ietf:params:rtp-hdrext:sdes:mid
+a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time
+a=mid:1
+a=msid:4d3be5ad-3650-439e-96be-20efbd792f69 1dd9d424-78d4-4efc-9a46-2cb98111c2d8
+a=rtcp:9 IN IP4 0.0.0.0
+a=rtcp-mux
+a=ssrc-group:FID 2012512532 2055444419
+a=ssrc:2012512532 cname:61e77a8c-eb02-4896-833f-8b4d01c19e84
+a=ssrc:2055444419 cname:61e77a8c-eb02-4896-833f-8b4d01c19e84
+a=rtpmap:97 VP8/90000
+a=rtcp-fb:97 nack
+a=rtcp-fb:97 nack pli
+a=rtcp-fb:97 goog-remb
+a=rtpmap:98 rtx/90000
+a=fmtp:98 apt=97
+a=rtpmap:99 H264/90000
+a=rtcp-fb:99 nack
+a=rtcp-fb:99 nack pli
+a=rtcp-fb:99 goog-remb
+a=fmtp:99 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f
+a=rtpmap:100 rtx/90000
+a=fmtp:100 apt=99
+a=rtpmap:101 H264/90000
+a=rtcp-fb:101 nack
+a=rtcp-fb:101 nack pli
+a=rtcp-fb:101 goog-remb
+a=fmtp:101 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f
+a=rtpmap:102 rtx/90000
+a=fmtp:102 apt=101
+a=ice-ufrag:1xJa
+a=ice-pwd:3XeNp0dg3bBeTFXGjOYp6z
+a=fingerprint:sha-256 5E:54:1A:86:72:3E:AB:F3:CE:98:86:39:CE:F1:0E:E5:98:58:DB:EA:7E:D1:F1:28:B9:02:24:29:36:0B:58:B4
+a=setup:actpass
+m=application 9 UDP/DTLS/SCTP webrtc-datachannel
+c=IN IP4 0.0.0.0
+a=mid:2
+a=sctp-port:5000
+a=max-message-size:65536
+a=ice-ufrag:1xJa
+a=ice-pwd:3XeNp0dg3bBeTFXGjOYp6z
+a=fingerprint:sha-256 5E:54:1A:86:72:3E:AB:F3:CE:98:86:39:CE:F1:0E:E5:98:58:DB:EA:7E:D1:F1:28:B9:02:24:29:36:0B:58:B4
+a=setup:actpass
+
+2026-05-14 19:50:25,834 [DEBUG] aiortc.rtcpeerconnection: RTCPeerConnection() iceGatheringState new -> gathering
+2026-05-14 19:50:25,843 [DEBUG] aioice.ice: Connection(0) protocol(0) connection_made(<_SelectorDatagramTransport fd=9 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,843 [DEBUG] aioice.ice: Connection(2) protocol(1) connection_made(<_SelectorDatagramTransport fd=10 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,844 [DEBUG] aioice.ice: Connection(1) protocol(2) connection_made(<_SelectorDatagramTransport fd=11 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,845 [DEBUG] aioice.ice: Connection(0) protocol(3) connection_made(<_SelectorDatagramTransport fd=12 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,845 [DEBUG] aioice.ice: Connection(2) protocol(4) connection_made(<_SelectorDatagramTransport fd=13 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,845 [DEBUG] aioice.ice: Connection(1) protocol(5) connection_made(<_SelectorDatagramTransport fd=14 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,846 [DEBUG] aioice.ice: Connection(0) protocol(6) connection_made(<_SelectorDatagramTransport fd=15 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,846 [DEBUG] aioice.ice: Connection(2) protocol(7) connection_made(<_SelectorDatagramTransport fd=16 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,846 [DEBUG] aioice.ice: Connection(1) protocol(8) connection_made(<_SelectorDatagramTransport fd=17 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,847 [DEBUG] aioice.ice: Connection(0) protocol(9) connection_made(<_SelectorDatagramTransport fd=18 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,847 [DEBUG] aioice.ice: Connection(2) protocol(10) connection_made(<_SelectorDatagramTransport fd=19 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,847 [DEBUG] aioice.ice: Connection(1) protocol(11) connection_made(<_SelectorDatagramTransport fd=20 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,848 [DEBUG] aioice.ice: Connection(0) protocol(12) connection_made(<_SelectorDatagramTransport fd=21 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,848 [DEBUG] aioice.ice: Connection(2) protocol(13) connection_made(<_SelectorDatagramTransport fd=22 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,849 [DEBUG] aioice.ice: Connection(1) protocol(14) connection_made(<_SelectorDatagramTransport fd=23 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:50:25,849 [DEBUG] aiortc.rtcpeerconnection: RTCPeerConnection() iceGatheringState gathering -> complete
+2026-05-14 19:50:25,850 [INFO] root: Trying to send SDP using the old method...
+2026-05-14 19:50:25,855 [DEBUG] urllib3.connectionpool: Starting new HTTP connection (1): 10.123.195.5:8081
+2026-05-14 19:50:25,864 [ERROR] root: An error occurred: HTTPConnectionPool(host='10.123.195.5', port=8081): Max retries exceeded with url: /offer (Caused by NewConnectionError('<urllib3.connection.HTTPConnection object at 0xffff6623b5b0>: Failed to establish a new connection: [Errno 111] Connection refused'))
+2026-05-14 19:50:25,864 [ERROR] root: An error occurred with the old method: Failed to receive SDP Answer: No response
+2026-05-14 19:50:25,864 [INFO] root: Falling back to the new method...
+2026-05-14 19:50:25,867 [DEBUG] urllib3.connectionpool: Starting new HTTP connection (1): 10.123.195.5:9991
+2026-05-14 19:50:26,062 [DEBUG] urllib3.connectionpool: http://10.123.195.5:9991 "POST /con_notify HTTP/1.1" 200 816
+2026-05-14 19:50:26,065 [DEBUG] root: Recieved con_notify response: {"data1":"XVoLZz1bNSj3Kf1q7S0MFUypHpGJxOS/fdEwaqia4MIr41Bmo5sSTmn5qDbOWS1FlZf2OVYnK0uD5omU+AO3ZlO6SI4bYCVXRAucIi92BnHlZmO1j7Sr/6YKPEHgrsxmHDcFoHBhYfHrbPBkTTk/bc2fYewP5e7F+XLwghh5tyV1Rlqm8Oq5SngI3wc6m7lsmyzN88D2ssMAtGHK4t7D6j+fWo97eCBIXHXL8exIfKp/FKxFSedV/EELTWBloZliy3P3BdmZoRGgDadA9cu39VcNKGtrOHUS347jyjmIKjkzlKxaRZWzNxIXSTN26ivhbLWa2L0SMKkWLCVbAapuVZtNZztgOufSAJHbpDRHBCXi5uyGGkNhfCyYKvBdpKmd15HV3onhYcseBBmczix1c5HqYmrvUo7rKhsvIlkfq7DQqLXfJksjifr3mIguhMunxRzs75KF0RgzV646sHruZYR9cTJrXaTtTIhOXgb4wZngsN9lsYAXgnS+Daef9TsDzyuTpJHq0BcPl+CjIk9VPA4ZxE9pgBM7JXCKM+k41CvabvaE5CxBnro6O42KlNWghyCRbzmVqdk=","data2":2}
+2026-05-14 19:50:26,212 [DEBUG] urllib3.connectionpool: Starting new HTTP connection (1): 10.123.195.5:9991
+2026-05-14 19:50:26,300 [DEBUG] urllib3.connectionpool: http://10.123.195.5:9991 "POST /con_ing_14400 HTTP/1.1" 200 4160
+2026-05-14 19:50:26,303 [DEBUG] root: Recieved con_ing_14400 response: {"type":"answer","sdp":"v=0\r\no=- 1053262620 2 IN IP4 127.0.0.1\r\ns=-\r\nt=0 0\r\na=group:BUNDLE 0 1 2\r\na=msid-semantic: WMS myKvsVideoStream\r\nm=audio 9 UDP/TLS/RTP/SAVPF 96\r\nc=IN IP4 127.0.0.1\r\na=candidate:2 1 udp 2130706431 2607:FB90:C961:E76C:278D:94F6:C162:A838 34945 typ host raddr ::/0 rport 0 generation 0 network-cost 999\r\na=candidate:1 1 udp 2130706431 2607:FB90:C961:E76C:839D:EA6A:074A:6FE8 57976 typ host raddr ::/0 rport 0 generation 0 network-cost 999\r\na=candidate:0 1 udp 2130706431 10.123.195.5 49077 typ host raddr 0.0.0.0 rport 0 generation 0 network-cost 999\r\na=msid:unitreeMediaStream unitreeAudioTrack\r\na=ssrc:628248918 cname:+PHcBQXVCzVfCaBl\r\na=ssrc:628248918 msid:unitreeMediaStream unitreeAudioTrack\r\na=ssrc:628248918 mslabel:unitreeMediaStream\r\na=ssrc:628248918 label:unitreeAudioTrack\r\na=rtcp:9 IN IP4 0.0.0.0\r\na=ice-ufrag:eo9w\r\na=ice-pwd:KnS/TF5YZScU9Cosq9Ok4/F4\r\na=ice-options:trickle\r\na=fingerprint:sha-256 E7:69:D1:2B:80:A0:03:C1:F4:7A:DF:D6:A9:68:C4:82:86:C6:0B:A9:E3:D0:28:E1:2B:5B:7D:D1:E0:21:CA:9C\r\na=setup:active\r\na=mid:0\r\na=sendrecv\r\na=rtcp-mux\r\na=rtcp-rsize\r\na=rtpmap:96 opus/48000/2\r\na=rtcp-fb:96 nack\r\na=rtcp-fb:96 goog-remb\r\nm=video 9 UDP/TLS/RTP/SAVPF 101\r\nc=IN IP4 127.0.0.1\r\na=candidate:2 1 udp 2130706431 2607:FB90:C961:E76C:278D:94F6:C162:A838 34945 typ host raddr ::/0 rport 0 generation 0 network-cost 999\r\na=candidate:1 1 udp 2130706431 2607:FB90:C961:E76C:839D:EA6A:074A:6FE8 57976 typ host raddr ::/0 rport 0 generation 0 network-cost 999\r\na=candidate:0 1 udp 2130706431 10.123.195.5 49077 typ host raddr 0.0.0.0 rport 0 generation 0 network-cost 999\r\na=msid:unitreeMediaStream unitreeVideoTrack\r\na=ssrc:242238704 cname:+PHcBQXVCzVfCaBl\r\na=ssrc:242238704 msid:unitreeMediaStream unitreeVideoTrack\r\na=ssrc:242238704 mslabel:unitreeMediaStream\r\na=ssrc:242238704 label:unitreeVideoTrack\r\na=rtcp:9 IN IP4 0.0.0.0\r\na=ice-ufrag:eo9w\r\na=ice-pwd:KnS/TF5YZScU9Cosq9Ok4/F4\r\na=ice-options:trickle\r\na=fingerprint:sha-256 E7:69:D1:2B:80:A0:03:C1:F4:7A:DF:D6:A9:68:C4:82:86:C6:0B:A9:E3:D0:28:E1:2B:5B:7D:D1:E0:21:CA:9C\r\na=setup:active\r\na=mid:1\r\na=sendonly\r\na=rtcp-mux\r\na=rtcp-rsize\r\na=rtpmap:101 H264/90000\r\na=fmtp:101 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f\r\na=rtcp-fb:101 nack\r\na=rtcp-fb:101 goog-remb\r\nm=application 9 UDP/DTLS/SCTP webrtc-datachannel\r\nc=IN IP4 127.0.0.1\r\na=candidate:2 1 udp 2130706431 2607:FB90:C961:E76C:278D:94F6:C162:A838 34945 typ host raddr ::/0 rport 0 generation 0 network-cost 999\r\na=candidate:1 1 udp 2130706431 2607:FB90:C961:E76C:839D:EA6A:074A:6FE8 57976 typ host raddr ::/0 rport 0 generation 0 network-cost 999\r\na=candidate:0 1 udp 2130706431 10.123.195.5 49077 typ host raddr 0.0.0.0 rport 0 generation 0 network-cost 999\r\na=rtcp:9 IN IP4 0.0.0.0\r\na=ice-ufrag:eo9w\r\na=ice-pwd:KnS/TF5YZScU9Cosq9Ok4/F4\r\na=fingerprint:sha-256 E7:69:D1:2B:80:A0:03:C1:F4:7A:DF:D6:A9:68:C4:82:86:C6:0B:A9:E3:D0:28:E1:2B:5B:7D:D1:E0:21:CA:9C\r\na=setup:active\r\na=mid:2\r\na=sctp-port:5000\r\n","id":"STA_localNetwork"}
+2026-05-14 19:50:26,304 [INFO] root: SDP successfully sent using the new method.
+2026-05-14 19:50:26,304 [DEBUG] aiortc.rtcpeerconnection: RTCPeerConnection() setRemoteDescription(answer)
+v=0
+o=- 1053262620 2 IN IP4 127.0.0.1
+s=-
+t=0 0
+a=group:BUNDLE 0 1 2
+a=msid-semantic: WMS myKvsVideoStream
+m=audio 9 UDP/TLS/RTP/SAVPF 96
+c=IN IP4 127.0.0.1
+a=candidate:2 1 udp 2130706431 2607:FB90:C961:E76C:278D:94F6:C162:A838 34945 typ host raddr ::/0 rport 0 generation 0 network-cost 999
+a=candidate:1 1 udp 2130706431 2607:FB90:C961:E76C:839D:EA6A:074A:6FE8 57976 typ host raddr ::/0 rport 0 generation 0 network-cost 999
+a=candidate:0 1 udp 2130706431 10.123.195.5 49077 typ host raddr 0.0.0.0 rport 0 generation 0 network-cost 999
+a=msid:unitreeMediaStream unitreeAudioTrack
+a=ssrc:628248918 cname:+PHcBQXVCzVfCaBl
+a=ssrc:628248918 msid:unitreeMediaStream unitreeAudioTrack
+a=ssrc:628248918 mslabel:unitreeMediaStream
+a=ssrc:628248918 label:unitreeAudioTrack
+a=rtcp:9 IN IP4 0.0.0.0
+a=ice-ufrag:eo9w
+a=ice-pwd:KnS/TF5YZScU9Cosq9Ok4/F4
+a=ice-options:trickle
+a=fingerprint:sha-256 E7:69:D1:2B:80:A0:03:C1:F4:7A:DF:D6:A9:68:C4:82:86:C6:0B:A9:E3:D0:28:E1:2B:5B:7D:D1:E0:21:CA:9C
+a=setup:active
+a=mid:0
+a=sendrecv
+a=rtcp-mux
+a=rtcp-rsize
+a=rtpmap:96 opus/48000/2
+a=rtcp-fb:96 nack
+a=rtcp-fb:96 goog-remb
+m=video 9 UDP/TLS/RTP/SAVPF 101
+c=IN IP4 127.0.0.1
+a=candidate:2 1 udp 2130706431 2607:FB90:C961:E76C:278D:94F6:C162:A838 34945 typ host raddr ::/0 rport 0 generation 0 network-cost 999
+a=candidate:1 1 udp 2130706431 2607:FB90:C961:E76C:839D:EA6A:074A:6FE8 57976 typ host raddr ::/0 rport 0 generation 0 network-cost 999
+a=candidate:0 1 udp 2130706431 10.123.195.5 49077 typ host raddr 0.0.0.0 rport 0 generation 0 network-cost 999
+a=msid:unitreeMediaStream unitreeVideoTrack
+a=ssrc:242238704 cname:+PHcBQXVCzVfCaBl
+a=ssrc:242238704 msid:unitreeMediaStream unitreeVideoTrack
+a=ssrc:242238704 mslabel:unitreeMediaStream
+a=ssrc:242238704 label:unitreeVideoTrack
+a=rtcp:9 IN IP4 0.0.0.0
+a=ice-ufrag:eo9w
+a=ice-pwd:KnS/TF5YZScU9Cosq9Ok4/F4
+a=ice-options:trickle
+a=fingerprint:sha-256 E7:69:D1:2B:80:A0:03:C1:F4:7A:DF:D6:A9:68:C4:82:86:C6:0B:A9:E3:D0:28:E1:2B:5B:7D:D1:E0:21:CA:9C
+a=setup:active
+a=mid:1
+a=sendonly
+a=rtcp-mux
+a=rtcp-rsize
+a=rtpmap:101 H264/90000
+a=fmtp:101 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f
+a=rtcp-fb:101 nack
+a=rtcp-fb:101 goog-remb
+m=application 9 UDP/DTLS/SCTP webrtc-datachannel
+c=IN IP4 127.0.0.1
+a=candidate:2 1 udp 2130706431 2607:FB90:C961:E76C:278D:94F6:C162:A838 34945 typ host raddr ::/0 rport 0 generation 0 network-cost 999
+a=candidate:1 1 udp 2130706431 2607:FB90:C961:E76C:839D:EA6A:074A:6FE8 57976 typ host raddr ::/0 rport 0 generation 0 network-cost 999
+a=candidate:0 1 udp 2130706431 10.123.195.5 49077 typ host raddr 0.0.0.0 rport 0 generation 0 network-cost 999
+a=rtcp:9 IN IP4 0.0.0.0
+a=ice-ufrag:eo9w
+a=ice-pwd:KnS/TF5YZScU9Cosq9Ok4/F4
+a=fingerprint:sha-256 E7:69:D1:2B:80:A0:03:C1:F4:7A:DF:D6:A9:68:C4:82:86:C6:0B:A9:E3:D0:28:E1:2B:5B:7D:D1:E0:21:CA:9C
+a=setup:active
+a=mid:2
+a=sctp-port:5000
+
+2026-05-14 19:50:26,309 [DEBUG] aiortc.rtcicetransport: RTCIceTransport(controlling) - new -> closed
+2026-05-14 19:50:26,310 [DEBUG] aiortc.rtcicetransport: RTCIceTransport(controlling) - new -> checking
+2026-05-14 19:50:26,311 [DEBUG] aiortc.rtcpeerconnection: RTCPeerConnection() iceConnectionState new -> checking
+2026-05-14 19:50:26,311 [DEBUG] aiortc.rtcpeerconnection: RTCPeerConnection() connectionState new -> connecting
+2026-05-14 19:50:26,312 [DEBUG] aioice.ice: Connection(2) protocol(1) connection_lost(None)
+2026-05-14 19:50:26,312 [DEBUG] aioice.ice: Connection(1) protocol(2) < ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\x9a\xa3\xed\xb2\xb0\xde\xbcV\xfdd\xa3d')
+2026-05-14 19:50:26,313 [DEBUG] aioice.ice: Connection(1) protocol(2) > ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\x9a\xa3\xed\xb2\xb0\xde\xbcV\xfdd\xa3d')
+2026-05-14 19:50:26,314 [INFO] aioice.ice: Connection(1) Discovered peer reflexive candidate Candidate(LbnsybodML 1 udp 2130706431 10.123.195.5 49077 typ prflx)
+2026-05-14 19:50:26,315 [DEBUG] aioice.ice: Connection(0) protocol(0) < ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\x16\xeb\xe3G\xba9/\xd6W`\x81\xe7')
+2026-05-14 19:50:26,315 [DEBUG] aioice.ice: Connection(0) protocol(0) > ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\x16\xeb\xe3G\xba9/\xd6W`\x81\xe7')
+2026-05-14 19:50:26,316 [DEBUG] aioice.ice: Connection(1) protocol(5) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'I\xd6\x9cz\x83\xc8H\x11\xd8"Q\x97')
+2026-05-14 19:50:26,316 [DEBUG] aioice.ice: Connection(1) protocol(5) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'I\xd6\x9cz\x83\xc8H\x11\xd8"Q\x97')
+2026-05-14 19:50:26,317 [INFO] aioice.ice: Connection(1) Discovered peer reflexive candidate Candidate(mlUG3kXqrJ 1 udp 2130706431 2607:fb90:c961:e76c:278d:94f6:c162:a838 34945 typ prflx)
+2026-05-14 19:50:26,317 [DEBUG] aioice.ice: Connection(2) protocol(4) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b"\xa17j2(Q|q'\x18\xeb\xaa")
+2026-05-14 19:50:26,318 [DEBUG] aioice.ice: Connection(2) protocol(4) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b"\xa17j2(Q|q'\x18\xeb\xaa")
+2026-05-14 19:50:26,318 [DEBUG] aioice.ice: Connection(0) protocol(3) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\xa2\xe3\xe4\xb9\xbfI\xf2`\x80\\\x93\xa8')
+2026-05-14 19:50:26,319 [DEBUG] aioice.ice: Connection(0) protocol(3) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\xa2\xe3\xe4\xb9\xbfI\xf2`\x80\\\x93\xa8')
+2026-05-14 19:50:26,319 [DEBUG] aioice.ice: Connection(1) protocol(8) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\x8a\x0b\xe3\xb9enKh\x17\xdcd8')
+2026-05-14 19:50:26,320 [DEBUG] aioice.ice: Connection(1) protocol(8) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\x8a\x0b\xe3\xb9enKh\x17\xdcd8')
+2026-05-14 19:50:26,320 [DEBUG] aioice.ice: Connection(2) protocol(7) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\xe13\xbb\xb9U\x0cQ\xdf\x174\x98|')
+2026-05-14 19:50:26,321 [DEBUG] aioice.ice: Connection(2) protocol(7) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\xe13\xbb\xb9U\x0cQ\xdf\x174\x98|')
+2026-05-14 19:50:26,321 [DEBUG] aioice.ice: Connection(0) protocol(6) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\xad\x0f\x19\xd4(\x04~\t79\xc2\x8c')
+2026-05-14 19:50:26,322 [DEBUG] aioice.ice: Connection(0) protocol(6) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\xad\x0f\x19\xd4(\x04~\t79\xc2\x8c')
+2026-05-14 19:50:26,323 [INFO] aioice.ice: Connection(1) Check CandidatePair(('10.123.195.241', 50981) -> ('10.123.195.5', 49077)) State.WAITING -> State.IN_PROGRESS
+2026-05-14 19:50:26,323 [DEBUG] aioice.ice: Connection(1) protocol(2) > ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'z\xd5Q\xd5\x80\xf5\xceK\x8e\\\x08\x06')
+2026-05-14 19:50:26,324 [INFO] aioice.ice: Connection(1) Check CandidatePair(('2607:fb90:c961:e76c:5fce:4760:4f6c:f5c8', 51630) -> ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945)) State.WAITING -> State.IN_PROGRESS
+2026-05-14 19:50:26,324 [DEBUG] aioice.ice: Connection(1) protocol(5) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\t\xceH\r\xc3Z\x19\x10:y\x0b\xc8')
+2026-05-14 19:50:26,324 [INFO] aioice.ice: Connection(1) Check CandidatePair(('2607:fb90:c961:e76c:7d08:75d4:a3b6:fbc1', 57749) -> ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945)) State.WAITING -> State.IN_PROGRESS
+2026-05-14 19:50:26,325 [DEBUG] aioice.ice: Connection(1) protocol(8) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'Z\xec\xe6\x19/KQ\x87c\xfa1\xd0')
+2026-05-14 19:50:26,325 [DEBUG] aioice.ice: Connection(1) protocol(2) < ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'{tc\x82&\xa2\x80\x062\x90c\xb6')
+2026-05-14 19:50:26,326 [DEBUG] aioice.ice: Connection(1) protocol(2) > ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'{tc\x82&\xa2\x80\x062\x90c\xb6')
+2026-05-14 19:50:26,326 [DEBUG] aioice.ice: Connection(0) protocol(0) < ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\xcbP>\x93\x94xn\xac\x0c\xec\xf8\x95')
+2026-05-14 19:50:26,327 [DEBUG] aioice.ice: Connection(0) protocol(0) > ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\xcbP>\x93\x94xn\xac\x0c\xec\xf8\x95')
+2026-05-14 19:50:26,327 [DEBUG] aioice.ice: Connection(1) protocol(5) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'E\x13k\\G\x03\xd9\xe9\xe6\xbd\xa3\xa5')
+2026-05-14 19:50:26,327 [DEBUG] aioice.ice: Connection(1) protocol(5) > ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'E\x13k\\G\x03\xd9\xe9\xe6\xbd\xa3\xa5')
+2026-05-14 19:50:26,328 [INFO] aioice.ice: Connection(1) Discovered peer reflexive candidate Candidate(KVSFqcqKvF 1 udp 2130706431 2607:fb90:c961:e76c:839d:ea6a:74a:6fe8 57976 typ prflx)
+2026-05-14 19:50:26,328 [DEBUG] aioice.ice: Connection(0) protocol(3) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\xa5\x1f\xa8Mg\x1c\x1d\xb2\x0e\xf659')
+2026-05-14 19:50:26,329 [DEBUG] aioice.ice: Connection(0) protocol(3) > ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\xa5\x1f\xa8Mg\x1c\x1d\xb2\x0e\xf659')
+2026-05-14 19:50:26,329 [DEBUG] aioice.ice: Connection(1) protocol(8) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\x06\x95\x05\x86\xf1\x98.\x9f\xa8Gs\xd0')
+2026-05-14 19:50:26,330 [DEBUG] aioice.ice: Connection(1) protocol(8) > ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\x06\x95\x05\x86\xf1\x98.\x9f\xa8Gs\xd0')
+2026-05-14 19:50:26,330 [DEBUG] aioice.ice: Connection(2) protocol(7) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'|\xa6\xe0bd\x83\x07j\x18\r\xf1\t')
+2026-05-14 19:50:26,331 [DEBUG] aioice.ice: Connection(2) protocol(7) > ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'|\xa6\xe0bd\x83\x07j\x18\r\xf1\t')
+2026-05-14 19:50:26,331 [DEBUG] aioice.ice: Connection(0) protocol(6) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\x92C\xaaA\xbdx79\x1e\x17\x9c\x82')
+2026-05-14 19:50:26,332 [DEBUG] aioice.ice: Connection(0) protocol(6) > ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\x92C\xaaA\xbdx79\x1e\x17\x9c\x82')
+2026-05-14 19:50:26,332 [DEBUG] aioice.ice: Connection(2) protocol(4) connection_lost(None)
+2026-05-14 19:50:26,332 [INFO] aioice.ice: Connection(1) Check CandidatePair(('2607:fb90:c961:e76c:5fce:4760:4f6c:f5c8', 51630) -> ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976)) State.WAITING -> State.IN_PROGRESS
+2026-05-14 19:50:26,333 [DEBUG] aioice.ice: Connection(1) protocol(5) > ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\xb7\xea\xe2cq\x7fp\xfer0`\x1d')
+2026-05-14 19:50:26,333 [INFO] aioice.ice: Connection(1) Check CandidatePair(('2607:fb90:c961:e76c:7d08:75d4:a3b6:fbc1', 57749) -> ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976)) State.WAITING -> State.IN_PROGRESS
+2026-05-14 19:50:26,333 [DEBUG] aioice.ice: Connection(1) protocol(8) > ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\x17\xba\x03\xdeK[\x85\xf6x\xcb\x15Z')
+2026-05-14 19:50:26,334 [DEBUG] aioice.ice: Connection(1) protocol(2) < ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'z\xd5Q\xd5\x80\xf5\xceK\x8e\\\x08\x06')
+2026-05-14 19:50:26,334 [DEBUG] aioice.ice: Connection(1) protocol(5) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'g\x7f\xe2Y\x1fS\x9d\x1b\xb7\x9c\xfe\t')
+2026-05-14 19:50:26,335 [DEBUG] aioice.ice: Connection(1) protocol(5) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'g\x7f\xe2Y\x1fS\x9d\x1b\xb7\x9c\xfe\t')
+2026-05-14 19:50:26,335 [DEBUG] aioice.ice: Connection(0) protocol(3) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\xb7\xfe\x01u\xf2\xce\x9e\x06\x1f\xc4\x02.')
+2026-05-14 19:50:26,336 [DEBUG] aioice.ice: Connection(0) protocol(3) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\xb7\xfe\x01u\xf2\xce\x9e\x06\x1f\xc4\x02.')
+2026-05-14 19:50:26,336 [DEBUG] aioice.ice: Connection(1) protocol(8) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\xdd\xcc\xa5\x80\x7f\xce\x98\xa7\xbd\xf4\xcd)')
+2026-05-14 19:50:26,337 [DEBUG] aioice.ice: Connection(1) protocol(8) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\xdd\xcc\xa5\x80\x7f\xce\x98\xa7\xbd\xf4\xcd)')
+2026-05-14 19:50:26,337 [DEBUG] aioice.ice: Connection(2) protocol(7) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\x82l\x0f:\x08\x0eC\xe6\xda\xe9fZ')
+2026-05-14 19:50:26,337 [DEBUG] aioice.ice: Connection(2) protocol(7) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\x82l\x0f:\x08\x0eC\xe6\xda\xe9fZ')
+2026-05-14 19:50:26,338 [DEBUG] aioice.ice: Connection(0) protocol(6) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\x1aO\xa4\xee\x7fs\xe2\x01\xdf\xf2;\xe7')
+2026-05-14 19:50:26,338 [DEBUG] aioice.ice: Connection(0) protocol(6) > ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\x1aO\xa4\xee\x7fs\xe2\x01\xdf\xf2;\xe7')
+2026-05-14 19:50:26,339 [INFO] aioice.ice: Connection(1) Check CandidatePair(('10.123.195.241', 50981) -> ('10.123.195.5', 49077)) State.IN_PROGRESS -> State.SUCCEEDED
+2026-05-14 19:50:26,339 [INFO] aioice.ice: Connection(1) ICE completed
+2026-05-14 19:50:26,340 [DEBUG] aiortc.rtcicetransport: RTCIceTransport(controlling) - checking -> completed
+2026-05-14 19:50:26,340 [DEBUG] aiortc.rtcpeerconnection: RTCPeerConnection() iceConnectionState checking -> new
+2026-05-14 19:50:26,351 [DEBUG] aiortc.rtcdtlstransport: RTCDtlsTransport(server) - State.NEW -> State.CONNECTING
+2026-05-14 19:50:26,352 [DEBUG] aioice.ice: Connection(1) protocol(5) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\x00\x7f\xcd\xdah44\x1f25\x94%')
+2026-05-14 19:50:26,353 [DEBUG] aioice.ice: Connection(1) protocol(5) > ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\x00\x7f\xcd\xdah44\x1f25\x94%')
+2026-05-14 19:50:26,354 [DEBUG] aioice.ice: Connection(0) protocol(3) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\xe0\x8f\x10]\x84\x10Y\xeb\xf2V2\xc7')
+2026-05-14 19:50:26,354 [DEBUG] aioice.ice: Connection(0) protocol(3) > ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\xe0\x8f\x10]\x84\x10Y\xeb\xf2V2\xc7')
+2026-05-14 19:50:26,355 [DEBUG] aioice.ice: Connection(1) protocol(8) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\x033+"\xf7-P\x11}\xf4\x00\xfc')
+2026-05-14 19:50:26,355 [DEBUG] aioice.ice: Connection(1) protocol(8) > ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\x033+"\xf7-P\x11}\xf4\x00\xfc')
+2026-05-14 19:50:26,356 [DEBUG] aioice.ice: Connection(0) protocol(6) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\x8f`\x9bG[Jg\x8b.\xa7\xedG')
+2026-05-14 19:50:26,356 [DEBUG] aioice.ice: Connection(0) protocol(6) > ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\x8f`\x9bG[Jg\x8b.\xa7\xedG')
+2026-05-14 19:50:26,356 [DEBUG] aioice.ice: Connection(2) protocol(7) connection_lost(None)
+2026-05-14 19:50:26,357 [DEBUG] aioice.ice: Connection(1) protocol(5) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\t\xceH\r\xc3Z\x19\x10:y\x0b\xc8')
+2026-05-14 19:50:26,358 [DEBUG] aioice.ice: Connection(1) protocol(8) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'Z\xec\xe6\x19/KQ\x87c\xfa1\xd0')
+2026-05-14 19:50:26,358 [DEBUG] aioice.ice: Connection(1) protocol(5) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\xb7\xea\xe2cq\x7fp\xfer0`\x1d')
+2026-05-14 19:50:26,358 [DEBUG] aioice.ice: Connection(1) protocol(8) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\x17\xba\x03\xdeK[\x85\xf6x\xcb\x15Z')
+2026-05-14 19:50:26,359 [DEBUG] aioice.ice: Connection(2) protocol(10) connection_lost(None)
+2026-05-14 19:50:26,359 [DEBUG] aioice.ice: Connection(1) protocol(5) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.INDICATION, transaction_id=b'`\xcd\xa6\x11\xc9\x89?\x11\xce\xc9\xf0\xf0')
+2026-05-14 19:50:26,359 [DEBUG] aioice.ice: Connection(1) protocol(8) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.INDICATION, transaction_id=b'`\xcd\xa6\x11\xc9\x89?\x11\xce\xc9\xf0\xf0')
+2026-05-14 19:50:26,359 [DEBUG] aioice.ice: Connection(1) protocol(5) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.INDICATION, transaction_id=b'`\xcd\xa6\x11\xc9\x89?\x11\xce\xc9\xf0\xf0')
+2026-05-14 19:50:26,360 [DEBUG] aioice.ice: Connection(1) protocol(8) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.INDICATION, transaction_id=b'`\xcd\xa6\x11\xc9\x89?\x11\xce\xc9\xf0\xf0')
+2026-05-14 19:50:26,360 [DEBUG] aioice.ice: Connection(0) protocol(3) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.INDICATION, transaction_id=b'`\xcd\xa6\x11\xc9\x89?\x11\xce\xc9\xf0\xf0')
+2026-05-14 19:50:26,360 [DEBUG] aioice.ice: Connection(0) protocol(6) < ('2607:fb90:c961:e76c:278d:94f6:c162:a838', 34945) Message(message_method=Method.BINDING, message_class=Class.INDICATION, transaction_id=b'`\xcd\xa6\x11\xc9\x89?\x11\xce\xc9\xf0\xf0')
+2026-05-14 19:50:26,360 [DEBUG] aioice.ice: Connection(2) protocol(13) connection_lost(None)
+2026-05-14 19:50:26,360 [DEBUG] aioice.ice: Connection(0) protocol(3) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.INDICATION, transaction_id=b'`\xcd\xa6\x11\xc9\x89?\x11\xce\xc9\xf0\xf0')
+2026-05-14 19:50:26,361 [DEBUG] aioice.ice: Connection(0) protocol(6) < ('2607:fb90:c961:e76c:839d:ea6a:74a:6fe8', 57976) Message(message_method=Method.BINDING, message_class=Class.INDICATION, transaction_id=b'`\xcd\xa6\x11\xc9\x89?\x11\xce\xc9\xf0\xf0')
+2026-05-14 19:50:26,361 [DEBUG] aioice.ice: Connection(1) protocol(2) < ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.INDICATION, transaction_id=b'`\xcd\xa6\x11\xc9\x89?\x11\xce\xc9\xf0\xf0')
+2026-05-14 19:50:26,361 [DEBUG] aioice.ice: Connection(0) protocol(0) < ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.INDICATION, transaction_id=b'`\xcd\xa6\x11\xc9\x89?\x11\xce\xc9\xf0\xf0')
+2026-05-14 19:50:26,361 [DEBUG] aiortc.rtcicetransport: RTCIceTransport(controlling) - new -> closed
+2026-05-14 19:50:26,362 [DEBUG] aioice.ice: Connection(0) protocol(0) connection_lost(None)
+2026-05-14 19:50:26,362 [DEBUG] aioice.ice: Connection(0) protocol(3) connection_lost(None)
+2026-05-14 19:50:26,363 [DEBUG] aioice.ice: Connection(0) protocol(6) connection_lost(None)
+2026-05-14 19:50:26,363 [DEBUG] aioice.ice: Connection(0) protocol(9) connection_lost(None)
+2026-05-14 19:50:26,363 [DEBUG] aioice.ice: Connection(0) protocol(12) connection_lost(None)
+2026-05-14 19:50:26,363 [DEBUG] aiortc.rtcpeerconnection: RTCPeerConnection() iceConnectionState new -> completed
+2026-05-14 19:50:26,365 [INFO] root: Track recieved: audio
+2026-05-14 19:50:26,366 [INFO] root: Track recieved: video
+2026-05-14 19:50:26,481 [DEBUG] aiortc.rtcdtlstransport: RTCDtlsTransport(server) x DTLS handshake negotiated SRTP_AES128_CM_SHA1_80
+2026-05-14 19:50:26,483 [DEBUG] aiortc.rtcdtlstransport: RTCDtlsTransport(server) - DTLS handshake complete
+2026-05-14 19:50:26,483 [DEBUG] aiortc.rtcdtlstransport: RTCDtlsTransport(server) - State.CONNECTING -> State.CONNECTED
+2026-05-14 19:50:26,483 [DEBUG] aiortc.rtcpeerconnection: RTCPeerConnection() connectionState connecting -> connected
+2026-05-14 19:50:26,488 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > InitChunk(flags=0)
+2026-05-14 19:50:26,489 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T1(InitChunk) start
+2026-05-14 19:50:26,489 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - State.CLOSED -> State.COOKIE_WAIT
+2026-05-14 19:50:26,490 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) - RTP started
+2026-05-14 19:50:26,491 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) - RTCP started
+2026-05-14 19:50:26,491 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) - RTCP started
+2026-05-14 19:50:26,491 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) - RTCP started
+2026-05-14 19:50:26,492 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < InitChunk(flags=0)
+2026-05-14 19:50:26,496 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < InitAckChunk(flags=0)
+2026-05-14 19:50:26,496 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T1(InitChunk) cancel
+2026-05-14 19:50:26,496 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - Peer supports 300 outbound streams, 300 max inbound streams
+2026-05-14 19:50:26,496 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > CookieEchoChunk(flags=0)
+2026-05-14 19:50:26,497 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T1(CookieEchoChunk) start
+2026-05-14 19:50:26,497 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - State.COOKIE_WAIT -> State.COOKIE_ECHOED
+2026-05-14 19:50:26,503 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < CookieAckChunk(flags=0)
+2026-05-14 19:50:26,503 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T1(CookieEchoChunk) cancel
+2026-05-14 19:50:26,504 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - State.COOKIE_ECHOED -> State.ESTABLISHED
+2026-05-14 19:50:26,504 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204458, stream_id=1, stream_seq=0)
+2026-05-14 19:50:26,505 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:26,542 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065521, stream_id=1, stream_seq=0)
+2026-05-14 19:50:26,543 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065521, gaps=[])
+2026-05-14 19:50:26,544 [INFO] root: Received message on data channel: {"type":"validation","data":"EsIodTltObK0vGShz9N"}
+2026-05-14 19:50:26,545 [DEBUG] aiortc.rtcdatachannel: RTCDataChannel(1) - connecting -> open
+2026-05-14 19:50:26,545 [INFO] root: Data channel opened
+2026-05-14 19:50:26,546 [INFO] root: > message sent: {"type": "validation", "topic": "", "data": "iSF62VaWnjB05ocVo0jh0A=="}
+2026-05-14 19:50:26,546 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204458, gaps=[])
+2026-05-14 19:50:26,547 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:26,547 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204459, stream_id=1, stream_seq=1)
+2026-05-14 19:50:26,547 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:26,552 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065522, stream_id=1, stream_seq=1)
+2026-05-14 19:50:26,553 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065522, gaps=[])
+2026-05-14 19:50:26,553 [INFO] root: Received message on data channel: {"type":"validation", "data":"Validation Ok."}
+2026-05-14 19:50:26,554 [INFO] root: Validation succeed
+2026-05-14 19:50:26,554 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065523, stream_id=1, stream_seq=2)
+2026-05-14 19:50:26,555 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065523, gaps=[])
+2026-05-14 19:50:26,555 [INFO] root: Received message on data channel: {"type":"errors","data":[]}
+2026-05-14 19:50:26,568 [INFO] __main__: WebRTC connected
+2026-05-14 19:50:26,568 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 693366389, "api_id": 1001}}, "parameter": ""}}
+2026-05-14 19:50:26,569 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204460, stream_id=1, stream_seq=2)
+2026-05-14 19:50:26,577 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204460, gaps=[])
+2026-05-14 19:50:26,577 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:26,595 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065524, stream_id=1, stream_seq=3)
+2026-05-14 19:50:26,595 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065524, gaps=[])
+2026-05-14 19:50:26,596 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1001,"id":693366389},"status":{"code":0}},"data":"{\"form\":\"0\",\"name\":\"mcf\"}"}}
+2026-05-14 19:50:26,597 [INFO] __main__: Robot API ready
+2026-05-14 19:50:26,597 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 693366150, "api_id": 1001}}, "parameter": ""}}
+2026-05-14 19:50:26,597 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204461, stream_id=1, stream_seq=3)
+2026-05-14 19:50:26,598 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:26,615 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204461, gaps=[])
+2026-05-14 19:50:26,615 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:26,616 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065525, stream_id=1, stream_seq=4)
+2026-05-14 19:50:26,616 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065525, gaps=[])
+2026-05-14 19:50:26,617 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1001,"id":693366150},"status":{"code":0}},"data":"{\"form\":\"0\",\"name\":\"mcf\"}"}}
+2026-05-14 19:50:26,617 [INFO] __main__: Current motion mode: mcf
+2026-05-14 19:50:26,617 [INFO] __main__: Setting motion mode to 'normal'...
+2026-05-14 19:50:26,617 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 693366592, "api_id": 1002}}, "parameter": "{\"name\": \"normal\"}"}}
+2026-05-14 19:50:26,618 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204462, stream_id=1, stream_seq=4)
+2026-05-14 19:50:26,619 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:26,630 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204462, gaps=[])
+2026-05-14 19:50:26,631 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:26,631 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065526, stream_id=1, stream_seq=5)
+2026-05-14 19:50:26,631 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065526, gaps=[])
+2026-05-14 19:50:26,632 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1002,"id":693366592},"status":{"code":7004}},"data":""}}
+2026-05-14 19:50:27,555 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "9f15ca4c-a266-455a-9be0-309c30362ccd"}}
+2026-05-14 19:50:27,556 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204463, stream_id=1, stream_seq=5)
+2026-05-14 19:50:27,556 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:27,564 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065527, stream_id=1, stream_seq=6)
+2026-05-14 19:50:27,565 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065527, gaps=[])
+2026-05-14 19:50:27,565 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"9f15ca4c-a266-455a-9be0-309c30362ccd"}}
+2026-05-14 19:50:27,566 [INFO] root: Network status message received.
+2026-05-14 19:50:27,763 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204463, gaps=[])
+2026-05-14 19:50:27,764 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:27,921 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSrPacket(ssrc=1395805565, sender_info=RtcpSenderInfo(ntp_timestamp=0, rtp_timestamp=0, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:27,922 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSdesPacket(chunks=[RtcpSourceInfo(ssrc=1395805565, items=[(1, b'61e77a8c-eb02-4896-833f-8b4d01c19e84')])])
+2026-05-14 19:50:28,067 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "79624c67-a0eb-403b-95e3-bd49fb361bc0"}}
+2026-05-14 19:50:28,067 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204464, stream_id=1, stream_seq=6)
+2026-05-14 19:50:28,068 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:28,078 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065528, stream_id=1, stream_seq=7)
+2026-05-14 19:50:28,079 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065528, gaps=[])
+2026-05-14 19:50:28,080 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"79624c67-a0eb-403b-95e3-bd49fb361bc0"}}
+2026-05-14 19:50:28,080 [INFO] root: Network status message received.
+2026-05-14 19:50:28,271 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204464, gaps=[])
+2026-05-14 19:50:28,272 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:28,556 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:50:28", "timeInNum": 1778809828}}
+2026-05-14 19:50:28,557 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204465, stream_id=1, stream_seq=7)
+2026-05-14 19:50:28,557 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:28,565 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065529, stream_id=1, stream_seq=8)
+2026-05-14 19:50:28,566 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065529, gaps=[])
+2026-05-14 19:50:28,566 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:50:28,567 [INFO] root: Heartbeat response received.
+2026-05-14 19:50:28,582 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "d945d982-0b46-4fd7-8cec-39ce97aa8ce2"}}
+2026-05-14 19:50:28,582 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204466, stream_id=1, stream_seq=8)
+2026-05-14 19:50:28,591 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204466, gaps=[])
+2026-05-14 19:50:28,591 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:28,592 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065530, stream_id=1, stream_seq=9)
+2026-05-14 19:50:28,592 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065530, gaps=[])
+2026-05-14 19:50:28,593 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"d945d982-0b46-4fd7-8cec-39ce97aa8ce2"}}
+2026-05-14 19:50:28,593 [INFO] root: Network status message received.
+2026-05-14 19:50:28,788 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204466, gaps=[])
+2026-05-14 19:50:29,095 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "f691ec3b-f15c-4939-b42b-c0dc65c877d7"}}
+2026-05-14 19:50:29,095 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204467, stream_id=1, stream_seq=9)
+2026-05-14 19:50:29,096 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:29,096 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSrPacket(ssrc=1395805565, sender_info=RtcpSenderInfo(ntp_timestamp=0, rtp_timestamp=0, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:29,097 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSdesPacket(chunks=[RtcpSourceInfo(ssrc=1395805565, items=[(1, b'61e77a8c-eb02-4896-833f-8b4d01c19e84')])])
+2026-05-14 19:50:29,103 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065531, stream_id=1, stream_seq=10)
+2026-05-14 19:50:29,103 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065531, gaps=[])
+2026-05-14 19:50:29,104 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"f691ec3b-f15c-4939-b42b-c0dc65c877d7"}}
+2026-05-14 19:50:29,104 [INFO] root: Network status message received.
+2026-05-14 19:50:29,234 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464695842322675, rtp_timestamp=2273645166, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:29,235 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464695842322675, rtp_timestamp=3216928827, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:29,302 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204467, gaps=[])
+2026-05-14 19:50:29,302 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:29,425 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464696668495283, rtp_timestamp=3216938060, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:29,471 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464696870500050, rtp_timestamp=2273666711, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:29,606 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "61523307-0d1a-4b8b-9f54-3f0795b47337"}}
+2026-05-14 19:50:29,607 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204468, stream_id=1, stream_seq=10)
+2026-05-14 19:50:29,607 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:29,616 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065532, stream_id=1, stream_seq=11)
+2026-05-14 19:50:29,616 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065532, gaps=[])
+2026-05-14 19:50:29,617 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"61523307-0d1a-4b8b-9f54-3f0795b47337"}}
+2026-05-14 19:50:29,617 [INFO] root: Network status message received.
+2026-05-14 19:50:29,675 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464697754013048, rtp_timestamp=2273685225, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:29,676 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464697754013048, rtp_timestamp=3216950191, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:29,798 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSrPacket(ssrc=1395805565, sender_info=RtcpSenderInfo(ntp_timestamp=0, rtp_timestamp=0, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:29,799 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSdesPacket(chunks=[RtcpSourceInfo(ssrc=1395805565, items=[(1, b'61e77a8c-eb02-4896-833f-8b4d01c19e84')])])
+2026-05-14 19:50:29,820 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204468, gaps=[])
+2026-05-14 19:50:29,820 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:29,832 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464698434566508, rtp_timestamp=3216957797, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:29,878 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464698627278684, rtp_timestamp=2273703524, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:30,078 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464699488034368, rtp_timestamp=3216969571, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:30,085 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464699526045688, rtp_timestamp=2273722358, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:30,119 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "6146b337-da28-4415-8273-6c0ca4a9c318"}}
+2026-05-14 19:50:30,120 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204469, stream_id=1, stream_seq=11)
+2026-05-14 19:50:30,121 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:30,152 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065533, stream_id=1, stream_seq=12)
+2026-05-14 19:50:30,153 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065533, gaps=[])
+2026-05-14 19:50:30,154 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"NetworkStatus.ON_WIFI_CONNECTED","uuid":"6146b337-da28-4415-8273-6c0ca4a9c318"}}
+2026-05-14 19:50:30,154 [INFO] root: Network status message received.
+2026-05-14 19:50:30,213 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464700077588208, rtp_timestamp=3216976159, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:30,310 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464700498022557, rtp_timestamp=2273742725, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:30,350 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204469, gaps=[])
+2026-05-14 19:50:30,350 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:30,453 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464701118235591, rtp_timestamp=3216987789, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:30,548 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464701530024600, rtp_timestamp=2273764351, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:30,557 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:50:30", "timeInNum": 1778809830}}
+2026-05-14 19:50:30,558 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204470, stream_id=1, stream_seq=12)
+2026-05-14 19:50:30,559 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:30,566 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065534, stream_id=1, stream_seq=13)
+2026-05-14 19:50:30,567 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065534, gaps=[])
+2026-05-14 19:50:30,567 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:50:30,568 [INFO] root: Heartbeat response received.
+2026-05-14 19:50:30,618 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464701823699431, rtp_timestamp=3216995674, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:30,681 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSrPacket(ssrc=1395805565, sender_info=RtcpSenderInfo(ntp_timestamp=0, rtp_timestamp=0, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:30,682 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSdesPacket(chunks=[RtcpSourceInfo(ssrc=1395805565, items=[(1, b'61e77a8c-eb02-4896-833f-8b4d01c19e84')])])
+2026-05-14 19:50:30,765 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204470, gaps=[])
+2026-05-14 19:50:30,766 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:30,771 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464702497500343, rtp_timestamp=2273784624, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:30,777 [DEBUG] aioice.ice: Connection(1) protocol(2) > ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\xabbq\x11\x96\x16!\x0f\xe9\xaa\xa0\xd1')
+2026-05-14 19:50:30,785 [DEBUG] aioice.ice: Connection(1) protocol(2) < ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\xabbq\x11\x96\x16!\x0f\xe9\xaa\xa0\xd1')
+2026-05-14 19:50:30,878 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464702954414426, rtp_timestamp=3217008310, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:30,988 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464703434822839, rtp_timestamp=2273804265, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:31,115 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464703986284184, rtp_timestamp=3217019842, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:31,225 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464704462442297, rtp_timestamp=2273825799, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:31,366 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464705061084288, rtp_timestamp=3217031854, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:31,512 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464705696115819, rtp_timestamp=2273851650, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:31,600 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464706075732516, rtp_timestamp=3217043194, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:31,613 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464706135250884, rtp_timestamp=2273860852, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:31,633 [INFO] __main__: Switched to normal mode
+2026-05-14 19:50:31,633 [INFO] __main__: BalanceStand...
+2026-05-14 19:50:31,634 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693371493, "api_id": 1002}}, "parameter": ""}}
+2026-05-14 19:50:31,634 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204471, stream_id=1, stream_seq=13)
+2026-05-14 19:50:31,635 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:31,642 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204471, gaps=[])
+2026-05-14 19:50:31,643 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:31,643 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065535, stream_id=1, stream_seq=14)
+2026-05-14 19:50:31,643 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065535, gaps=[])
+2026-05-14 19:50:31,644 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":693371493},"status":{"code":0}},"data":""}}
+2026-05-14 19:50:31,742 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464706688930580, rtp_timestamp=2273872454, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:31,786 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464706884153165, rtp_timestamp=3217052229, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:31,985 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464707738079851, rtp_timestamp=2273894439, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:31,987 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464707752853680, rtp_timestamp=3217061937, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:32,001 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSrPacket(ssrc=1395805565, sender_info=RtcpSenderInfo(ntp_timestamp=0, rtp_timestamp=0, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:32,001 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSdesPacket(chunks=[RtcpSourceInfo(ssrc=1395805565, items=[(1, b'61e77a8c-eb02-4896-833f-8b4d01c19e84')])])
+2026-05-14 19:50:32,147 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464708443599955, rtp_timestamp=2273909223, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:32,231 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464708806085317, rtp_timestamp=3217073708, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:32,287 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464709045975132, rtp_timestamp=2273921846, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:32,496 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464709949709265, rtp_timestamp=3217086489, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:32,524 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464710069291892, rtp_timestamp=2273943289, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:32,559 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:50:32", "timeInNum": 1778809832}}
+2026-05-14 19:50:32,559 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204472, stream_id=1, stream_seq=14)
+2026-05-14 19:50:32,560 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:32,567 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065536, stream_id=1, stream_seq=15)
+2026-05-14 19:50:32,568 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065536, gaps=[])
+2026-05-14 19:50:32,568 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:50:32,569 [INFO] root: Heartbeat response received.
+2026-05-14 19:50:32,635 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464710547097984, rtp_timestamp=2273953301, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:32,646 [INFO] __main__: Moving 5.0m at 0.5m/s
+2026-05-14 19:50:32,646 [INFO] __main__:   Ramp: 0.5s | Cruise: 9.5s | Total: 10.5s
+2026-05-14 19:50:32,647 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693373019, "api_id": 1008}}, "parameter": "{\"x\": 0.05, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:50:32,647 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204473, stream_id=1, stream_seq=15)
+2026-05-14 19:50:32,655 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204473, gaps=[])
+2026-05-14 19:50:32,656 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:32,656 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065537, stream_id=1, stream_seq=16)
+2026-05-14 19:50:32,657 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065537, gaps=[])
+2026-05-14 19:50:32,657 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693373019},"status":{"code":0}},"data":""}}
+2026-05-14 19:50:32,697 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSrPacket(ssrc=1395805565, sender_info=RtcpSenderInfo(ntp_timestamp=0, rtp_timestamp=0, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:32,697 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSdesPacket(chunks=[RtcpSourceInfo(ssrc=1395805565, items=[(1, b'61e77a8c-eb02-4896-833f-8b4d01c19e84')])])
+2026-05-14 19:50:32,709 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693372497, "api_id": 1008}}, "parameter": "{\"x\": 0.1, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:50:32,709 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204474, stream_id=1, stream_seq=16)
+2026-05-14 19:50:32,710 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:32,726 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464710942955671, rtp_timestamp=3217097589, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:32,730 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204474, gaps=[])
+2026-05-14 19:50:32,730 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:32,730 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065538, stream_id=1, stream_seq=17)
+2026-05-14 19:50:32,731 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065538, gaps=[])
+2026-05-14 19:50:32,731 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693372497},"status":{"code":0}},"data":""}}
+2026-05-14 19:50:32,774 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464711149434935, rtp_timestamp=2273965923, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:32,783 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693372589, "api_id": 1008}}, "parameter": "{\"x\": 0.15, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:50:32,783 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204475, stream_id=1, stream_seq=17)
+2026-05-14 19:50:32,784 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:32,794 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204475, gaps=[])
+2026-05-14 19:50:32,794 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:32,795 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065539, stream_id=1, stream_seq=18)
+2026-05-14 19:50:32,795 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065539, gaps=[])
+2026-05-14 19:50:32,796 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693372589},"status":{"code":0}},"data":""}}
+2026-05-14 19:50:32,847 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693372536, "api_id": 1008}}, "parameter": "{\"x\": 0.2, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:50:32,847 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204476, stream_id=1, stream_seq=18)
+2026-05-14 19:50:32,848 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:32,866 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204476, gaps=[])
+2026-05-14 19:50:32,866 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:32,866 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065540, stream_id=1, stream_seq=19)
+2026-05-14 19:50:32,867 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065540, gaps=[])
+2026-05-14 19:50:32,867 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693372536},"status":{"code":0}},"data":""}}
+2026-05-14 19:50:32,919 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693372732, "api_id": 1008}}, "parameter": "{\"x\": 0.25, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:50:32,919 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204477, stream_id=1, stream_seq=19)
+2026-05-14 19:50:32,919 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:32,934 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204477, gaps=[])
+2026-05-14 19:50:32,934 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:32,934 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065541, stream_id=1, stream_seq=20)
+2026-05-14 19:50:32,935 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065541, gaps=[])
+2026-05-14 19:50:32,935 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693372732},"status":{"code":0}},"data":""}}
+2026-05-14 19:50:32,939 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464711863519205, rtp_timestamp=2273980886, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:32,987 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693373402, "api_id": 1008}}, "parameter": "{\"x\": 0.3, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:50:32,987 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204478, stream_id=1, stream_seq=20)
+2026-05-14 19:50:32,988 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:32,999 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204478, gaps=[])
+2026-05-14 19:50:32,999 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:32,999 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065542, stream_id=1, stream_seq=21)
+2026-05-14 19:50:32,999 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065542, gaps=[])
+2026-05-14 19:50:33,000 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693373402},"status":{"code":0}},"data":""}}
+2026-05-14 19:50:33,011 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464712172357847, rtp_timestamp=3217111329, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:33,051 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693372604, "api_id": 1008}}, "parameter": "{\"x\": 0.35, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:50:33,052 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204479, stream_id=1, stream_seq=21)
+2026-05-14 19:50:33,052 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:33,064 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204479, gaps=[])
+2026-05-14 19:50:33,064 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:33,064 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065543, stream_id=1, stream_seq=22)
+2026-05-14 19:50:33,065 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065543, gaps=[])
+2026-05-14 19:50:33,065 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693372604},"status":{"code":0}},"data":""}}
+2026-05-14 19:50:33,116 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693372613, "api_id": 1008}}, "parameter": "{\"x\": 0.4, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:50:33,117 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204480, stream_id=1, stream_seq=22)
+2026-05-14 19:50:33,117 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:33,128 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204480, gaps=[])
+2026-05-14 19:50:33,128 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:33,128 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065544, stream_id=1, stream_seq=23)
+2026-05-14 19:50:33,129 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065544, gaps=[])
+2026-05-14 19:50:33,129 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693372613},"status":{"code":0}},"data":""}}
+2026-05-14 19:50:33,136 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464712714942354, rtp_timestamp=2273998728, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:33,180 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693373628, "api_id": 1008}}, "parameter": "{\"x\": 0.45, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:50:33,180 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204481, stream_id=1, stream_seq=23)
+2026-05-14 19:50:33,181 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:33,193 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204481, gaps=[])
+2026-05-14 19:50:33,193 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:33,193 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065545, stream_id=1, stream_seq=24)
+2026-05-14 19:50:33,194 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065545, gaps=[])
+2026-05-14 19:50:33,194 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693373628},"status":{"code":0}},"data":""}}
+2026-05-14 19:50:33,240 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464713165531668, rtp_timestamp=3217122428, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:33,245 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693373054, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:50:33,246 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204482, stream_id=1, stream_seq=24)
+2026-05-14 19:50:33,246 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:33,255 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204482, gaps=[])
+2026-05-14 19:50:33,256 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:33,256 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065546, stream_id=1, stream_seq=25)
+2026-05-14 19:50:33,256 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065546, gaps=[])
+2026-05-14 19:50:33,257 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693373054},"status":{"code":0}},"data":""}}
+2026-05-14 19:50:33,308 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693373764, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:50:33,308 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204483, stream_id=1, stream_seq=25)
+2026-05-14 19:50:33,309 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:33,319 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204483, gaps=[])
+2026-05-14 19:50:33,320 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:33,320 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065547, stream_id=1, stream_seq=26)
+2026-05-14 19:50:33,320 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065547, gaps=[])
+2026-05-14 19:50:33,321 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693373764},"status":{"code":0}},"data":""}}
+2026-05-14 19:50:33,410 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464713897188796, rtp_timestamp=2274023502, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:33,426 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464713969787917, rtp_timestamp=3217131417, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:33,518 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464714366368447, rtp_timestamp=2274033333, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:33,595 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464714696713279, rtp_timestamp=3217139541, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:33,768 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464715445137530, rtp_timestamp=3217147905, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:33,783 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSrPacket(ssrc=1395805565, sender_info=RtcpSenderInfo(ntp_timestamp=0, rtp_timestamp=0, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:33,783 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSdesPacket(chunks=[RtcpSourceInfo(ssrc=1395805565, items=[(1, b'61e77a8c-eb02-4896-833f-8b4d01c19e84')])])
+2026-05-14 19:50:33,798 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464715575695946, rtp_timestamp=2274058674, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:34,041 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464716620465638, rtp_timestamp=2274080567, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:34,061 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464716708920919, rtp_timestamp=3217162029, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:34,246 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464717508933740, rtp_timestamp=3217170970, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:34,330 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464717875677561, rtp_timestamp=2274106870, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:34,379 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464718085491438, rtp_timestamp=3217177413, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:34,504 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464718623415906, rtp_timestamp=3217183425, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:34,559 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:50:34", "timeInNum": 1778809834}}
+2026-05-14 19:50:34,560 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204484, stream_id=1, stream_seq=26)
+2026-05-14 19:50:34,561 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:34,568 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065548, stream_id=1, stream_seq=27)
+2026-05-14 19:50:34,569 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065548, gaps=[])
+2026-05-14 19:50:34,570 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:50:34,570 [INFO] root: Heartbeat response received.
+2026-05-14 19:50:34,572 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464718920539166, rtp_timestamp=2274128765, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:34,760 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204484, gaps=[])
+2026-05-14 19:50:34,760 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:34,766 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065549, stream_id=1, stream_seq=28)
+2026-05-14 19:50:34,766 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065549, gaps=[])
+2026-05-14 19:50:34,767 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778809834,"uuid":"809a6815-6018-4f60-9eee-caf3d0a015bb"}}
+2026-05-14 19:50:34,768 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778809834, "uuid": "809a6815-6018-4f60-9eee-caf3d0a015bb"}}
+2026-05-14 19:50:34,768 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204485, stream_id=1, stream_seq=27)
+2026-05-14 19:50:34,769 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:34,769 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464719767684529, rtp_timestamp=2274146516, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:34,772 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464719788356206, rtp_timestamp=3217196444, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:34,884 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464720262680798, rtp_timestamp=2274156889, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:34,971 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204485, gaps=[])
+2026-05-14 19:50:34,971 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:35,006 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464720790067993, rtp_timestamp=3217207639, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:35,105 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464721212950902, rtp_timestamp=2274176802, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:35,278 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSrPacket(ssrc=1395805565, sender_info=RtcpSenderInfo(ntp_timestamp=0, rtp_timestamp=0, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:35,279 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSdesPacket(chunks=[RtcpSourceInfo(ssrc=1395805565, items=[(1, b'61e77a8c-eb02-4896-833f-8b4d01c19e84')])])
+2026-05-14 19:50:35,284 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464721993934441, rtp_timestamp=3217221094, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:35,343 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464722244872630, rtp_timestamp=2274198425, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:35,474 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464722812916844, rtp_timestamp=2274210328, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:35,479 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464722836819196, rtp_timestamp=3217230514, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:35,503 [DEBUG] aioice.ice: Connection(1) protocol(2) > ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.REQUEST, transaction_id=b'\x8b&\xeb\x11\xed\xb92\xef\xd0{}\x81')
+2026-05-14 19:50:35,511 [DEBUG] aioice.ice: Connection(1) protocol(2) < ('10.123.195.5', 49077) Message(message_method=Method.BINDING, message_class=Class.RESPONSE, transaction_id=b'\x8b&\xeb\x11\xed\xb92\xef\xd0{}\x81')
+2026-05-14 19:50:35,576 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464723252195362, rtp_timestamp=2274219533, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:35,689 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464723735678971, rtp_timestamp=3217240559, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:35,690 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464723743044840, rtp_timestamp=2274229819, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:35,856 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464724465383177, rtp_timestamp=2274244955, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:35,891 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464724617181924, rtp_timestamp=3217250411, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:36,082 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464725441523158, rtp_timestamp=2274265410, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:36,117 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464725588901525, rtp_timestamp=3217261270, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:36,284 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464726310175140, rtp_timestamp=2274283613, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:36,369 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464726680863029, rtp_timestamp=3217273474, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:36,507 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464727277628119, rtp_timestamp=2274303885, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:36,561 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:50:36", "timeInNum": 1778809836}}
+2026-05-14 19:50:36,561 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204486, stream_id=1, stream_seq=28)
+2026-05-14 19:50:36,562 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:36,568 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065550, stream_id=1, stream_seq=29)
+2026-05-14 19:50:36,568 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065550, gaps=[])
+2026-05-14 19:50:36,569 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:50:36,569 [INFO] root: Heartbeat response received.
+2026-05-14 19:50:36,606 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464727699226404, rtp_timestamp=3217284855, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:36,718 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSrPacket(ssrc=1395805565, sender_info=RtcpSenderInfo(ntp_timestamp=0, rtp_timestamp=0, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:36,718 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSdesPacket(chunks=[RtcpSourceInfo(ssrc=1395805565, items=[(1, b'61e77a8c-eb02-4896-833f-8b4d01c19e84')])])
+2026-05-14 19:50:36,761 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204486, gaps=[])
+2026-05-14 19:50:36,761 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:36,776 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464728430493978, rtp_timestamp=3217293028, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:36,801 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464728519900165, rtp_timestamp=2274329917, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:36,904 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464728980617871, rtp_timestamp=2274339571, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:36,994 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464729371955964, rtp_timestamp=3217303549, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:37,177 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464730163348356, rtp_timestamp=3217312394, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:37,187 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464730205797235, rtp_timestamp=2274365244, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:37,334 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464730843129150, rtp_timestamp=3217319991, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:37,476 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464731460995844, rtp_timestamp=2274391547, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:37,492 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464731527166687, rtp_timestamp=3217327636, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:37,643 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSrPacket(ssrc=1395805565, sender_info=RtcpSenderInfo(ntp_timestamp=0, rtp_timestamp=0, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:37,644 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSdesPacket(chunks=[RtcpSourceInfo(ssrc=1395805565, items=[(1, b'61e77a8c-eb02-4896-833f-8b4d01c19e84')])])
+2026-05-14 19:50:37,646 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464732192237219, rtp_timestamp=2274406870, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:37,721 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464732507593904, rtp_timestamp=3217338593, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:37,835 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464733002690246, rtp_timestamp=3217344126, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:37,866 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464733134017461, rtp_timestamp=2274426605, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:37,971 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464733586102713, rtp_timestamp=2274436078, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:38,078 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464734047514056, rtp_timestamp=3217355803, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:38,157 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464734395399535, rtp_timestamp=2274453037, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:38,301 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464735012006515, rtp_timestamp=3217366582, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:38,402 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464735448775912, rtp_timestamp=2274475110, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:38,561 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:50:38", "timeInNum": 1778809838}}
+2026-05-14 19:50:38,562 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204487, stream_id=1, stream_seq=29)
+2026-05-14 19:50:38,563 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:38,570 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065551, stream_id=1, stream_seq=30)
+2026-05-14 19:50:38,570 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065551, gaps=[])
+2026-05-14 19:50:38,571 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:50:38,571 [INFO] root: Heartbeat response received.
+2026-05-14 19:50:38,584 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464736232903367, rtp_timestamp=3217380226, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:38,609 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464736338926353, rtp_timestamp=2274493763, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:38,619 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSrPacket(ssrc=1395805565, sender_info=RtcpSenderInfo(ntp_timestamp=0, rtp_timestamp=0, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:38,620 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSdesPacket(chunks=[RtcpSourceInfo(ssrc=1395805565, items=[(1, b'61e77a8c-eb02-4896-833f-8b4d01c19e84')])])
+2026-05-14 19:50:38,753 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464736962716665, rtp_timestamp=2274506834, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:38,772 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < SackChunk(flags=0, advertised_rwnd=131072, cumulative_tsn=1018204487, gaps=[])
+2026-05-14 19:50:38,772 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 cancel
+2026-05-14 19:50:38,784 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464737093086103, rtp_timestamp=3217389840, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:38,887 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464737545110365, rtp_timestamp=3217394891, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:38,974 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464737917384816, rtp_timestamp=2274526839, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:39,076 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464738352410028, rtp_timestamp=2274535955, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:39,101 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464738461098470, rtp_timestamp=3217405128, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:39,306 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464739345669318, rtp_timestamp=2274556768, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:39,367 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464739608992475, rtp_timestamp=3217417957, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:39,477 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464740073900780, rtp_timestamp=3217423153, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:39,563 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464740446304080, rtp_timestamp=2274579832, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:39,594 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSrPacket(ssrc=1395805565, sender_info=RtcpSenderInfo(ntp_timestamp=0, rtp_timestamp=0, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:39,594 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpSdesPacket(chunks=[RtcpSourceInfo(ssrc=1395805565, items=[(1, b'61e77a8c-eb02-4896-833f-8b4d01c19e84')])])
+2026-05-14 19:50:39,675 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464740942928142, rtp_timestamp=3217432865, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:39,758 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464741293640569, rtp_timestamp=2274597588, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:39,854 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464741708469555, rtp_timestamp=3217441421, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:39,879 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464741814540215, rtp_timestamp=2274608503, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:39,995 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464742310521750, rtp_timestamp=2274618896, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:40,010 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464742379743308, rtp_timestamp=3217448923, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:40,154 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464742985937140, rtp_timestamp=2274633049, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:40,224 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464743304265084, rtp_timestamp=3217459255, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:40,411 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464744103719988, rtp_timestamp=2274656472, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:40,440 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464744233085692, rtp_timestamp=3217469635, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:40,563 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:50:40", "timeInNum": 1778809840}}
+2026-05-14 19:50:40,564 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > DataChunk(flags=3, tsn=1018204488, stream_id=1, stream_seq=30)
+2026-05-14 19:50:40,565 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) - T3 start
+2026-05-14 19:50:40,572 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) < DataChunk(flags=3, tsn=2404065552, stream_id=1, stream_seq=31)
+2026-05-14 19:50:40,573 [DEBUG] aiortc.rtcsctptransport: RTCSctpTransport(client) > SackChunk(flags=0, advertised_rwnd=1048576, cumulative_tsn=2404065552, gaps=[])
+2026-05-14 19:50:40,573 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:50:40,574 [INFO] root: Heartbeat response received.
+2026-05-14 19:50:40,627 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) < RtcpSrPacket(ssrc=628248918, sender_info=RtcpSenderInfo(ntp_timestamp=17127464745041700043, rtp_timestamp=3217478672, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:40,646 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) < RtcpSrPacket(ssrc=242238704, sender_info=RtcpSenderInfo(ntp_timestamp=17127464745122731044, rtp_timestamp=2274677825, packet_count=0, octet_count=0), reports=[])
+2026-05-14 19:50:40,703 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) > RtcpByePacket(sources=[1395805565])
+2026-05-14 19:50:40,703 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) - RTCP finished
+2026-05-14 19:50:40,704 [DEBUG] aiortc.rtcdtlstransport: RTCDtlsTransport(server) - State.CONNECTED -> State.CLOSED
+2026-05-14 19:50:40,704 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(audio) - RTCP finished
+2026-05-14 19:50:40,705 [DEBUG] aiortc.rtcrtpreceiver: RTCRtpReceiver(video) - RTCP finished
+2026-05-14 19:50:40,705 [DEBUG] aiortc.rtcrtpsender: RTCRtpSender(audio) - RTP finished

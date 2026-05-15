@@ -1,0 +1,103 @@
+2026-05-14 19:37:39,821 [DEBUG] asyncio: Using selector: EpollSelector
+2026-05-14 19:37:39,822 [INFO] __main__: ============================================================
+2026-05-14 19:37:39,822 [INFO] __main__: Go2 Walk Forward
+2026-05-14 19:37:39,823 [INFO] __main__: Logging to: /home/mpg-robodog/dev/mpg-ai-edge/dev/archive/reference/logs/go2_walk_2026-05-14_19-37-39.log
+2026-05-14 19:37:39,823 [INFO] __main__: CONNECTION_MODE=LocalSTA ROBOT_IP= ROBOT_SERIAL=None
+2026-05-14 19:37:39,823 [INFO] __main__: Distance: 5.0m | Velocity: 0.5m/s
+2026-05-14 19:37:39,823 [INFO] __main__: ============================================================
+2026-05-14 19:37:39,823 [INFO] __main__: Using LocalSTA mode (IP: )
+2026-05-14 19:37:39,902 [INFO] root: Creating offer...
+2026-05-14 19:37:39,904 [DEBUG] aiortc.rtcpeerconnection: RTCPeerConnection() setLocalDescription(offer)
+v=0
+o=- 3987797859 3987797859 IN IP4 0.0.0.0
+s=-
+t=0 0
+a=group:BUNDLE 0 1 2
+a=msid-semantic:WMS *
+m=audio 9 UDP/TLS/RTP/SAVPF 96 9 0 8
+c=IN IP4 0.0.0.0
+a=sendrecv
+a=extmap:1 urn:ietf:params:rtp-hdrext:sdes:mid
+a=extmap:2 urn:ietf:params:rtp-hdrext:ssrc-audio-level
+a=mid:0
+a=msid:510c113c-944a-443c-8615-bd62c682efdf dbfee1fa-81cf-432a-87ad-9d2844b6758b
+a=rtcp:9 IN IP4 0.0.0.0
+a=rtcp-mux
+a=ssrc:3837408274 cname:96d0f9ef-9178-4f85-b09f-0b5363e356e5
+a=rtpmap:96 opus/48000/2
+a=rtpmap:9 G722/8000
+a=rtpmap:0 PCMU/8000
+a=rtpmap:8 PCMA/8000
+a=ice-ufrag:B1sd
+a=ice-pwd:X7Rqr4rUtXQFWOzhGPS8re
+a=fingerprint:sha-256 27:97:CE:02:AE:B4:F8:7C:F3:3C:EE:AE:BB:2D:02:40:A4:B4:EE:F6:89:21:94:CD:0A:6A:80:DF:D4:7E:00:E4
+a=setup:actpass
+m=video 9 UDP/TLS/RTP/SAVPF 97 98 99 100 101 102
+c=IN IP4 0.0.0.0
+a=recvonly
+a=extmap:1 urn:ietf:params:rtp-hdrext:sdes:mid
+a=extmap:3 http://www.webrtc.org/experiments/rtp-hdrext/abs-send-time
+a=mid:1
+a=msid:510c113c-944a-443c-8615-bd62c682efdf cf739d26-6675-43a8-a882-4259e3a0f73e
+a=rtcp:9 IN IP4 0.0.0.0
+a=rtcp-mux
+a=ssrc-group:FID 3303881304 3327581421
+a=ssrc:3303881304 cname:96d0f9ef-9178-4f85-b09f-0b5363e356e5
+a=ssrc:3327581421 cname:96d0f9ef-9178-4f85-b09f-0b5363e356e5
+a=rtpmap:97 VP8/90000
+a=rtcp-fb:97 nack
+a=rtcp-fb:97 nack pli
+a=rtcp-fb:97 goog-remb
+a=rtpmap:98 rtx/90000
+a=fmtp:98 apt=97
+a=rtpmap:99 H264/90000
+a=rtcp-fb:99 nack
+a=rtcp-fb:99 nack pli
+a=rtcp-fb:99 goog-remb
+a=fmtp:99 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f
+a=rtpmap:100 rtx/90000
+a=fmtp:100 apt=99
+a=rtpmap:101 H264/90000
+a=rtcp-fb:101 nack
+a=rtcp-fb:101 nack pli
+a=rtcp-fb:101 goog-remb
+a=fmtp:101 level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42e01f
+a=rtpmap:102 rtx/90000
+a=fmtp:102 apt=101
+a=ice-ufrag:B1sd
+a=ice-pwd:X7Rqr4rUtXQFWOzhGPS8re
+a=fingerprint:sha-256 27:97:CE:02:AE:B4:F8:7C:F3:3C:EE:AE:BB:2D:02:40:A4:B4:EE:F6:89:21:94:CD:0A:6A:80:DF:D4:7E:00:E4
+a=setup:actpass
+m=application 9 UDP/DTLS/SCTP webrtc-datachannel
+c=IN IP4 0.0.0.0
+a=mid:2
+a=sctp-port:5000
+a=max-message-size:65536
+a=ice-ufrag:B1sd
+a=ice-pwd:X7Rqr4rUtXQFWOzhGPS8re
+a=fingerprint:sha-256 27:97:CE:02:AE:B4:F8:7C:F3:3C:EE:AE:BB:2D:02:40:A4:B4:EE:F6:89:21:94:CD:0A:6A:80:DF:D4:7E:00:E4
+a=setup:actpass
+
+2026-05-14 19:37:39,907 [DEBUG] aiortc.rtcpeerconnection: RTCPeerConnection() iceGatheringState new -> gathering
+2026-05-14 19:37:39,914 [DEBUG] aioice.ice: Connection(1) protocol(0) connection_made(<_SelectorDatagramTransport fd=9 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,914 [DEBUG] aioice.ice: Connection(2) protocol(1) connection_made(<_SelectorDatagramTransport fd=10 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,915 [DEBUG] aioice.ice: Connection(0) protocol(2) connection_made(<_SelectorDatagramTransport fd=11 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,916 [DEBUG] aioice.ice: Connection(1) protocol(3) connection_made(<_SelectorDatagramTransport fd=12 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,916 [DEBUG] aioice.ice: Connection(2) protocol(4) connection_made(<_SelectorDatagramTransport fd=13 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,916 [DEBUG] aioice.ice: Connection(0) protocol(5) connection_made(<_SelectorDatagramTransport fd=14 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,917 [DEBUG] aioice.ice: Connection(1) protocol(6) connection_made(<_SelectorDatagramTransport fd=15 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,917 [DEBUG] aioice.ice: Connection(2) protocol(7) connection_made(<_SelectorDatagramTransport fd=16 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,917 [DEBUG] aioice.ice: Connection(0) protocol(8) connection_made(<_SelectorDatagramTransport fd=17 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,918 [DEBUG] aioice.ice: Connection(1) protocol(9) connection_made(<_SelectorDatagramTransport fd=18 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,918 [DEBUG] aioice.ice: Connection(2) protocol(10) connection_made(<_SelectorDatagramTransport fd=19 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,918 [DEBUG] aioice.ice: Connection(0) protocol(11) connection_made(<_SelectorDatagramTransport fd=20 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,920 [DEBUG] aioice.ice: Connection(1) protocol(12) connection_made(<_SelectorDatagramTransport fd=21 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,921 [DEBUG] aioice.ice: Connection(2) protocol(13) connection_made(<_SelectorDatagramTransport fd=22 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,921 [DEBUG] aioice.ice: Connection(0) protocol(14) connection_made(<_SelectorDatagramTransport fd=23 read=idle write=<idle, bufsize=0>>)
+2026-05-14 19:37:39,922 [DEBUG] aiortc.rtcpeerconnection: RTCPeerConnection() iceGatheringState gathering -> complete
+2026-05-14 19:37:39,924 [INFO] root: Trying to send SDP using the old method...
+2026-05-14 19:37:39,928 [ERROR] root: An error occurred: Invalid URL 'http://:8081/offer': No host supplied
+2026-05-14 19:37:39,928 [ERROR] root: An error occurred with the old method: Failed to receive SDP Answer: No response
+2026-05-14 19:37:39,928 [INFO] root: Falling back to the new method...
+2026-05-14 19:37:39,929 [ERROR] root: An error occurred: Invalid URL 'http://:9991/con_notify': No host supplied
+2026-05-14 19:37:39,929 [ERROR] root: An error occurred with the new method: Failed to receive initial public key response.
