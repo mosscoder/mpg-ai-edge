@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "captured_at_unix": 1778874613.466772,
+  "captured_at_utc": "2026-05-15T19:50:13.466772+00:00",
+  "frame": {
+    "timestamp_unix": 1778874613.7176738,
+    "width": 1280,
+    "height": 720
+  },
+  "position": {
+    "latitude": 46.67389174444444,
+    "longitude": -114.0161392,
+    "altitude": 1090.2253333333335,
+    "accuracy_horizontal": 0.014,
+    "accuracy_vertical": 0.01,
+    "fix_type": 6,
+    "satellites_used": 32,
+    "course_over_ground": null,
+    "timestamp": 1778874613.466772,
+    "head_vehicle": null,
+    "head_vehicle_accuracy": 180.00000000000003,
+    "altitude_msl": 1107.957666666667,
+    "pdop": 1.05,
+    "correction_age_bin": 0
+  },
+  "heading": {
+    "degrees_true": null,
+    "source": "none"
+  },
+  "mission": {
+    "mission_name": "04_tennis_single_forward",
+    "mission_dir": "/home/mpg-robodog/dev/mpg-ai-edge/dev/missions/04_tennis_single_forward",
+    "waypoint_name": "tennis_court_wp1",
+    "strategy": "waypoint_forward",
+    "target_bearing_deg_true": null
+  }
+}
