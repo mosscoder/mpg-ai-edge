@@ -136,10 +136,19 @@ class WaypointNavigator:
             f"type {pos.fix_type} hAcc={pos.accuracy_horizontal:.3f}m{age_str}"
         )
         if pos.fix_type >= 5 and not corrections_active:
-            cause = (
-                f"NTRIP corrections stale (state={self.gps.state}); "
-                f"reported {pos.fix_type} but coasting"
-            )
+            ntrip = self.gps.ntrip
+            if ntrip is not None and not ntrip.connection_alive:
+                cause = (
+                    f"NTRIP stream died (worker exited; state={self.gps.state}); "
+                    f"receiver coasting on type {pos.fix_type}"
+                )
+            else:
+                age_repr = f"{age:.1f}s" if age is not None else "∞"
+                cause = (
+                    f"RTCM stale (age={age_repr} > max="
+                    f"{self.gps.max_rtcm_age_s:.1f}s, state={self.gps.state}); "
+                    f"receiver coasting on type {pos.fix_type}"
+                )
         elif pos.fix_type < self.min_fix_type:
             cause = (
                 f"receiver fix degraded to type {pos.fix_type} "

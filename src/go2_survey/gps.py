@@ -982,6 +982,7 @@ class GPSManager:
 
             # One-time "RTK FLOAT SUSPECT" warning when receiver claims
             # RTK without active corrections — the float-coast scenario.
+            # Distinguish "stream died" from "stream alive but stale".
             if rtk_claimed and not corrections_active and not suspect_logged:
                 age = (
                     self.ntrip.seconds_since_last_rtcm() if self.ntrip else None
@@ -989,12 +990,20 @@ class GPSManager:
                 age_str = (
                     f"rtcm_age={age:.1f}s" if age is not None else "rtcm_age=∞"
                 )
+                if self.ntrip is not None and not self.ntrip.connection_alive:
+                    sub_cause = "NTRIP stream died (worker exited)"
+                else:
+                    sub_cause = (
+                        f"RTCM stale (age={age_str.split('=')[-1]} "
+                        f"> max={self.max_rtcm_age_s:.1f}s)"
+                    )
                 logger.warning(
                     f"Receiver reports type {pos.fix_type} ({fix_names[pos.fix_type]}) "
-                    f"but {age_str} — treating as coasting; will not accept this fix"
+                    f"but {sub_cause} — treating as coasting; "
+                    f"will not accept this fix"
                 )
                 log_banner(
-                    f"RTK FLOAT SUSPECT | no active corrections ({age_str}) | "
+                    f"RTK FLOAT SUSPECT | {sub_cause} | "
                     f"NTRIP state={self.state}",
                     level="warning",
                     char="!",
