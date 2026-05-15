@@ -1,0 +1,22 @@
+2026-05-14 19:41:40,357 [INFO] go2_survey.cli: go2-survey v0.7.0 | git 22c11ff | run dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/logs/00_parking_lot_2026-05-14_19-41-40
+2026-05-14 19:41:40,358 [INFO] go2_survey.cli: Logging to: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/logs/00_parking_lot_2026-05-14_19-41-40/main.log (+ imu.log, gps.log)
+2026-05-14 19:41:40,358 [INFO] go2_survey.cli: Mission dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot
+2026-05-14 19:41:40,363 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-14 19:41:40,363 [INFO] go2_survey.mission_runner: ================= MISSION: 00_parking_lot ==================
+2026-05-14 19:41:40,363 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-14 19:41:40,363 [INFO] go2_survey.mission_runner: Parking lot two-waypoint circuit (first successful autonomous run, 2026-04-01)
+2026-05-14 19:41:40,364 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:41:40,364 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-05-14 19:41:40,364 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:41:40,365 [INFO] go2_survey.waypoints: Loaded 2 waypoints from /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/waypoints.geojson
+2026-05-14 19:41:40,365 [INFO] go2_survey.mission_runner: Loaded 2 waypoint(s):
+2026-05-14 19:41:40,365 [INFO] go2_survey.mission_runner:   1. waypoint_1: (46.86164631, -113.99780057)
+2026-05-14 19:41:40,365 [INFO] go2_survey.mission_runner:   2. waypoint_2: (46.86154957, -113.99796955)
+2026-05-14 19:41:40,366 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101 mountpoints=['MP22385', 'MP22385a'] | Robot: LocalSTA
+2026-05-14 19:41:40,366 [INFO] go2_survey.mission_runner: Nav: tol=0.5m vmax=0.5m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-05-14 19:41:40,366 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:41:40,366 [INFO] go2_survey.mission_runner: ---------------- AUTO-DISCOVERING ROBOT IP -----------------
+2026-05-14 19:41:40,366 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:41:40,367 [INFO] go2_survey.mission_runner: robot.ip not set in mission.toml and ROBOT_IP env var not set; scanning local network for a Go2 (nmap ports 8081/9991)...
+2026-05-14 19:41:40,378 [INFO] go2_survey.discovery: Scanning 10.123.195.241/24 for Go2 ports 8081/9991...
+2026-05-14 19:41:47,371 [ERROR] go2_survey.mission_runner: Robot IP auto-discovery found no Go2 on the local network. Set [robot] ip in mission.toml, set ROBOT_IP in the environment, or run `go2-survey discover-ip` to diagnose.
