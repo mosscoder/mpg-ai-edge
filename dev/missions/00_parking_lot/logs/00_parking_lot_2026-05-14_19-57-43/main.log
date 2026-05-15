@@ -1,0 +1,861 @@
+2026-05-14 19:57:43,450 [INFO] go2_survey.cli: go2-survey v0.7.0 | git 6b80329 | run dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/logs/00_parking_lot_2026-05-14_19-57-43
+2026-05-14 19:57:43,450 [INFO] go2_survey.cli: Logging to: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/logs/00_parking_lot_2026-05-14_19-57-43/main.log (+ imu.log, gps.log)
+2026-05-14 19:57:43,451 [INFO] go2_survey.cli: Mission dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot
+2026-05-14 19:57:43,453 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-14 19:57:43,453 [INFO] go2_survey.mission_runner: ================= MISSION: 00_parking_lot ==================
+2026-05-14 19:57:43,454 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-14 19:57:43,454 [INFO] go2_survey.mission_runner: Parking lot two-waypoint circuit (first successful autonomous run, 2026-04-01)
+2026-05-14 19:57:43,454 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:57:43,454 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-05-14 19:57:43,454 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:57:43,455 [INFO] go2_survey.waypoints: Loaded 2 waypoints from /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/00_parking_lot/waypoints.geojson
+2026-05-14 19:57:43,455 [INFO] go2_survey.mission_runner: Loaded 2 waypoint(s):
+2026-05-14 19:57:43,455 [INFO] go2_survey.mission_runner:   1. waypoint_1: (46.86164631, -113.99780057)
+2026-05-14 19:57:43,455 [INFO] go2_survey.mission_runner:   2. waypoint_2: (46.86154957, -113.99796955)
+2026-05-14 19:57:43,455 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101 mountpoints=['MP22385', 'MP22385a'] | Robot: LocalSTA
+2026-05-14 19:57:43,455 [INFO] go2_survey.mission_runner: Nav: tol=0.5m vmax=0.5m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-05-14 19:57:43,456 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:57:43,456 [INFO] go2_survey.mission_runner: ---------------- AUTO-DISCOVERING ROBOT IP -----------------
+2026-05-14 19:57:43,456 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:57:43,456 [INFO] go2_survey.mission_runner: robot.ip not set in mission.toml and ROBOT_IP env var not set; scanning local network for a Go2 (nmap ports 8081/9991)...
+2026-05-14 19:57:43,463 [INFO] go2_survey.discovery: Scanning 10.123.195.241/24 for Go2 ports 8081/9991...
+2026-05-14 19:57:45,862 [INFO] go2_survey.mission_runner: Auto-discovered Go2 at 10.123.195.5
+2026-05-14 19:57:45,864 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:57:45,864 [INFO] go2_survey.mission_runner: ----------------------- PHASE 1: GPS -----------------------
+2026-05-14 19:57:45,864 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:57:45,867 [INFO] go2_survey.gps: Connected to GPS on /dev/ttyACM0 @ 38400 baud
+2026-05-14 19:57:45,867 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2, attempt 1/3)
+2026-05-14 19:57:45,868 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-14 19:57:46,612 [INFO] go2_survey.ntrip: Connected to NTRIP mountpoint: MP22385
+2026-05-14 19:57:46,614 [INFO] go2_survey.gps: NTRIP: connected via primary mountpoint MP22385 (took 1s, 1 attempt(s))
+2026-05-14 19:57:46,616 [INFO] go2_survey.ntrip: Started RTCM correction stream
+2026-05-14 19:57:46,616 [INFO] go2_survey.gps: Waiting for GPS fix (min type 4, NTRIP state=connected)...
+2026-05-14 19:57:47,663 [WARNING] go2_survey.gps: Receiver reports type 6 (RTK Fixed) but rtcm_age=∞ — treating as coasting; will not accept this fix
+2026-05-14 19:57:47,664 [WARNING] go2_survey.gps: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+2026-05-14 19:57:47,664 [WARNING] go2_survey.gps:  RTK FLOAT SUSPECT | no active corrections (rtcm_age=∞) | NTRIP state=connected 
+2026-05-14 19:57:47,664 [WARNING] go2_survey.gps: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+2026-05-14 19:57:48,733 [INFO] go2_survey.gps: RTK Fixed achieved! Lat: 46.86158340, Lon: -113.99794070, h: 964.30m, hMSL: 981.96m hAcc: 0.014m pDOP: 1.18
+2026-05-14 19:57:48,734 [INFO] go2_survey.gps: ============================================================
+2026-05-14 19:57:48,734 [INFO] go2_survey.gps:  GPS RTK Fixed ACHIEVED | hAcc: 0.014m pDOP: 1.18 | rtcm_age=0.4s msgs=4 
+2026-05-14 19:57:48,734 [INFO] go2_survey.gps: ============================================================
+2026-05-14 19:57:48,850 [INFO] go2_survey.mission_runner: Start position: (46.86158330, -113.99794070) hAcc: 0.014m
+2026-05-14 19:57:48,850 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:57:48,850 [INFO] go2_survey.mission_runner: ---------------------- PHASE 2: ROBOT ----------------------
+2026-05-14 19:57:48,851 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:57:48,851 [INFO] go2_survey.robot: Connecting via LocalSTA (IP: 10.123.195.5)
+2026-05-14 19:57:48,945 [INFO] root: Creating offer...
+2026-05-14 19:57:48,973 [INFO] root: Trying to send SDP using the old method...
+2026-05-14 19:57:48,989 [INFO] root: Falling back to the new method...
+2026-05-14 19:57:49,221 [INFO] root: SDP successfully sent using the new method.
+2026-05-14 19:57:49,239 [INFO] root: Track recieved: audio
+2026-05-14 19:57:49,239 [INFO] root: Track recieved: video
+2026-05-14 19:57:49,450 [INFO] root: Received message on data channel: {"type":"validation","data":"17EuVm1kzjkL0xiceZP"}
+2026-05-14 19:57:49,451 [INFO] root: Data channel opened
+2026-05-14 19:57:49,452 [INFO] root: > message sent: {"type": "validation", "topic": "", "data": "SOjmiMPPpRi9fkwe2FMpAg=="}
+2026-05-14 19:57:49,459 [INFO] root: Received message on data channel: {"type":"validation", "data":"Validation Ok."}
+2026-05-14 19:57:49,460 [INFO] root: Validation succeed
+2026-05-14 19:57:49,461 [INFO] root: Received message on data channel: {"type":"errors","data":[]}
+2026-05-14 19:57:49,542 [INFO] go2_survey.robot: WebRTC connected
+2026-05-14 19:57:49,543 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 693809232, "api_id": 1001}}, "parameter": ""}}
+2026-05-14 19:57:49,569 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1001,"id":693809232},"status":{"code":0}},"data":"{\"form\":\"0\",\"name\":\"mcf\"}"}}
+2026-05-14 19:57:49,569 [INFO] go2_survey.robot: Robot API ready
+2026-05-14 19:57:49,570 [INFO] go2_survey.robot: Subscribed to sport mode state (IMU)
+2026-05-14 19:57:49,570 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 693809029, "api_id": 1001}}, "parameter": ""}}
+2026-05-14 19:57:49,589 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1001,"id":693809029},"status":{"code":0}},"data":"{\"form\":\"0\",\"name\":\"mcf\"}"}}
+2026-05-14 19:57:49,590 [INFO] go2_survey.robot: Current motion mode: mcf
+2026-05-14 19:57:49,590 [INFO] go2_survey.robot: Switching to normal mode...
+2026-05-14 19:57:49,590 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 693809455, "api_id": 1002}}, "parameter": "{\"name\": \"normal\"}"}}
+2026-05-14 19:57:49,601 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1002,"id":693809455},"status":{"code":7004}},"data":""}}
+2026-05-14 19:57:50,461 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "99a21c99-4519-4c86-8598-343226688779"}}
+2026-05-14 19:57:50,471 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"99a21c99-4519-4c86-8598-343226688779"}}
+2026-05-14 19:57:50,471 [INFO] root: Network status message received.
+2026-05-14 19:57:50,973 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "b09a03dd-066c-4297-ac66-686882a99621"}}
+2026-05-14 19:57:50,982 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"b09a03dd-066c-4297-ac66-686882a99621"}}
+2026-05-14 19:57:50,983 [INFO] root: Network status message received.
+2026-05-14 19:57:51,461 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:57:51", "timeInNum": 1778810271}}
+2026-05-14 19:57:51,469 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:57:51,470 [INFO] root: Heartbeat response received.
+2026-05-14 19:57:51,484 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "4073e067-4f1c-4b7e-a903-36b25cffb43f"}}
+2026-05-14 19:57:51,492 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"4073e067-4f1c-4b7e-a903-36b25cffb43f"}}
+2026-05-14 19:57:51,493 [INFO] root: Network status message received.
+2026-05-14 19:57:51,994 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "5035644b-6317-485d-91b9-e1bd2e45037e"}}
+2026-05-14 19:57:52,005 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"5035644b-6317-485d-91b9-e1bd2e45037e"}}
+2026-05-14 19:57:52,005 [INFO] root: Network status message received.
+2026-05-14 19:57:52,506 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "13857669-bd2b-4a7c-86d8-9733667d6465"}}
+2026-05-14 19:57:52,516 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"Undefined","uuid":"13857669-bd2b-4a7c-86d8-9733667d6465"}}
+2026-05-14 19:57:52,517 [INFO] root: Network status message received.
+2026-05-14 19:57:53,018 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "3b22406d-cfc1-4627-bbcc-a880dd9ce0de"}}
+2026-05-14 19:57:53,332 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"NetworkStatus.ON_WIFI_CONNECTED","uuid":"3b22406d-cfc1-4627-bbcc-a880dd9ce0de"}}
+2026-05-14 19:57:53,332 [INFO] root: Network status message received.
+2026-05-14 19:57:53,463 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:57:53", "timeInNum": 1778810273}}
+2026-05-14 19:57:53,472 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:57:53,473 [INFO] root: Heartbeat response received.
+2026-05-14 19:57:54,602 [INFO] go2_survey.robot: BalanceStand...
+2026-05-14 19:57:54,603 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693814424, "api_id": 1002}}, "parameter": ""}}
+2026-05-14 19:57:54,613 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":693814424},"status":{"code":0}},"data":""}}
+2026-05-14 19:57:55,464 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:57:55", "timeInNum": 1778810275}}
+2026-05-14 19:57:55,474 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:57:55,475 [INFO] root: Heartbeat response received.
+2026-05-14 19:57:55,615 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:57:55,615 [INFO] go2_survey.mission_runner: ------------- PHASE 3: NAVIGATE 2 WAYPOINT(S) --------------
+2026-05-14 19:57:55,615 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-14 19:57:55,616 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-14 19:57:55,616 [INFO] go2_survey.mission_runner: ================= WAYPOINT 1/2: waypoint_1 =================
+2026-05-14 19:57:55,616 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-14 19:57:55,616 [INFO] go2_survey.navigator: Navigating to waypoint_1: (46.86164631, -113.99780057)
+2026-05-14 19:57:55,616 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:57:55,617 [INFO] go2_survey.navigator: ================= NAVIGATING TO waypoint_1 =================
+2026-05-14 19:57:55,617 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:57:55,617 [INFO] go2_survey.robot: BalanceStand...
+2026-05-14 19:57:55,618 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693815187, "api_id": 1002}}, "parameter": ""}}
+2026-05-14 19:57:55,628 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":693815187},"status":{"code":0}},"data":""}}
+2026-05-14 19:57:56,629 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:57:56,630 [INFO] go2_survey.navigator: --------------------- CALIBRATING IMU ----------------------
+2026-05-14 19:57:56,630 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:57:57,651 [INFO] go2_survey.navigator: IMU calibration started (hAcc: 0.014m) - walking forward to calibrate...
+2026-05-14 19:57:57,652 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:57:57,652 [INFO] go2_survey.navigator: ----------------- IMU CALIBRATION STARTED ------------------
+2026-05-14 19:57:57,652 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:57:57,653 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693817824, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:57:57,654 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:57:57", "timeInNum": 1778810277}}
+2026-05-14 19:57:57,662 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:57:57,663 [INFO] root: Heartbeat response received.
+2026-05-14 19:57:57,664 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693817824},"status":{"code":0}},"data":""}}
+2026-05-14 19:57:58,065 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693818115, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:57:58,077 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693818115},"status":{"code":0}},"data":""}}
+2026-05-14 19:57:58,465 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693818793, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:57:58,479 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693818793},"status":{"code":0}},"data":""}}
+2026-05-14 19:57:58,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693818829, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:57:58,862 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693818829},"status":{"code":0}},"data":""}}
+2026-05-14 19:57:59,076 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693819105, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:57:59,087 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693819105},"status":{"code":0}},"data":""}}
+2026-05-14 19:57:59,450 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693819253, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:57:59,463 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693819253},"status":{"code":0}},"data":""}}
+2026-05-14 19:57:59,655 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:57:59", "timeInNum": 1778810279}}
+2026-05-14 19:57:59,849 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693819428, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:57:59,852 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:57:59,852 [INFO] root: Heartbeat response received.
+2026-05-14 19:57:59,859 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693819428},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:00,073 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693819619, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:58:00,088 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693819619},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:00,451 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693820401, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:58:00,461 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693820401},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:00,864 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693820601, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0}"}}
+2026-05-14 19:58:00,873 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693820601},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:00,904 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778810280,"uuid":"1ecb3b72-875d-4eaa-a11c-7fa2e10a5aed"}}
+2026-05-14 19:58:00,905 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778810280, "uuid": "1ecb3b72-875d-4eaa-a11c-7fa2e10a5aed"}}
+2026-05-14 19:58:01,253 [INFO] go2_survey.navigator: IMU calibrated! Offset: 178.6° (GPS bearing: 118.4°, IMU yaw: 60.2°, hAcc: 0.014m, disp: 1.59m)
+2026-05-14 19:58:01,253 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:58:01,254 [INFO] go2_survey.navigator: ============ IMU CALIBRATED | Offset: 178.6 deg ============
+2026-05-14 19:58:01,254 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:58:01,254 [INFO] go2_survey.robot: Stopping robot
+2026-05-14 19:58:01,255 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693821381, "api_id": 1003}}, "parameter": ""}}
+2026-05-14 19:58:01,266 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":693821381},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:01,267 [INFO] go2_survey.robot: BalanceStand...
+2026-05-14 19:58:01,267 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693821711, "api_id": 1002}}, "parameter": ""}}
+2026-05-14 19:58:01,279 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":693821711},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:01,657 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:01", "timeInNum": 1778810281}}
+2026-05-14 19:58:01,667 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:01,667 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:02,457 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:58:02,457 [INFO] go2_survey.navigator: ------------------- TURNING TO WAYPOINT --------------------
+2026-05-14 19:58:02,457 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:58:02,457 [INFO] go2_survey.navigator: Turn direction: CCW (heading=117.0° bearing=49.5° error=-67.5°)
+2026-05-14 19:58:02,457 [INFO] go2_survey.robot: BalanceStand...
+2026-05-14 19:58:02,458 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693822397, "api_id": 1002}}, "parameter": ""}}
+2026-05-14 19:58:02,468 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":693822397},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:02,532 [ERROR] go2_survey.ntrip: Error in correction worker: [Errno 104] Connection reset by peer
+2026-05-14 19:58:02,532 [INFO] go2_survey.ntrip: RTCM correction worker stopped
+2026-05-14 19:58:03,651 [INFO] go2_survey.navigator: [turn] hdg=117.0° brg=49.5° err=-67.4°
+2026-05-14 19:58:03,652 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693823861, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": 0.8}"}}
+2026-05-14 19:58:03,658 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:03", "timeInNum": 1778810283}}
+2026-05-14 19:58:03,662 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693823861},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:03,665 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:03,665 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:03,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693823935, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": 0.8}"}}
+2026-05-14 19:58:03,864 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693823935},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:04,064 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693824152, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": 0.8}"}}
+2026-05-14 19:58:04,073 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693824152},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:04,253 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693823770, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": 0.8}"}}
+2026-05-14 19:58:04,263 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693823770},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:04,454 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693824835, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": 0.8}"}}
+2026-05-14 19:58:04,465 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693824835},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:04,654 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693825055, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": 0.8}"}}
+2026-05-14 19:58:04,667 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693825055},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:04,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693824397, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": 0.8}"}}
+2026-05-14 19:58:04,868 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693824397},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:05,059 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693825250, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": 0.8}"}}
+2026-05-14 19:58:05,073 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693825250},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:05,254 [INFO] go2_survey.robot: Stopping robot
+2026-05-14 19:58:05,255 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693825145, "api_id": 1003}}, "parameter": ""}}
+2026-05-14 19:58:05,266 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":693825145},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:05,267 [INFO] go2_survey.navigator: Aligned to waypoint — heading: 72.5° (error: -23.0°)
+2026-05-14 19:58:05,267 [INFO] go2_survey.robot: BalanceStand...
+2026-05-14 19:58:05,268 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693825020, "api_id": 1002}}, "parameter": ""}}
+2026-05-14 19:58:05,276 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":693825020},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:05,659 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:05", "timeInNum": 1778810285}}
+2026-05-14 19:58:05,669 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:05,669 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:06,277 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:58:06,277 [INFO] go2_survey.navigator: ------------------- WALKING TO WAYPOINT --------------------
+2026-05-14 19:58:06,277 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:58:06,451 [WARNING] go2_survey.navigator: GPS fix lost or degraded (type 6 hAcc=0.014m rtcm_age=4.0s), pausing robot...
+2026-05-14 19:58:06,451 [WARNING] go2_survey.navigator: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+2026-05-14 19:58:06,452 [WARNING] go2_survey.navigator:  GPS FIX LOST | type 6 hAcc=0.014m rtcm_age=4.0s | Cause: NTRIP corrections stale (state=connected); reported 6 but coasting | robot paused | mid-mission timeout 60s 
+2026-05-14 19:58:06,452 [WARNING] go2_survey.navigator: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+2026-05-14 19:58:06,452 [INFO] go2_survey.robot: Stopping robot
+2026-05-14 19:58:06,452 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693826097, "api_id": 1003}}, "parameter": ""}}
+2026-05-14 19:58:06,462 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":693826097},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:06,463 [INFO] go2_survey.ntrip: Disconnected from NTRIP. Forwarded 34 messages.
+2026-05-14 19:58:06,463 [INFO] go2_survey.gps: NTRIP reconnect: starting retry loop
+2026-05-14 19:58:06,464 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2, attempt 1/3)
+2026-05-14 19:58:06,464 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-14 19:58:06,927 [INFO] go2_survey.ntrip: Connected to NTRIP mountpoint: MP22385
+2026-05-14 19:58:06,927 [INFO] go2_survey.gps: NTRIP: connected via primary mountpoint MP22385 (took 0s, 1 attempt(s))
+2026-05-14 19:58:06,929 [INFO] go2_survey.ntrip: Started RTCM correction stream
+2026-05-14 19:58:06,930 [INFO] go2_survey.gps: NTRIP reconnect: stream restored
+2026-05-14 19:58:07,660 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:07", "timeInNum": 1778810287}}
+2026-05-14 19:58:07,670 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:07,671 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:08,850 [INFO] go2_survey.navigator: GPS fix restored (type 6), resuming navigation
+2026-05-14 19:58:08,850 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:58:08,851 [INFO] go2_survey.navigator:  GPS FIX RESTORED | type 6 hAcc 0.014m | paused 2s | NTRIP state=connected rtcm_age=0.5s 
+2026-05-14 19:58:08,851 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:58:08,851 [INFO] go2_survey.robot: BalanceStand...
+2026-05-14 19:58:08,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693828825, "api_id": 1002}}, "parameter": ""}}
+2026-05-14 19:58:08,861 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":693828825},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:09,662 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:09", "timeInNum": 1778810289}}
+2026-05-14 19:58:09,673 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:09,673 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:09,863 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693829999, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0.20379040197588572}"}}
+2026-05-14 19:58:09,875 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693829999},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:09,875 [INFO] go2_survey.navigator: NAV | (46.86157610, -113.99792140) | fix=6 hAcc=0.014m | dist=12.06m | hdg=63.2° | IMU cal: yes
+2026-05-14 19:58:10,254 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693830398, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0.18553040633974247}"}}
+2026-05-14 19:58:10,269 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693830398},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:10,651 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693831086, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0.12242261051537823}"}}
+2026-05-14 19:58:10,672 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693831086},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:11,062 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693830691, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0.05979245046966596}"}}
+2026-05-14 19:58:11,072 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693830691},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:11,451 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693830987, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": 0.022553425916552853}"}}
+2026-05-14 19:58:11,463 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693830987},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:11,663 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:11", "timeInNum": 1778810291}}
+2026-05-14 19:58:11,850 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693831503, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.014202978017622029}"}}
+2026-05-14 19:58:11,852 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:11,852 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:11,868 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693831503},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:12,253 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693832626, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.01449694012526649}"}}
+2026-05-14 19:58:12,263 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693832626},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:12,651 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693832950, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.026871532231859587}"}}
+2026-05-14 19:58:12,664 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693832950},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:13,060 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693832624, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.020874706401457815}"}}
+2026-05-14 19:58:13,072 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693832624},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:13,452 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693833223, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03787974703281151}"}}
+2026-05-14 19:58:13,465 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693833223},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:13,665 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:13", "timeInNum": 1778810293}}
+2026-05-14 19:58:13,851 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693833666, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.029707887544675057}"}}
+2026-05-14 19:58:13,854 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:13,854 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:13,861 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693833666},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:14,252 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693833849, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.031874440486116665}"}}
+2026-05-14 19:58:14,263 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693833849},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:14,652 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693835091, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.02758380457572926}"}}
+2026-05-14 19:58:14,664 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693835091},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:15,063 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693834825, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.027386997061188793}"}}
+2026-05-14 19:58:15,074 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693834825},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:15,075 [INFO] go2_survey.navigator: NAV | (46.86159010, -113.99789770) | fix=6 hAcc=0.014m | dist=9.67m | hdg=47.9° | IMU cal: yes
+2026-05-14 19:58:15,452 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693835881, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03950017350390382}"}}
+2026-05-14 19:58:15,465 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693835881},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:15,666 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:15", "timeInNum": 1778810295}}
+2026-05-14 19:58:15,850 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693836195, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03380132366177449}"}}
+2026-05-14 19:58:15,852 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:15,853 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:15,860 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693836195},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:16,076 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693835734, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03381389841668223}"}}
+2026-05-14 19:58:16,088 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693835734},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:16,465 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693836568, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.029930177998217147}"}}
+2026-05-14 19:58:16,475 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693836568},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:16,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693836873, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.02730219050297933}"}}
+2026-05-14 19:58:16,863 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693836873},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:17,079 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693837296, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.037429898909115876}"}}
+2026-05-14 19:58:17,090 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693837296},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:17,452 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693837747, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.02907830478488094}"}}
+2026-05-14 19:58:17,468 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693837747},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:17,668 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:17", "timeInNum": 1778810297}}
+2026-05-14 19:58:17,850 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693838132, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04026154101704023}"}}
+2026-05-14 19:58:17,852 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:17,852 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:17,863 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693838132},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:18,080 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693838404, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.0266496750744804}"}}
+2026-05-14 19:58:18,091 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693838404},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:18,462 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693838713, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.044244200860427865}"}}
+2026-05-14 19:58:18,473 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693838713},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:18,855 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693839108, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.033828526940165346}"}}
+2026-05-14 19:58:18,865 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693839108},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:19,252 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693838764, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03090642720431461}"}}
+2026-05-14 19:58:19,262 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693838764},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:19,652 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693839175, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.02306773328198389}"}}
+2026-05-14 19:58:19,664 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693839175},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:19,669 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:19", "timeInNum": 1778810299}}
+2026-05-14 19:58:19,677 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:19,677 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:20,069 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693840230, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.033810167774110195}"}}
+2026-05-14 19:58:20,082 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693840230},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:20,082 [INFO] go2_survey.navigator: NAV | (46.86160440, -113.99787550) | fix=6 hAcc=0.014m | dist=7.36m | hdg=48.5° | IMU cal: yes
+2026-05-14 19:58:20,434 [ERROR] go2_survey.ntrip: Error in correction worker: [Errno 104] Connection reset by peer
+2026-05-14 19:58:20,434 [INFO] go2_survey.ntrip: RTCM correction worker stopped
+2026-05-14 19:58:20,464 [WARNING] go2_survey.navigator: GPS fix lost or degraded (type 6 hAcc=0.014m rtcm_age=0.1s), pausing robot...
+2026-05-14 19:58:20,465 [WARNING] go2_survey.navigator: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+2026-05-14 19:58:20,465 [WARNING] go2_survey.navigator:  GPS FIX LOST | type 6 hAcc=0.014m rtcm_age=0.1s | Cause: NTRIP corrections stale (state=connected); reported 6 but coasting | robot paused | mid-mission timeout 60s 
+2026-05-14 19:58:20,465 [WARNING] go2_survey.navigator: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+2026-05-14 19:58:20,465 [INFO] go2_survey.robot: Stopping robot
+2026-05-14 19:58:20,466 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693840155, "api_id": 1003}}, "parameter": ""}}
+2026-05-14 19:58:20,476 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":693840155},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:20,478 [INFO] go2_survey.ntrip: Disconnected from NTRIP. Forwarded 30 messages.
+2026-05-14 19:58:20,478 [INFO] go2_survey.gps: NTRIP reconnect: starting retry loop
+2026-05-14 19:58:20,478 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2, attempt 1/3)
+2026-05-14 19:58:20,479 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-14 19:58:20,892 [ERROR] go2_survey.ntrip: Failed to connect to NTRIP caster: [Errno 104] Connection reset by peer
+2026-05-14 19:58:20,892 [WARNING] go2_survey.gps: NTRIP: primary mountpoint MP22385 failed
+2026-05-14 19:58:20,893 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2, attempt 2/3)
+2026-05-14 19:58:20,894 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-14 19:58:20,908 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778810300,"uuid":"23203d09-136b-4edc-8a3f-398aac41ced7"}}
+2026-05-14 19:58:20,909 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778810300, "uuid": "23203d09-136b-4edc-8a3f-398aac41ced7"}}
+2026-05-14 19:58:21,382 [INFO] go2_survey.ntrip: Connected to NTRIP mountpoint: MP22385
+2026-05-14 19:58:21,383 [INFO] go2_survey.gps: NTRIP: connected via primary mountpoint MP22385 (took 1s, 2 attempt(s))
+2026-05-14 19:58:21,384 [INFO] go2_survey.ntrip: Started RTCM correction stream
+2026-05-14 19:58:21,385 [INFO] go2_survey.gps: NTRIP reconnect: stream restored
+2026-05-14 19:58:21,670 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:21", "timeInNum": 1778810301}}
+2026-05-14 19:58:21,679 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:21,679 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:22,851 [INFO] go2_survey.navigator: GPS fix restored (type 6), resuming navigation
+2026-05-14 19:58:22,852 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:58:22,852 [INFO] go2_survey.navigator:  GPS FIX RESTORED | type 6 hAcc 0.014m | paused 2s | NTRIP state=connected rtcm_age=0.6s 
+2026-05-14 19:58:22,852 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:58:22,852 [INFO] go2_survey.robot: BalanceStand...
+2026-05-14 19:58:22,853 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693842456, "api_id": 1002}}, "parameter": ""}}
+2026-05-14 19:58:22,863 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":693842456},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:23,671 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:23", "timeInNum": 1778810303}}
+2026-05-14 19:58:23,680 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:23,681 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:23,865 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693844296, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.07895881979208454}"}}
+2026-05-14 19:58:23,877 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693844296},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:24,255 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693844570, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.06610683386658024}"}}
+2026-05-14 19:58:24,265 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693844570},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:24,653 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693844179, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.06428581820023296}"}}
+2026-05-14 19:58:24,665 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693844179},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:25,069 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693845234, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04299958554236241}"}}
+2026-05-14 19:58:25,081 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693845234},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:25,455 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693845603, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.05420379111764461}"}}
+2026-05-14 19:58:25,467 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693845603},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:25,468 [INFO] go2_survey.navigator: NAV | (46.86160990, -113.99786680) | fix=6 hAcc=0.014m | dist=6.46m | hdg=47.6° | IMU cal: yes
+2026-05-14 19:58:25,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693845836, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03844042936100038}"}}
+2026-05-14 19:58:25,853 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:25", "timeInNum": 1778810305}}
+2026-05-14 19:58:25,861 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:25,862 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:25,863 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693845836},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:26,079 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693845932, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04028447000033381}"}}
+2026-05-14 19:58:26,091 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693845932},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:26,466 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693846590, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.033463771988836016}"}}
+2026-05-14 19:58:26,480 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693846590},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:26,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693847178, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03885557895218412}"}}
+2026-05-14 19:58:26,862 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693847178},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:27,078 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693847193, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03208847167737516}"}}
+2026-05-14 19:58:27,089 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693847193},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:27,452 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693847814, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03279170248814992}"}}
+2026-05-14 19:58:27,462 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693847814},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:27,853 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693848137, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03751393907453291}"}}
+2026-05-14 19:58:27,855 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:27", "timeInNum": 1778810307}}
+2026-05-14 19:58:27,863 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:27,864 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:27,866 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693848137},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:28,253 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693848567, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.036463716280372295}"}}
+2026-05-14 19:58:28,265 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693848567},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:28,652 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693848816, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.031790025261982324}"}}
+2026-05-14 19:58:28,662 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693848816},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:29,067 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693849306, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.029748313365584946}"}}
+2026-05-14 19:58:29,078 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693849306},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:29,451 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693849404, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.031288078841468094}"}}
+2026-05-14 19:58:29,464 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693849404},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:29,849 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693850030, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03994656852458035}"}}
+2026-05-14 19:58:29,856 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:29", "timeInNum": 1778810309}}
+2026-05-14 19:58:29,860 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693850030},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:29,863 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:29,863 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:30,076 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693850002, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.031020188054283578}"}}
+2026-05-14 19:58:30,087 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693850002},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:30,461 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693850337, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.02220816622581296}"}}
+2026-05-14 19:58:30,478 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693850337},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:30,478 [INFO] go2_survey.navigator: NAV | (46.86162380, -113.99784370) | fix=6 hAcc=0.014m | dist=4.12m | hdg=51.2° | IMU cal: yes
+2026-05-14 19:58:30,853 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693850810, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.034819712881482584}"}}
+2026-05-14 19:58:30,866 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693850810},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:31,252 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693851051, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.02687721935485271}"}}
+2026-05-14 19:58:31,266 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693851051},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:31,653 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693851592, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03221282888193279}"}}
+2026-05-14 19:58:31,665 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693851592},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:31,857 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:31", "timeInNum": 1778810311}}
+2026-05-14 19:58:31,866 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:31,866 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:32,063 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693851657, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.033462819519138445}"}}
+2026-05-14 19:58:32,074 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693851657},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:32,465 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693852066, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.039302399224110544}"}}
+2026-05-14 19:58:32,475 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693852066},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:32,850 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693852692, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.042953010912223276}"}}
+2026-05-14 19:58:32,859 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693852692},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:33,252 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693852869, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.034839080119070547}"}}
+2026-05-14 19:58:33,266 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693852869},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:33,652 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693853359, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03840056472303509}"}}
+2026-05-14 19:58:33,663 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693853359},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:33,858 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:33", "timeInNum": 1778810313}}
+2026-05-14 19:58:34,070 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693853795, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.029882197975587204}"}}
+2026-05-14 19:58:34,072 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:34,072 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:34,080 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693853795},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:34,465 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693854628, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03428707368139094}"}}
+2026-05-14 19:58:34,477 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693854628},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:34,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693854592, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.024812189003612345}"}}
+2026-05-14 19:58:34,862 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693854592},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:35,252 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693855081, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03610977870162763}"}}
+2026-05-14 19:58:35,263 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693855081},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:35,649 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693855981, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.029905147985667922}"}}
+2026-05-14 19:58:35,659 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693855981},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:35,659 [INFO] go2_survey.navigator: NAV | (46.86163720, -113.99781930) | fix=6 hAcc=0.014m | dist=1.75m | hdg=52.6° | IMU cal: yes
+2026-05-14 19:58:35,859 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:35", "timeInNum": 1778810315}}
+2026-05-14 19:58:36,073 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693856361, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04961288230643404}"}}
+2026-05-14 19:58:36,078 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:36,079 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:36,090 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693856361},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:36,461 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693856057, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.043690102548921673}"}}
+2026-05-14 19:58:36,478 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693856057},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:36,853 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693856495, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.05484916982635688}"}}
+2026-05-14 19:58:36,863 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693856495},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:37,256 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693857288, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.05487415031211277}"}}
+2026-05-14 19:58:37,267 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693857288},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:37,653 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693857980, "api_id": 1008}}, "parameter": "{\"x\": 0.4155436738077103, \"y\": 0, \"z\": -0.05233067994380526}"}}
+2026-05-14 19:58:37,664 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693857980},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:37,861 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:37", "timeInNum": 1778810317}}
+2026-05-14 19:58:38,068 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693857707, "api_id": 1008}}, "parameter": "{\"x\": 0.32161319232389113, \"y\": 0, \"z\": -0.04696133397463534}"}}
+2026-05-14 19:58:38,071 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:38,071 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:38,079 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693857707},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:38,458 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693858613, "api_id": 1008}}, "parameter": "{\"x\": 0.26495232574702215, \"y\": 0, \"z\": -0.050947335629775096}"}}
+2026-05-14 19:58:38,468 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693858613},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:38,847 [INFO] go2_survey.navigator: ARRIVED at waypoint_1! Distance: 0.430m
+2026-05-14 19:58:38,847 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:58:38,847 [INFO] go2_survey.navigator: =========== ARRIVED at waypoint_1 | 0.430m | 43s ===========
+2026-05-14 19:58:38,847 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:58:38,848 [INFO] go2_survey.robot: Stopping robot
+2026-05-14 19:58:38,848 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693858643, "api_id": 1003}}, "parameter": ""}}
+2026-05-14 19:58:38,858 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":693858643},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:38,859 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:58:38,859 [INFO] go2_survey.navigator: - IMU RECAL | 178.6° → 177.9° (Δ -0.7°) | n=59 bsl=10.96m --
+2026-05-14 19:58:38,860 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:58:39,057 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-14 19:58:39,057 [INFO] go2_survey.mission_runner: ================= WAYPOINT 2/2: waypoint_2 =================
+2026-05-14 19:58:39,057 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-14 19:58:39,057 [INFO] go2_survey.navigator: Navigating to waypoint_2: (46.86154957, -113.99796955)
+2026-05-14 19:58:39,058 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:58:39,058 [INFO] go2_survey.navigator: ================= NAVIGATING TO waypoint_2 =================
+2026-05-14 19:58:39,058 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:58:39,058 [INFO] go2_survey.robot: BalanceStand...
+2026-05-14 19:58:39,059 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693858689, "api_id": 1002}}, "parameter": ""}}
+2026-05-14 19:58:39,070 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":693858689},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:39,862 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:39", "timeInNum": 1778810319}}
+2026-05-14 19:58:39,871 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:39,872 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:40,250 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:58:40,250 [INFO] go2_survey.navigator: ------------------- TURNING TO WAYPOINT --------------------
+2026-05-14 19:58:40,250 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:58:40,250 [INFO] go2_survey.navigator: Turn direction: CW (heading=56.6° bearing=229.8° error=173.2°)
+2026-05-14 19:58:40,250 [INFO] go2_survey.robot: BalanceStand...
+2026-05-14 19:58:40,251 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693860139, "api_id": 1002}}, "parameter": ""}}
+2026-05-14 19:58:40,261 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":693860139},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:40,912 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778810320,"uuid":"935afa40-09b6-406e-9969-d3e07a2184c3"}}
+2026-05-14 19:58:40,912 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778810320, "uuid": "935afa40-09b6-406e-9969-d3e07a2184c3"}}
+2026-05-14 19:58:41,451 [INFO] go2_survey.navigator: [turn] hdg=56.8° brg=229.8° err=173.0°
+2026-05-14 19:58:41,451 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693861221, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:41,461 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693861221},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:41,650 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693861678, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:41,662 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693861678},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:41,849 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693862274, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:41,859 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693862274},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:41,863 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:41", "timeInNum": 1778810321}}
+2026-05-14 19:58:41,870 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:41,871 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:42,063 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693861609, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:42,077 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693861609},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:42,251 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693861730, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:42,262 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693861730},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:42,461 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693862587, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:42,472 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693862587},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:42,651 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693862274, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:42,662 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693862274},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:42,848 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693863189, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:42,858 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693863189},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:43,064 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693862780, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:43,074 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693862780},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:43,251 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693862712, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:43,262 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693862712},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:43,453 [INFO] go2_survey.navigator: [turn] hdg=125.2° brg=229.8° err=104.5°
+2026-05-14 19:58:43,454 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693863379, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:43,464 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693863379},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:43,650 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693864026, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:43,662 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693864026},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:43,848 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693863594, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:43,862 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693863594},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:43,864 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:43", "timeInNum": 1778810323}}
+2026-05-14 19:58:43,872 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:43,873 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:44,064 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693864079, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:44,075 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693864079},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:44,254 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693864255, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:44,267 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693864255},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:44,461 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693864230, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:44,472 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693864230},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:44,648 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693864123, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:44,658 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693864123},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:44,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693864371, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:44,865 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693864371},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:45,061 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693865209, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:45,072 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693865209},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:45,252 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693865353, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-14 19:58:45,263 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693865353},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:45,450 [INFO] go2_survey.robot: Stopping robot
+2026-05-14 19:58:45,451 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693865100, "api_id": 1003}}, "parameter": ""}}
+2026-05-14 19:58:45,462 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":693865100},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:45,463 [INFO] go2_survey.navigator: Aligned to waypoint — heading: 202.8° (error: 27.1°)
+2026-05-14 19:58:45,463 [INFO] go2_survey.robot: BalanceStand...
+2026-05-14 19:58:45,464 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693865519, "api_id": 1002}}, "parameter": ""}}
+2026-05-14 19:58:45,472 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":693865519},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:45,865 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:45", "timeInNum": 1778810325}}
+2026-05-14 19:58:45,871 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:45,872 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:46,260 [ERROR] go2_survey.ntrip: Error in correction worker: [Errno 104] Connection reset by peer
+2026-05-14 19:58:46,261 [INFO] go2_survey.ntrip: RTCM correction worker stopped
+2026-05-14 19:58:46,473 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:58:46,474 [INFO] go2_survey.navigator: ------------------- WALKING TO WAYPOINT --------------------
+2026-05-14 19:58:46,474 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:58:46,653 [WARNING] go2_survey.navigator: GPS fix lost or degraded (type 6 hAcc=0.014m rtcm_age=0.4s), pausing robot...
+2026-05-14 19:58:46,654 [WARNING] go2_survey.navigator: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+2026-05-14 19:58:46,654 [WARNING] go2_survey.navigator:  GPS FIX LOST | type 6 hAcc=0.014m rtcm_age=0.4s | Cause: NTRIP corrections stale (state=connected); reported 6 but coasting | robot paused | mid-mission timeout 60s 
+2026-05-14 19:58:46,654 [WARNING] go2_survey.navigator: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+2026-05-14 19:58:46,654 [INFO] go2_survey.robot: Stopping robot
+2026-05-14 19:58:46,655 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693866361, "api_id": 1003}}, "parameter": ""}}
+2026-05-14 19:58:46,675 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":693866361},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:46,676 [INFO] go2_survey.ntrip: Disconnected from NTRIP. Forwarded 58 messages.
+2026-05-14 19:58:46,677 [INFO] go2_survey.gps: NTRIP reconnect: starting retry loop
+2026-05-14 19:58:46,677 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2, attempt 1/3)
+2026-05-14 19:58:46,677 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-14 19:58:47,121 [INFO] go2_survey.ntrip: Connected to NTRIP mountpoint: MP22385
+2026-05-14 19:58:47,122 [INFO] go2_survey.gps: NTRIP: connected via primary mountpoint MP22385 (took 0s, 1 attempt(s))
+2026-05-14 19:58:47,123 [INFO] go2_survey.ntrip: Started RTCM correction stream
+2026-05-14 19:58:47,124 [INFO] go2_survey.gps: NTRIP reconnect: stream restored
+2026-05-14 19:58:47,866 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:47", "timeInNum": 1778810327}}
+2026-05-14 19:58:47,876 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:47,877 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:48,462 [INFO] go2_survey.navigator: GPS fix restored (type 6), resuming navigation
+2026-05-14 19:58:48,463 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:58:48,463 [INFO] go2_survey.navigator:  GPS FIX RESTORED | type 6 hAcc 0.014m | paused 2s | NTRIP state=connected rtcm_age=0.2s 
+2026-05-14 19:58:48,463 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:58:48,463 [INFO] go2_survey.robot: BalanceStand...
+2026-05-14 19:58:48,464 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693868747, "api_id": 1002}}, "parameter": ""}}
+2026-05-14 19:58:48,476 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":693868747},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:49,477 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693869824, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.4244639419047603}"}}
+2026-05-14 19:58:49,491 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693869824},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:49,492 [INFO] go2_survey.navigator: NAV | (46.86164450, -113.99780430) | fix=6 hAcc=0.014m | dist=16.41m | hdg=201.7° | IMU cal: yes
+2026-05-14 19:58:49,850 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693869692, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.3694624279423743}"}}
+2026-05-14 19:58:49,861 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693869692},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:49,867 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:49", "timeInNum": 1778810329}}
+2026-05-14 19:58:49,877 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:49,877 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:50,254 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693870134, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.2720305647381822}"}}
+2026-05-14 19:58:50,265 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693870134},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:50,650 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693870238, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.17094014025358262}"}}
+2026-05-14 19:58:50,661 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693870238},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:51,058 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693870737, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.12521182943194786}"}}
+2026-05-14 19:58:51,071 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693870737},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:51,450 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693871299, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.0793465176187442}"}}
+2026-05-14 19:58:51,464 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693871299},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:51,848 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693872245, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.0667312119234235}"}}
+2026-05-14 19:58:51,860 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693872245},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:51,869 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:51", "timeInNum": 1778810331}}
+2026-05-14 19:58:51,878 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:51,879 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:52,075 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693871552, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04601036217347868}"}}
+2026-05-14 19:58:52,086 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693871552},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:52,461 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693872527, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.05034831877384803}"}}
+2026-05-14 19:58:52,473 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693872527},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:52,849 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693873060, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04304435588872934}"}}
+2026-05-14 19:58:52,859 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693873060},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:53,252 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693873447, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04413475272281445}"}}
+2026-05-14 19:58:53,264 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693873447},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:53,648 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693873238, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.0343980057911979}"}}
+2026-05-14 19:58:53,660 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693873238},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:54,064 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693873698, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.041990155792605746}"}}
+2026-05-14 19:58:54,066 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:54", "timeInNum": 1778810334}}
+2026-05-14 19:58:54,074 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:54,075 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:54,076 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693873698},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:54,461 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693874668, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03099538550438254}"}}
+2026-05-14 19:58:54,474 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693874668},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:54,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693874481, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04037138309319218}"}}
+2026-05-14 19:58:54,862 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693874481},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:54,863 [INFO] go2_survey.navigator: NAV | (46.86162950, -113.99782720) | fix=6 hAcc=0.014m | dist=14.01m | hdg=227.9° | IMU cal: yes
+2026-05-14 19:58:55,252 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693875383, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.031047511006824492}"}}
+2026-05-14 19:58:55,264 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693875383},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:55,655 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693876023, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04332915552098058}"}}
+2026-05-14 19:58:55,673 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693876023},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:56,066 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693876210, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.032623425008635965}"}}
+2026-05-14 19:58:56,067 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:56", "timeInNum": 1778810336}}
+2026-05-14 19:58:56,077 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:56,077 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:56,078 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693876210},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:56,458 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693876634, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03782967595940221}"}}
+2026-05-14 19:58:56,469 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693876634},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:56,850 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693876843, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.0285889835353737}"}}
+2026-05-14 19:58:56,863 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693876843},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:57,248 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693877410, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03411929318735545}"}}
+2026-05-14 19:58:57,260 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693877410},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:57,652 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693877793, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04407412289458449}"}}
+2026-05-14 19:58:57,667 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693877793},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:58,064 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693877799, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03697292642785981}"}}
+2026-05-14 19:58:58,069 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:58:58", "timeInNum": 1778810338}}
+2026-05-14 19:58:58,074 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693877799},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:58,076 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:58:58,076 [INFO] root: Heartbeat response received.
+2026-05-14 19:58:58,463 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693878515, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04287539651825142}"}}
+2026-05-14 19:58:58,474 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693878515},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:58,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693878905, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03860823306123379}"}}
+2026-05-14 19:58:58,863 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693878905},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:59,253 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693879247, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04278154082834007}"}}
+2026-05-14 19:58:59,262 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693879247},"status":{"code":0}},"data":""}}
+2026-05-14 19:58:59,652 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693879277, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.031520674129778714}"}}
+2026-05-14 19:58:59,757 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693879277},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:00,066 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693880457, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.036013166907206226}"}}
+2026-05-14 19:59:00,070 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:00", "timeInNum": 1778810340}}
+2026-05-14 19:59:00,076 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693880457},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:00,077 [INFO] go2_survey.navigator: NAV | (46.86161550, -113.99785150) | fix=6 hAcc=0.014m | dist=11.59m | hdg=228.4° | IMU cal: yes
+2026-05-14 19:59:00,078 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:00,079 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:00,452 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693880060, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.029054106893651833}"}}
+2026-05-14 19:59:00,493 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693880060},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:00,849 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693880450, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.038427349548238114}"}}
+2026-05-14 19:59:00,863 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693880450},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:01,251 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693881260, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.034644880707661085}"}}
+2026-05-14 19:59:01,253 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778810340,"uuid":"ba562db3-3a06-467e-8b2f-775eba1a4e2f"}}
+2026-05-14 19:59:01,254 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778810340, "uuid": "ba562db3-3a06-467e-8b2f-775eba1a4e2f"}}
+2026-05-14 19:59:01,263 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693881260},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:01,651 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693881384, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.043284322733575915}"}}
+2026-05-14 19:59:01,968 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693881384},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:02,072 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:02", "timeInNum": 1778810342}}
+2026-05-14 19:59:02,082 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:02,082 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:02,252 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693882088, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04304082763762835}"}}
+2026-05-14 19:59:02,263 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693882088},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:02,648 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693882618, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.0333277881989406}"}}
+2026-05-14 19:59:02,701 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693882618},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:03,062 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693883324, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.035824820352438565}"}}
+2026-05-14 19:59:03,072 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693883324},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:03,451 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693883608, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03457950660005366}"}}
+2026-05-14 19:59:03,461 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693883608},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:03,853 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693883931, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.031192798551220164}"}}
+2026-05-14 19:59:04,001 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693883931},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:04,074 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:04", "timeInNum": 1778810344}}
+2026-05-14 19:59:04,083 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:04,084 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:04,256 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693884045, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.020601861589168068}"}}
+2026-05-14 19:59:04,266 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693884045},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:04,652 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693884495, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.026650117349732765}"}}
+2026-05-14 19:59:04,664 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693884495},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:05,062 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693885455, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.02283469900837886}"}}
+2026-05-14 19:59:05,077 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693885455},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:05,078 [INFO] go2_survey.navigator: NAV | (46.86160210, -113.99787470) | fix=6 hAcc=0.014m | dist=9.28m | hdg=229.5° | IMU cal: yes
+2026-05-14 19:59:05,452 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693885019, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03391864625947008}"}}
+2026-05-14 19:59:05,477 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693885019},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:05,848 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693885684, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.024487683368028285}"}}
+2026-05-14 19:59:05,859 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693885684},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:06,073 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693886308, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.02774882943953301}"}}
+2026-05-14 19:59:06,075 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:06", "timeInNum": 1778810346}}
+2026-05-14 19:59:06,108 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:06,109 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:06,110 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693886308},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:06,464 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693886439, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.02769496703496557}"}}
+2026-05-14 19:59:06,477 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693886439},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:06,854 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693886720, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03214839544979781}"}}
+2026-05-14 19:59:06,865 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693886720},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:07,252 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693887592, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03130834230403039}"}}
+2026-05-14 19:59:07,264 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693887592},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:07,652 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693887613, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03721888285197437}"}}
+2026-05-14 19:59:07,661 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693887613},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:08,065 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693888026, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03528604152282255}"}}
+2026-05-14 19:59:08,076 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693888026},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:08,077 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:08", "timeInNum": 1778810348}}
+2026-05-14 19:59:08,082 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:08,083 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:08,464 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693888467, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03917813527265352}"}}
+2026-05-14 19:59:08,477 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693888467},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:08,851 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693889183, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03568858189691994}"}}
+2026-05-14 19:59:08,863 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693889183},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:09,253 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693889228, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04214300957570941}"}}
+2026-05-14 19:59:09,266 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693889228},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:09,653 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693889267, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.037994492362980026}"}}
+2026-05-14 19:59:09,667 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693889267},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:10,065 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693889829, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.0488513107628782}"}}
+2026-05-14 19:59:10,076 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693889829},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:10,078 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:10", "timeInNum": 1778810350}}
+2026-05-14 19:59:10,086 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:10,086 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:10,463 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693890715, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03782704472329726}"}}
+2026-05-14 19:59:10,473 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693890715},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:10,473 [INFO] go2_survey.navigator: NAV | (46.86158800, -113.99790000) | fix=6 hAcc=0.014m | dist=6.80m | hdg=228.5° | IMU cal: yes
+2026-05-14 19:59:10,851 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693890730, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.0448460560773772}"}}
+2026-05-14 19:59:10,861 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693890730},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:11,253 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693890746, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03405431582983382}"}}
+2026-05-14 19:59:11,264 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693890746},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:11,650 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693891209, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.039538820136772866}"}}
+2026-05-14 19:59:11,661 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693891209},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:12,067 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693891886, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.034107227645574625}"}}
+2026-05-14 19:59:12,077 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693891886},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:12,079 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:12", "timeInNum": 1778810352}}
+2026-05-14 19:59:12,087 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:12,088 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:12,462 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693892646, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04071426061144891}"}}
+2026-05-14 19:59:12,477 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693892646},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:12,854 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693892676, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.029070684496096105}"}}
+2026-05-14 19:59:12,865 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693892676},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:13,253 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693893073, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03746600814517834}"}}
+2026-05-14 19:59:13,264 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693893073},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:13,651 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693893210, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.024632126091518672}"}}
+2026-05-14 19:59:13,662 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693893210},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:14,066 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693894100, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03687593251722305}"}}
+2026-05-14 19:59:14,078 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693894100},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:14,080 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:14", "timeInNum": 1778810354}}
+2026-05-14 19:59:14,089 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:14,089 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:14,463 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693894268, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.027043086016306717}"}}
+2026-05-14 19:59:14,473 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693894268},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:14,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693894587, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03799998007158692}"}}
+2026-05-14 19:59:14,861 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693894587},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:15,250 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693895361, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.023020631555082785}"}}
+2026-05-14 19:59:15,311 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693895361},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:15,652 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693895403, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.02517915779313796}"}}
+2026-05-14 19:59:15,662 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693895403},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:15,663 [INFO] go2_survey.navigator: NAV | (46.86157430, -113.99792380) | fix=6 hAcc=0.014m | dist=4.43m | hdg=230.0° | IMU cal: yes
+2026-05-14 19:59:16,065 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693895524, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.02463631776083261}"}}
+2026-05-14 19:59:16,076 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693895524},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:16,081 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:16", "timeInNum": 1778810356}}
+2026-05-14 19:59:16,089 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:16,089 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:16,452 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693896241, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03083399912524584}"}}
+2026-05-14 19:59:16,618 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693896241},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:16,861 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693896874, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.0368061382547269}"}}
+2026-05-14 19:59:16,872 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693896874},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:17,251 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693897340, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.028957879291444895}"}}
+2026-05-14 19:59:17,356 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693897340},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:17,652 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693897274, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.034135755059416364}"}}
+2026-05-14 19:59:17,664 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693897274},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:18,067 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693897594, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.034113194253476135}"}}
+2026-05-14 19:59:18,083 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:18", "timeInNum": 1778810358}}
+2026-05-14 19:59:18,087 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693897594},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:18,091 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:18,091 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:18,462 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693898354, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.0395699189467112}"}}
+2026-05-14 19:59:18,472 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693898354},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:18,848 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693898320, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.04139065501224195}"}}
+2026-05-14 19:59:18,861 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693898320},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:19,254 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693899020, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.037492312812649545}"}}
+2026-05-14 19:59:19,561 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693899020},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:19,851 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693900106, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.027307546879331283}"}}
+2026-05-14 19:59:19,862 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693900106},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:20,076 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693899977, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.022047773796258524}"}}
+2026-05-14 19:59:20,085 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:20", "timeInNum": 1778810360}}
+2026-05-14 19:59:20,089 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693899977},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:20,093 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:20,093 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:20,463 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693900802, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.015735578357706146}"}}
+2026-05-14 19:59:20,475 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693900802},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:20,850 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693901104, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.027644846097797708}"}}
+2026-05-14 19:59:20,864 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693901104},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:20,864 [INFO] go2_survey.navigator: NAV | (46.86156090, -113.99794840) | fix=6 hAcc=0.014m | dist=2.04m | hdg=230.1° | IMU cal: yes
+2026-05-14 19:59:20,918 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1778810360,"uuid":"ca4009f4-8c00-4847-abab-c00cccbe658d"}}
+2026-05-14 19:59:20,919 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1778810360, "uuid": "ca4009f4-8c00-4847-abab-c00cccbe658d"}}
+2026-05-14 19:59:21,254 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693901048, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03138321989701737}"}}
+2026-05-14 19:59:21,264 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693901048},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:21,651 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693902104, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.035448670877803325}"}}
+2026-05-14 19:59:21,662 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693902104},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:22,066 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693901863, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03253808792745246}"}}
+2026-05-14 19:59:22,077 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693901863},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:22,085 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:22", "timeInNum": 1778810362}}
+2026-05-14 19:59:22,094 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:22,094 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:22,460 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693902674, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.03359296849255514}"}}
+2026-05-14 19:59:22,475 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693902674},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:22,852 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693903186, "api_id": 1008}}, "parameter": "{\"x\": 0.5, \"y\": 0, \"z\": -0.028697257593122742}"}}
+2026-05-14 19:59:22,881 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693903186},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:23,250 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693903249, "api_id": 1008}}, "parameter": "{\"x\": 0.4709630705443678, \"y\": 0, \"z\": -0.028275164808107718}"}}
+2026-05-14 19:59:23,261 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693903249},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:23,653 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693903613, "api_id": 1008}}, "parameter": "{\"x\": 0.38284828290431167, \"y\": 0, \"z\": -0.021763499151859947}"}}
+2026-05-14 19:59:23,667 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693903613},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:24,071 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693904284, "api_id": 1008}}, "parameter": "{\"x\": 0.3108873811868138, \"y\": 0, \"z\": -0.02050557732764986}"}}
+2026-05-14 19:59:24,082 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":693904284},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:24,086 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-14 19:59:24", "timeInNum": 1778810364}}
+2026-05-14 19:59:24,093 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-14 19:59:24,093 [INFO] root: Heartbeat response received.
+2026-05-14 19:59:24,462 [INFO] go2_survey.navigator: ARRIVED at waypoint_2! Distance: 0.483m
+2026-05-14 19:59:24,462 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:59:24,462 [INFO] go2_survey.navigator: =========== ARRIVED at waypoint_2 | 0.483m | 45s ===========
+2026-05-14 19:59:24,463 [INFO] go2_survey.navigator: ============================================================
+2026-05-14 19:59:24,463 [INFO] go2_survey.robot: Stopping robot
+2026-05-14 19:59:24,463 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693904491, "api_id": 1003}}, "parameter": ""}}
+2026-05-14 19:59:24,692 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":693904491},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:24,693 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:59:24,693 [INFO] go2_survey.navigator: - IMU RECAL | 177.9° → 176.9° (Δ -1.0°) | n=59 bsl=10.64m --
+2026-05-14 19:59:24,693 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-14 19:59:24,854 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-14 19:59:24,854 [INFO] go2_survey.mission_runner: ===================== MISSION COMPLETE =====================
+2026-05-14 19:59:24,855 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-14 19:59:25,063 [INFO] go2_survey.mission_runner: Final position: (46.86155170, -113.99796550)
+2026-05-14 19:59:25,063 [INFO] go2_survey.robot: Stopping robot
+2026-05-14 19:59:25,064 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 693904950, "api_id": 1003}}, "parameter": ""}}
+2026-05-14 19:59:25,076 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":693904950},"status":{"code":0}},"data":""}}
+2026-05-14 19:59:25,080 [ERROR] asyncio: Exception in callback AsyncIOEventEmitter._emit_run.<locals>.callback(<Task finishe...StreamError()>) at /home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/asyncio.py:97
+handle: <Handle AsyncIOEventEmitter._emit_run.<locals>.callback(<Task finishe...StreamError()>) at /home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/asyncio.py:97>
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/asyncio/events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/asyncio.py", line 105, in callback
+    self.emit("error", exc)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/asyncio.py", line 70, in emit
+    return super().emit(event, *args, **kwargs)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/base.py", line 223, in emit
+    self._emit_handle_potential_error(event, args[0] if args else None)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/base.py", line 181, in _emit_handle_potential_error
+    raise error
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/unitree_webrtc_connect/webrtc_driver.py", line 166, in on_track
+    frame = await track.recv()
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcrtpreceiver.py", line 209, in recv
+    raise MediaStreamError
+aiortc.mediastreams.MediaStreamError
+2026-05-14 19:59:25,085 [INFO] root: Data channel closed
+2026-05-14 19:59:25,087 [ERROR] asyncio: Exception in callback AsyncIOEventEmitter._emit_run.<locals>.callback(<Task finishe...StreamError()>) at /home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/asyncio.py:97
+handle: <Handle AsyncIOEventEmitter._emit_run.<locals>.callback(<Task finishe...StreamError()>) at /home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/asyncio.py:97>
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/asyncio/events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/asyncio.py", line 105, in callback
+    self.emit("error", exc)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/asyncio.py", line 70, in emit
+    return super().emit(event, *args, **kwargs)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/base.py", line 223, in emit
+    self._emit_handle_potential_error(event, args[0] if args else None)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/pyee/base.py", line 181, in _emit_handle_potential_error
+    raise error
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/unitree_webrtc_connect/webrtc_driver.py", line 162, in on_track
+    frame = await track.recv()
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcrtpreceiver.py", line 209, in recv
+    raise MediaStreamError
+aiortc.mediastreams.MediaStreamError
+2026-05-14 19:59:25,089 [WARNING] go2_survey.ntrip: NTRIP connection lost
+2026-05-14 19:59:25,089 [INFO] go2_survey.ntrip: RTCM correction worker stopped
+2026-05-14 19:59:25,089 [INFO] go2_survey.ntrip: Disconnected from NTRIP. Forwarded 84 messages.
+2026-05-14 19:59:25,092 [INFO] go2_survey.gps: GPS connection closed
+2026-05-14 19:59:25,092 [INFO] go2_survey.mission_runner: Connections closed
