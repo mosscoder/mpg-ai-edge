@@ -1,5 +1,117 @@
 # Navigation Changelog
 
+## 2026-05-15: v0.8.2 — GPS Stabilization Phase, Tighter Arrival Tolerance, Cause-Attribution Fix
+
+### Scope
+
+The 2026-05-14 parking-lot run
+(`dev/missions/00_parking_lot/logs/00_parking_lot_2026-05-14_19-52-24/`)
+was the first v0.7.0 mission to complete cleanly — both waypoints
+reached, full reconnect handling exercised on a real `ECONNRESET`,
+gps.log captured the entire RTK convergence timeline. Reading that
+timeline surfaced three things to tighten:
+
+1. **The robot started moving before RTK Fixed converged.** First
+   waypoint was reached in Float (hAcc ~0.07 m); Fixed (hAcc
+   0.014 m) only converged 47 s after NTRIP connect, mid-walk to the
+   second waypoint. Carrier-phase ambiguity resolution is genuinely
+   slow on a fresh F9P boot; the prior pipeline gave it no soak time.
+2. **Arrival tolerance was loose for the RTK quality we now get.**
+   0.5 m made sense when Float was the realistic best case. With
+   sub-cm Fixed reliably available, 0.5 m is twice the underlying
+   precision and was leaving fidelity on the table.
+3. **Mid-mission cause-attribution banner read as self-contradictory.**
+   When the NTRIP worker died on `[Errno 104] Connection reset by
+   peer`, the navigator paused the robot within 0.7 s — correctly —
+   but the FIX LOST banner reported `"rtcm_age=0.8s ... corrections
+   stale"`. The `has_active_corrections()` predicate returned False
+   because `connection_alive=False`, not because the age exceeded the
+   threshold; but the diagnostic string lumped both cases under
+   "stale". Three different failure modes; we should name them
+   distinctly.
+
+Three code commits + a docs commit, additive (no breaking schema
+changes — the new field has a safe default). End state
+`0.7.0 → 0.8.2`.
+
+### 1. PHASE 2: GPS STABILIZATION between fix and motion (`70cb7f2`)
+
+A new phase sits between PHASE 1 (GPS connect + initial fix) and the
+former PHASE 2 (ROBOT), dwelling for `[navigation]
+stabilization_period_s` (default 60 s) so RTK ambiguity resolution
+can complete before the robot moves. All later phases reindex:
+
+```
+PHASE 1: GPS                        (unchanged)
+PHASE 2: GPS STABILIZATION  (60s)   (new)
+PHASE 3: ROBOT                      (was PHASE 2)
+PHASE 4: NAVIGATE                   (was PHASE 3)
+```
+
+`GPSManager.stabilization_dwell()` polls `get_position()` at 1 Hz so
+the existing `gps.log` telemetry captures the dwell for free. It
+tracks `best_fix_type`, `min_hacc`, `mean_hacc`, `mean_sats`,
+`tt_first_float`, `tt_first_fixed`, and emits banners at start, every
+`progress_interval_s` (default 15 s), and end:
+
+```
+[stabilization] 15/60s | fix=5 hAcc=0.089m sats=23 | rtcm_age=0.4s
+[stabilization] 30/60s | fix=5 hAcc=0.071m sats=24 | rtcm_age=0.5s
+[stabilization] 45/60s | fix=6 hAcc=0.014m sats=24 | rtcm_age=0.3s
+
+DWELL COMPLETE | best=RTK Fixed min_hAcc=0.014m |
+mean hAcc=0.041m sats=23.4 | TTFloat=9s TTFixed=42s
+```
+
+`static_geotag` mode picks up the same insertion (PHASE 2:
+STABILIZATION + reindex). `static_camera` (no GPS) is unchanged
+because there's no PHASE 1 to anchor against. `probe_gps` is
+unchanged because the probe itself is a diagnostic dwell — adding
+another 60 s in front would be redundant.
+
+Set `stabilization_period_s = 0` to skip the dwell entirely; the
+method short-circuits with no banner.
+
+### 2. Waypoint arrival tolerance 0.5 m → 0.25 m (`59b25bc`)
+
+Single-line edits to `NavigationSettings.arrival_tolerance` and the
+five in-tree mission TOMLs that explicitly set it
+(`00_parking_lot`, `01_tennis_court`, `04_tennis_single_forward`,
+`05_tennis_single_quadrat`, `06_tennis_quadrat_pair`, plus
+`_template`). `03_static_geotag` and `02_camera_test` don't navigate,
+so they're untouched.
+
+The tighter tolerance is safe because the v0.7.0 stack now delivers
+RTK Fixed (~1.4 cm) reliably during walk legs and the new
+stabilization phase ensures Fixed is already locked before the robot
+moves.
+
+### 3. NTRIP stream-died vs. RTCM-stale (`cbaa37d`)
+
+The cause string in `WaypointNavigator._fix_lost_diagnostics` now
+branches on `EmlidNTRIPClient.connection_alive`:
+
+| Sub-case | Trigger | Banner reads |
+|---|---|---|
+| Stream died | `connection_alive=False` | `NTRIP stream died (worker exited; state=connected); receiver coasting on type 5` |
+| RTCM stale | `connection_alive=True` AND `rtcm_age > max_rtcm_age_s` | `RTCM stale (age=7.2s > max=5.0s, state=connected); receiver coasting on type 5` |
+
+The same split applies to the `RTK FLOAT SUSPECT` banner in
+`GPSManager.wait_for_fix`, which fires at the initial-fix gate when
+the receiver claims Float without active corrections.
+
+Yesterday's run would have read `NTRIP stream died (worker exited)`
+instead of `rtcm_age=0.8s ... stale`.
+
+### Hardware validation pending
+
+Local syntax checks + config parsing verified; cause-attribution
+split unit-tested via mock NTRIP/GPS objects. End-to-end behavior
+(60 s dwell ticks, robot stationary during dwell, 0.25 m arrival,
+ECONNRESET attribution on real hardware) requires field hardware.
+
+---
+
 ## 2026-05-09: v0.7.0 — RTK Observability (retry, gps.log sidecar, cause-attributed banners)
 
 ### Scope
