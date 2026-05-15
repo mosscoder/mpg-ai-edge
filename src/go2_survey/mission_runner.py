@@ -172,7 +172,14 @@ async def run_mission(runner: MissionRunner) -> bool:
                 f"hAcc: {initial_pos.accuracy_horizontal:.3f}m"
             )
 
-        log_banner("PHASE 2: ROBOT", char="-", logger=logger)
+        log_banner(
+            f"PHASE 2: GPS STABILIZATION ({settings.navigation.stabilization_period_s}s)",
+            char="-",
+            logger=logger,
+        )
+        gps.stabilization_dwell(settings.navigation.stabilization_period_s)
+
+        log_banner("PHASE 3: ROBOT", char="-", logger=logger)
         if not await robot.connect():
             logger.error("Failed to connect to robot")
             return False
@@ -188,7 +195,7 @@ async def run_mission(runner: MissionRunner) -> bool:
             await robot.enable_video()
 
         log_banner(
-            f"PHASE 3: NAVIGATE {len(waypoints)} WAYPOINT(S)",
+            f"PHASE 4: NAVIGATE {len(waypoints)} WAYPOINT(S)",
             char="-",
             logger=logger,
         )
@@ -293,6 +300,12 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
             ):
                 logger.error("GPS fix timeout")
                 return False
+            log_banner(
+                f"PHASE 2: GPS STABILIZATION ({settings.navigation.stabilization_period_s}s)",
+                char="-",
+                logger=logger,
+            )
+            gps.stabilization_dwell(settings.navigation.stabilization_period_s)
 
         robot_ip = settings.robot.ip
         if (
@@ -317,7 +330,12 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
             robot_ip=robot_ip,
             robot_serial=settings.robot.serial,
         )
-        log_banner("PHASE 2: ROBOT", char="-", logger=logger)
+        # Phase numbering: if GPS was used we inserted a stabilization phase,
+        # so ROBOT is PHASE 3 and CAPTURE is PHASE 4. Otherwise (no GPS) keep
+        # the legacy PHASE 2 / PHASE 3 numbering.
+        robot_phase = "PHASE 3" if use_gps else "PHASE 2"
+        capture_phase = "PHASE 4" if use_gps else "PHASE 3"
+        log_banner(f"{robot_phase}: ROBOT", char="-", logger=logger)
         if not await robot.connect():
             logger.error("Failed to connect to robot")
             return False
@@ -326,7 +344,7 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
 
         capture_strategy = build_strategy(settings.capture)
         log_banner(
-            f"PHASE 3: STATIC CAPTURE ({settings.capture.strategy})",
+            f"{capture_phase}: STATIC CAPTURE ({settings.capture.strategy})",
             char="-",
             logger=logger,
         )

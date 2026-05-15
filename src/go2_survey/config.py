@@ -75,6 +75,11 @@ class NavigationSettings:
     # ~30-60s after corrections stop, but those readings are increasingly
     # stale. Below this threshold, RTK readings are trusted.
     max_rtcm_age_s: float = 5.0
+    # Soak time after the initial fix and before the robot starts
+    # moving. Lets the F9P's carrier-phase ambiguity resolution
+    # complete (Float -> Fixed typically takes 30-60s) and captures a
+    # clean quality baseline in gps.log. Set to 0 to disable the dwell.
+    stabilization_period_s: int = 60
     # Refresh the IMU→true-north offset on each waypoint arrival using
     # GPS+IMU samples already collected during the walk leg. Disable to
     # preserve the legacy single-shot calibration set on the first leg.
