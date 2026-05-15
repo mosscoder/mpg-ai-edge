@@ -1,0 +1,66 @@
+2026-05-15 13:22:01,221 [INFO] go2_survey.cli: go2-survey v0.8.3 | git a43e144 | run dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/01_tennis_court/logs/01_tennis_court_2026-05-15_13-22-01
+2026-05-15 13:22:01,222 [INFO] go2_survey.cli: Logging to: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/01_tennis_court/logs/01_tennis_court_2026-05-15_13-22-01/main.log (+ imu.log, gps.log)
+2026-05-15 13:22:01,222 [INFO] go2_survey.cli: Mission dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/01_tennis_court
+2026-05-15 13:22:01,225 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-15 13:22:01,225 [INFO] go2_survey.mission_runner: ================= MISSION: 01_tennis_court =================
+2026-05-15 13:22:01,225 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-15 13:22:01,226 [INFO] go2_survey.mission_runner: Tennis court two-waypoint circuit (tuned settings: tol=0.5m, vmax=0.5m/s)
+2026-05-15 13:22:01,226 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:22:01,226 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-05-15 13:22:01,226 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:22:01,229 [INFO] go2_survey.waypoints: Loaded 2 waypoints from /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/01_tennis_court/waypoints.geojson
+2026-05-15 13:22:01,229 [INFO] go2_survey.mission_runner: Loaded 2 waypoint(s):
+2026-05-15 13:22:01,229 [INFO] go2_survey.mission_runner:   1. tennis_court_wp1: (46.67389244, -114.01613655)
+2026-05-15 13:22:01,229 [INFO] go2_survey.mission_runner:   2. tennis_court_wp2: (46.67381342, -114.01619783)
+2026-05-15 13:22:01,229 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101 mountpoints=['MP22385', 'MP22385a'] | Robot: LocalSTA
+2026-05-15 13:22:01,230 [INFO] go2_survey.mission_runner: Nav: tol=0.25m vmax=0.5m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-05-15 13:22:01,230 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:22:01,230 [INFO] go2_survey.mission_runner:  AUTO-DISCOVERING ROBOT IP (up to 4 attempts, 10s between) -
+2026-05-15 13:22:01,230 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:22:01,230 [INFO] go2_survey.mission_runner: robot.ip not set in mission.toml and ROBOT_IP env var not set; scanning local network for a Go2 (nmap ports 8081/9991)...
+2026-05-15 13:22:01,231 [INFO] go2_survey.mission_runner: Discovery attempt 1/4: scanning for Go2 on ports 8081/9991...
+2026-05-15 13:22:01,242 [INFO] go2_survey.discovery: Scanning 10.163.85.241/24 for Go2 ports 8081/9991...
+2026-05-15 13:22:03,807 [INFO] go2_survey.mission_runner: Discovery attempt 1: found Go2 at 10.163.85.5
+2026-05-15 13:22:03,808 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:22:03,809 [INFO] go2_survey.mission_runner: ------------ ROBOT IP DISCOVERED | 10.163.85.5 -------------
+2026-05-15 13:22:03,809 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:22:03,809 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:22:03,809 [INFO] go2_survey.mission_runner: ----------------------- PHASE 1: GPS -----------------------
+2026-05-15 13:22:03,809 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-15 13:22:03,813 [INFO] go2_survey.gps: Connected to GPS on /dev/ttyACM0 @ 38400 baud
+2026-05-15 13:22:03,814 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2, attempt 1/3)
+2026-05-15 13:22:03,814 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-15 13:22:04,352 [INFO] go2_survey.ntrip: Connected to NTRIP mountpoint: MP22385
+2026-05-15 13:22:04,353 [INFO] go2_survey.gps: NTRIP: connected via primary mountpoint MP22385 (took 1s, 1 attempt(s))
+2026-05-15 13:22:04,355 [INFO] go2_survey.ntrip: Started RTCM correction stream
+2026-05-15 13:22:04,355 [INFO] go2_survey.gps: Waiting for GPS fix (min type 4, NTRIP state=connected)...
+2026-05-15 13:22:06,480 [ERROR] go2_survey.ntrip: Error in correction worker: [Errno 104] Connection reset by peer
+2026-05-15 13:22:06,481 [INFO] go2_survey.ntrip: RTCM correction worker stopped
+2026-05-15 13:22:19,549 [INFO] go2_survey.gps: Waiting... (15s/300s | type 3 hAcc 0.501m | 31 SVs | rtcm_age=13.1s)
+2026-05-15 13:22:34,882 [INFO] go2_survey.gps: Waiting... (31s/300s | type 3 hAcc 0.423m | 32 SVs | rtcm_age=28.5s)
+2026-05-15 13:22:50,105 [INFO] go2_survey.gps: Waiting... (46s/300s | type 3 hAcc 0.388m | 31 SVs | rtcm_age=43.7s)
+2026-05-15 13:23:05,286 [INFO] go2_survey.gps: Waiting... (61s/300s | type 3 hAcc 0.370m | 32 SVs | rtcm_age=58.9s)
+2026-05-15 13:23:20,492 [INFO] go2_survey.gps: Waiting... (76s/300s | type 3 hAcc 0.360m | 32 SVs | rtcm_age=74.1s)
+2026-05-15 13:23:36,346 [INFO] go2_survey.gps: Waiting... (92s/300s | type 3 hAcc 0.351m | 31 SVs | rtcm_age=89.9s)
+2026-05-15 13:23:51,479 [INFO] go2_survey.gps: Waiting... (107s/300s | type 3 hAcc 0.345m | 32 SVs | rtcm_age=105.1s)
+2026-05-15 13:24:06,480 [INFO] go2_survey.gps: Waiting... (122s/300s | type 3 hAcc 0.342m | 32 SVs | rtcm_age=120.1s)
+2026-05-15 13:24:21,682 [INFO] go2_survey.gps: Waiting... (137s/300s | type 3 hAcc 0.343m | 32 SVs | rtcm_age=135.3s)
+2026-05-15 13:24:36,881 [INFO] go2_survey.gps: Waiting... (153s/300s | type 3 hAcc 0.344m | 32 SVs | rtcm_age=150.5s)
+2026-05-15 13:24:52,099 [INFO] go2_survey.gps: Waiting... (168s/300s | type 3 hAcc 0.345m | 32 SVs | rtcm_age=165.7s)
+2026-05-15 13:25:07,288 [INFO] go2_survey.gps: Waiting... (183s/300s | type 3 hAcc 0.347m | 31 SVs | rtcm_age=180.9s)
+2026-05-15 13:25:22,479 [INFO] go2_survey.gps: Waiting... (198s/300s | type 3 hAcc 0.348m | 31 SVs | rtcm_age=196.1s)
+2026-05-15 13:25:38,098 [INFO] go2_survey.gps: Waiting... (214s/300s | type 3 hAcc 0.349m | 31 SVs | rtcm_age=211.7s)
+2026-05-15 13:25:53,275 [INFO] go2_survey.gps: Waiting... (229s/300s | type 3 hAcc 0.352m | 31 SVs | rtcm_age=226.9s)
+2026-05-15 13:26:08,678 [INFO] go2_survey.gps: Waiting... (244s/300s | type 3 hAcc 0.351m | 31 SVs | rtcm_age=242.3s)
+2026-05-15 13:26:23,680 [INFO] go2_survey.gps: Waiting... (259s/300s | type 3 hAcc 0.351m | 31 SVs | rtcm_age=257.3s)
+2026-05-15 13:26:38,680 [INFO] go2_survey.gps: Waiting... (274s/300s | type 3 hAcc 0.351m | 31 SVs | rtcm_age=272.3s)
+2026-05-15 13:26:54,088 [INFO] go2_survey.gps: Waiting... (290s/300s | type 3 hAcc 0.352m | 31 SVs | rtcm_age=287.7s)
+2026-05-15 13:27:04,678 [ERROR] go2_survey.gps: GPS fix timeout after 300s; never reached min type 4
+2026-05-15 13:27:04,679 [ERROR] go2_survey.gps: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+2026-05-15 13:27:04,680 [ERROR] go2_survey.gps:  GPS FIX TIMEOUT | 300s | never reached type 4 | Last: type 3 hAcc 0.353m sats 32 | NTRIP state=connected | Likely cause: see NTRIP attempts above 
+2026-05-15 13:27:04,680 [ERROR] go2_survey.gps: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+2026-05-15 13:27:04,680 [ERROR] go2_survey.mission_runner: GPS fix timeout
+2026-05-15 13:27:04,680 [INFO] go2_survey.robot: Stopping robot
+2026-05-15 13:27:04,681 [INFO] go2_survey.ntrip: Disconnected from NTRIP. Forwarded 4 messages.
+2026-05-15 13:27:04,684 [INFO] go2_survey.gps: GPS connection closed
+2026-05-15 13:27:04,684 [INFO] go2_survey.mission_runner: Connections closed
