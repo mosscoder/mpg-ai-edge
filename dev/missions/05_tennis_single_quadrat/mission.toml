@@ -30,5 +30,5 @@ settle_time        = 2.0
 gps_avg_sec        = 3.0
 bearings           = [0.0, 90.0, 180.0, 270.0]   # N, E, S, W (true north)
 output_subdir      = "captures"
-turn_tolerance_deg = 5.0
+turn_tolerance_deg = 2.0
 turn_timeout_sec   = 20.0

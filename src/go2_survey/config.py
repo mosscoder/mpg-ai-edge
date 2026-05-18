@@ -106,7 +106,16 @@ class CaptureSettings:
     output_subdir: str = "captures"     # relative to mission dir
     frame_max_age: float = 0.5          # max staleness for a captured frame (s)
     frame_wait_timeout: float = 5.0     # max wait for a fresh frame (s)
-    turn_tolerance_deg: float = 5.0     # how close to target bearing before capture
+    # P-controller bearing alignment for rotating_quadrat. The controller
+    # decelerates as it approaches the target so the stop command lands
+    # before overshoot, enabling sub-2° alignment without hunting.
+    # Tuning rule of thumb: turn_kp = self.rotation_rate / angle_at_full_rate.
+    # Default 0.04 = full rotation_rate commanded at error ≥ 20°.
+    # turn_min_rate_rad_s defeats Go2 motor stiction near zero error
+    # (a pure P controller stalls sub-threshold and never converges).
+    turn_tolerance_deg: float = 2.0     # was 5.0; the P-controller makes 2° reachable
+    turn_kp: float = 0.04               # P-controller gain (rad/s per degree of error)
+    turn_min_rate_rad_s: float = 0.15   # dead-band floor (rad/s); below = no motion
     turn_timeout_sec: float = 15.0      # per-bearing rotation timeout
 
 

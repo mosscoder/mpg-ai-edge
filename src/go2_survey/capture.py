@@ -299,7 +299,13 @@ async def _turn_to_bearing(ctx: CaptureContext, target_bearing_deg: float) -> bo
         f"TURN TO {target_bearing_deg:.0f}° (true)", char="-", logger=logger
     )
     try:
-        return await nav.turn_to_bearing(target_bearing_deg)
+        return await nav.turn_to_bearing(
+            target_bearing_deg,
+            tolerance_deg=ctx.settings.turn_tolerance_deg,
+            timeout=ctx.settings.turn_timeout_sec,
+            kp=ctx.settings.turn_kp,
+            min_rate_rad_s=ctx.settings.turn_min_rate_rad_s,
+        )
     except AttributeError:
         logger.error(
             "Navigator has no turn_to_bearing method; capture rotation "

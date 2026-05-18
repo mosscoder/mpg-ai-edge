@@ -658,10 +658,20 @@ class WaypointNavigator:
     async def turn_to_bearing(
         self,
         target_bearing_deg: float,
-        tolerance_deg: float = 5.0,
+        tolerance_deg: float = 2.0,
         timeout: float = 15.0,
+        kp: float = 0.04,
+        min_rate_rad_s: float = 0.15,
     ) -> bool:
         """Rotate in place to face `target_bearing_deg` (true-north).
+
+        P-controller: rate = clamp(|kp * error|, min_rate_rad_s,
+        self.rotation_rate). Decelerates as it approaches target so the
+        stop command lands before overshoot — enables sub-2° alignment
+        without the hunting that pure bang-bang produces at the same
+        tolerance. `min_rate_rad_s` floors the command above the motor
+        stiction threshold; a pure P-controller would stall sub-threshold
+        near zero error and never converge.
 
         Uses `get_calibrated_heading()` as the heading source —
         requires the IMU-to-GPS offset to have been established by a
@@ -701,13 +711,6 @@ class WaypointNavigator:
 
             error = normalize_angle(target - heading)
 
-            now = time.time()
-            if now - last_log >= 1.0:
-                logger.info(
-                    f"[turn→{target:.0f}°] hdg={heading:.1f}° err={error:.1f}°"
-                )
-                last_log = now
-
             if abs(error) <= tolerance_deg:
                 await self.robot.stop()
                 logger.info(
@@ -718,11 +721,25 @@ class WaypointNavigator:
                 await asyncio.sleep(0.5)
                 return True
 
+            # P-controller with dead-band floor. The min-rate clamp is
+            # critical: below the Go2's motor stiction threshold the
+            # body doesn't actually rotate, so a pure P controller
+            # would stall on the last few degrees and never converge.
+            rate_mag = min(self.rotation_rate, max(abs(kp * error), min_rate_rad_s))
             # Same sign convention as navigate_to(): positive error →
             # need to rotate CW in the GPS frame, which is CCW-negative
             # on the Go2 IMU. direction = -1 for CCW (positive z-rate).
             direction = -1.0 if error > 0 else 1.0
-            await self.robot.send_velocity(z=direction * self.rotation_rate)
+
+            now = time.time()
+            if now - last_log >= 1.0:
+                logger.info(
+                    f"[turn→{target:.0f}°] hdg={heading:.1f}° err={error:.1f}° "
+                    f"rate={rate_mag:.2f}rad/s"
+                )
+                last_log = now
+
+            await self.robot.send_velocity(z=direction * rate_mag)
             await asyncio.sleep(0.1)
 
         await self.robot.stop()
