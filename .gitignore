@@ -15,10 +15,13 @@ venv/
 *.pth
 *.whl
 
-# Legacy artifacts from the pre-refactor repo
-runs/
+# Legacy artifacts from the pre-refactor repo (root-only — the
+# per-mission `dev/missions/<m>/runs/` dirs are intentionally tracked).
+/runs/
 results/
 mapping.txt
 
-# NOTE: mission logs under dev/missions/*/logs/ and dev/archive/logs/ are
-# intentionally tracked — they are historical run data, not build output.
+# NOTE: per-mission run dirs under dev/missions/*/runs/ and dev/archive/
+# are intentionally tracked — they are historical run data + captures,
+# not build output. (Prior to v0.10.0 these lived under logs/ and
+# captures/; see dev/scripts/migrate_to_runs_layout.py for the rename.)

@@ -1,0 +1,18 @@
+2026-04-16 15:49:49,790 [INFO] go2_survey.cli: Logging to: /Users/kdoherty/mpg-ai-edge/dev/missions/00_parking_lot/logs/00_parking_lot_2026-04-16_15-49-49.log
+2026-04-16 15:49:49,790 [INFO] go2_survey.cli: Mission dir: /Users/kdoherty/mpg-ai-edge/dev/missions/00_parking_lot
+2026-04-16 15:49:49,792 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-16 15:49:49,792 [INFO] go2_survey.mission_runner: ================= MISSION: 00_parking_lot ==================
+2026-04-16 15:49:49,792 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-16 15:49:49,792 [INFO] go2_survey.mission_runner: Parking lot two-waypoint circuit (first successful autonomous run, 2026-04-01)
+2026-04-16 15:49:49,792 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-16 15:49:49,792 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-04-16 15:49:49,792 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-16 15:49:49,792 [INFO] go2_survey.waypoints: Loaded 2 waypoints from /Users/kdoherty/mpg-ai-edge/dev/missions/00_parking_lot/waypoints.geojson
+2026-04-16 15:49:49,792 [INFO] go2_survey.mission_runner: Loaded 2 waypoint(s):
+2026-04-16 15:49:49,793 [INFO] go2_survey.mission_runner:   1. waypoint_1: (46.86164631, -113.99780057)
+2026-04-16 15:49:49,793 [INFO] go2_survey.mission_runner:   2. waypoint_2: (46.86154957, -113.99796955)
+2026-04-16 15:49:49,793 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101/MP15774 | Robot: LocalSTA
+2026-04-16 15:49:49,793 [INFO] go2_survey.mission_runner: Nav: tol=0.5m vmax=0.5m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-04-16 15:49:49,793 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-16 15:49:49,793 [INFO] go2_survey.mission_runner: =========== DRY RUN — not connecting to hardware ===========
+2026-04-16 15:49:49,793 [INFO] go2_survey.mission_runner: ============================================================

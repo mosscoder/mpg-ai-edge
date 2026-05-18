@@ -77,9 +77,11 @@ def resolve_mission_dir(arg: str) -> Path | None:
 
 
 def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
-    """Configure logging to a per-run directory under <mission_dir>/logs/.
+    """Configure logging to a per-run directory under <mission_dir>/runs/.
 
-    Layout: ``<mission_dir>/logs/<name>_<TIMESTAMP>/{main.log, imu.log, gps.log}``.
+    Layout: ``<mission_dir>/runs/<name>_<TIMESTAMP>/{main.log, imu.log, gps.log}``.
+    Captures land under the same run directory (``captures/<wp>/...``)
+    so every artifact from one mission run lives in one place.
 
     - ``main.log`` and the console carry the mission narrative
       (everything EXCEPT the 20 Hz IMU flood and the dense per-second
@@ -94,7 +96,7 @@ def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
     Returns the run directory.
     """
     timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-    run_dir = mission_dir / "logs" / f"{mission_dir.name}_{timestamp}"
+    run_dir = mission_dir / "runs" / f"{mission_dir.name}_{timestamp}"
     run_dir.mkdir(parents=True, exist_ok=True)
     main_log = run_dir / "main.log"
     imu_log = run_dir / "imu.log"
@@ -181,6 +183,7 @@ def cmd_run(args: argparse.Namespace) -> int:
 
     runner = MissionRunner(
         mission_dir=mission_dir,
+        run_dir=run_dir,
         dry_run=args.dry_run,
     )
 

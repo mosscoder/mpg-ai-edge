@@ -1,0 +1,17 @@
+2026-04-23 09:53:51,989 [INFO] go2_survey.cli: Logging to: /Users/kdoherty/mpg-ai-edge/dev/missions/04_tennis_single_forward/logs/04_tennis_single_forward_2026-04-23_09-53-51.log
+2026-04-23 09:53:51,989 [INFO] go2_survey.cli: Mission dir: /Users/kdoherty/mpg-ai-edge/dev/missions/04_tennis_single_forward
+2026-04-23 09:53:51,989 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner: ============ MISSION: 04_tennis_single_forward =============
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner: Walk to tennis court waypoint 1, stop, capture one forward-facing geotagged frame, exit. First integration of nav + capture.
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-23 09:53:51,990 [INFO] go2_survey.waypoints: Loaded 1 waypoints from /Users/kdoherty/mpg-ai-edge/dev/missions/04_tennis_single_forward/waypoints.geojson
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner: Loaded 1 waypoint(s):
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner:   1. tennis_court_wp1: (46.67389244, -114.01613655)
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101/MP15774 | Robot: LocalSTA
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner: Nav: tol=0.5m vmax=0.5m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner: =========== DRY RUN — not connecting to hardware ===========
+2026-04-23 09:53:51,990 [INFO] go2_survey.mission_runner: ============================================================

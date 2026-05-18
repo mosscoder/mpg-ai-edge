@@ -91,6 +91,7 @@ class MissionRunner:
     """
 
     mission_dir: Path
+    run_dir: Path
     dry_run: bool = False
     on_waypoint_reached: WaypointHook | None = None
     on_gps_update: PositionHook | None = None
@@ -276,6 +277,7 @@ async def run_mission(runner: MissionRunner) -> bool:
                 ctx = CaptureContext(
                     mission_name=settings.name or mission_dir.name,
                     mission_dir=mission_dir,
+                    run_dir=runner.run_dir,
                     robot=robot,
                     gps=gps,
                     navigator=navigator,
@@ -434,6 +436,7 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
         ctx = CaptureContext(
             mission_name=settings.name or mission_dir.name,
             mission_dir=mission_dir,
+            run_dir=runner.run_dir,
             robot=robot,
             gps=gps,
             navigator=None,  # no rotation support for static

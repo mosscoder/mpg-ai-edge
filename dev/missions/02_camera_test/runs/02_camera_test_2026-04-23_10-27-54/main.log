@@ -1,0 +1,14 @@
+2026-04-23 10:27:54,341 [INFO] go2_survey.cli: Logging to: /Users/kdoherty/mpg-ai-edge/dev/missions/02_camera_test/logs/02_camera_test_2026-04-23_10-27-54.log
+2026-04-23 10:27:54,342 [INFO] go2_survey.cli: Mission dir: /Users/kdoherty/mpg-ai-edge/dev/missions/02_camera_test
+2026-04-23 10:27:54,342 [DEBUG] asyncio: Using selector: KqueueSelector
+2026-04-23 10:27:54,342 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-23 10:27:54,342 [INFO] go2_survey.mission_runner: ================= MISSION: 02_camera_test ==================
+2026-04-23 10:27:54,342 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-23 10:27:54,342 [INFO] go2_survey.mission_runner: Static WebRTC video smoke test. No GPS, no navigation. Lab-bench confirmation that the camera pipeline works on the Go2.
+2026-04-23 10:27:54,342 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-23 10:27:54,342 [INFO] go2_survey.mission_runner: ------------------- MODE: static_camera --------------------
+2026-04-23 10:27:54,342 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-23 10:27:54,342 [INFO] go2_survey.mission_runner: Static mode: static_camera | capture strategy: frame_only
+2026-04-23 10:27:54,342 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-23 10:27:54,342 [INFO] go2_survey.mission_runner: =========== DRY RUN — not connecting to hardware ===========
+2026-04-23 10:27:54,342 [INFO] go2_survey.mission_runner: ============================================================

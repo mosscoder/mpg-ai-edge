@@ -1,0 +1,18 @@
+2026-04-16 15:49:50,342 [INFO] go2_survey.cli: Logging to: /Users/kdoherty/mpg-ai-edge/dev/missions/01_tennis_court/logs/01_tennis_court_2026-04-16_15-49-50.log
+2026-04-16 15:49:50,342 [INFO] go2_survey.cli: Mission dir: /Users/kdoherty/mpg-ai-edge/dev/missions/01_tennis_court
+2026-04-16 15:49:50,344 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-16 15:49:50,344 [INFO] go2_survey.mission_runner: ================= MISSION: 01_tennis_court =================
+2026-04-16 15:49:50,344 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-16 15:49:50,344 [INFO] go2_survey.mission_runner: Tennis court two-waypoint circuit (tuned settings: tol=0.5m, vmax=0.5m/s)
+2026-04-16 15:49:50,344 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-16 15:49:50,344 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-04-16 15:49:50,344 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-16 15:49:50,344 [INFO] go2_survey.waypoints: Loaded 2 waypoints from /Users/kdoherty/mpg-ai-edge/dev/missions/01_tennis_court/waypoints.geojson
+2026-04-16 15:49:50,344 [INFO] go2_survey.mission_runner: Loaded 2 waypoint(s):
+2026-04-16 15:49:50,344 [INFO] go2_survey.mission_runner:   1. tennis_court_wp1: (46.67389244, -114.01613655)
+2026-04-16 15:49:50,344 [INFO] go2_survey.mission_runner:   2. tennis_court_wp2: (46.67381342, -114.01619783)
+2026-04-16 15:49:50,344 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101/MP15774 | Robot: LocalSTA
+2026-04-16 15:49:50,345 [INFO] go2_survey.mission_runner: Nav: tol=0.5m vmax=0.5m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-04-16 15:49:50,345 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-16 15:49:50,345 [INFO] go2_survey.mission_runner: =========== DRY RUN — not connecting to hardware ===========
+2026-04-16 15:49:50,345 [INFO] go2_survey.mission_runner: ============================================================

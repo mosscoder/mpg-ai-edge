@@ -42,6 +42,7 @@ class CaptureContext:
 
     mission_name: str
     mission_dir: Path
+    run_dir: Path  # per-run directory under <mission>/runs/; captures land in run_dir/<output_subdir>/<wp>/
     robot: Go2Robot
     gps: GPSManager | None  # None for static_camera mode
     navigator: "WaypointNavigator | None"  # None for static modes
@@ -322,16 +323,24 @@ async def _turn_to_bearing(ctx: CaptureContext, target_bearing_deg: float) -> bo
 def _capture_output_path(
     ctx: CaptureContext, wp_name: str, bearing: float | None
 ) -> Path:
-    """Build `<mission>/captures/<wp>_<bearing>_<ts>.jpg` path.
+    """Build `<run_dir>/<output_subdir>/<wp>/<bearing>_<ts>.jpg` path.
 
+    Captures live under the per-run directory so a single mission run's
+    logs and captures are co-located. Per-waypoint subdirs keep the
+    layout legible when waypoint counts grow.
+
+    Timestamp stays in the filename to disambiguate within-run retries
+    (e.g. if a rotating_quadrat bearing is captured twice in one run).
     Omits the bearing component when it's None (e.g. static_camera
     mode with no heading data).
     """
     ts = time.strftime("%Y-%m-%dT%H-%M-%S")
     bearing_tag = f"b{int(bearing) % 360:03d}" if bearing is not None else "nobrg"
     safe_wp = wp_name.replace("/", "_").replace(" ", "_")
-    fname = f"{safe_wp}_{bearing_tag}_{ts}.jpg"
-    return ctx.mission_dir / ctx.settings.output_subdir / fname
+    fname = f"{bearing_tag}_{ts}.jpg"
+    wp_dir = ctx.run_dir / ctx.settings.output_subdir / safe_wp
+    wp_dir.mkdir(parents=True, exist_ok=True)
+    return wp_dir / fname
 
 
 def _mission_context(

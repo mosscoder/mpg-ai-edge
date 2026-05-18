@@ -1,0 +1,13 @@
+2026-04-23 09:53:51,367 [INFO] go2_survey.cli: Logging to: /Users/kdoherty/mpg-ai-edge/dev/missions/03_static_geotag/logs/03_static_geotag_2026-04-23_09-53-51.log
+2026-04-23 09:53:51,367 [INFO] go2_survey.cli: Mission dir: /Users/kdoherty/mpg-ai-edge/dev/missions/03_static_geotag
+2026-04-23 09:53:51,368 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-23 09:53:51,368 [INFO] go2_survey.mission_runner: ================ MISSION: 03_static_geotag =================
+2026-04-23 09:53:51,368 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-23 09:53:51,368 [INFO] go2_survey.mission_runner: Static RTK + capture + sidecar pipeline test. Robot stands in place; one forward capture; full EXIF + sidecar. Rotation debuts in 05.
+2026-04-23 09:53:51,368 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-23 09:53:51,368 [INFO] go2_survey.mission_runner: ------------------- MODE: static_geotag --------------------
+2026-04-23 09:53:51,368 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-04-23 09:53:51,368 [INFO] go2_survey.mission_runner: Static mode: static_geotag | capture strategy: waypoint_forward
+2026-04-23 09:53:51,368 [INFO] go2_survey.mission_runner: ============================================================
+2026-04-23 09:53:51,368 [INFO] go2_survey.mission_runner: =========== DRY RUN — not connecting to hardware ===========
+2026-04-23 09:53:51,369 [INFO] go2_survey.mission_runner: ============================================================

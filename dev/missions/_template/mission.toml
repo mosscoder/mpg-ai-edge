@@ -46,6 +46,9 @@ stabilization_period_s     = 60   # seconds — robot stationary after initial f
 stabilization_early_exit_s = 3.0  # seconds — if RTK Fixed + active corrections held this long, exit dwell early (0 disables)
 
 # [capture] block is optional — uncomment + set strategy to enable.
+# Captures land at:
+#   <mission>/runs/<mission>_<TS>/<output_subdir>/<waypoint>/<bearing>_<TS>.jpg
+# (co-located with main.log / imu.log / gps.log for that run).
 # [capture]
 # strategy             = "rotating_quadrat"   # "none" | "frame_only" | "waypoint_forward" | "rotating_quadrat"
 # bearings             = [0.0, 90.0, 180.0, 270.0]  # rotating_quadrat only
@@ -55,3 +58,4 @@ stabilization_early_exit_s = 3.0  # seconds — if RTK Fixed + active correction
 # turn_kp              = 0.04     # P-controller gain (rad/s per degree of error)
 # turn_min_rate_rad_s  = 0.15     # dead-band floor (below this, robot doesn't rotate)
 # turn_timeout_sec     = 15.0     # per-bearing rotation timeout
+# output_subdir        = "captures"  # subdir under run_dir where captures land
