@@ -1,5 +1,57 @@
 # Navigation Changelog
 
+## 2026-05-18: v0.9.2 — Stabilization Early Exit
+
+### Scope
+
+The 2026-05-15 `06_tennis_quadrat_pair` run reached RTK Fixed within
+seconds of NTRIP connect — and then burned the full 60-second
+stabilization dwell standing still anyway, because the dwell duration
+was a fixed value, not a quality threshold. The 60s is sized for the
+worst-case fresh-boot convergence; with a warm receiver and good sky
+it's pure dead time.
+
+### Change (`1d935ca`)
+
+`stabilization_dwell` gains an early-exit predicate. If the receiver
+holds **RTK Fixed (type 6)** AND `has_active_corrections()` is True
+for **N consecutive seconds** (default 3), the dwell breaks out
+immediately and the mission proceeds.
+
+The active-corrections gate is the same anti-coast guard used by
+`wait_for_fix` since v0.7.0 — a stale Fixed (receiver hasn't yet
+realized RTCM dropped) won't trigger a false-positive early exit.
+A trusted-Fixed streak broken mid-accumulation logs one INFO line
+and resets the counter, so post-mortem can see the wobble.
+
+New TOML knob:
+
+```toml
+[navigation]
+stabilization_period_s     = 60    # max duration (unchanged)
+stabilization_early_exit_s = 3.0   # NEW — 0 disables early exit
+```
+
+Banner reads either `DWELL COMPLETE` (full duration) or
+`DWELL EARLY EXIT | ... | early@Xs/Ys (held trusted Fixed Ns)` so
+the wallclock saved is visible in the main.log.
+
+Unit-tested with three cases:
+- Trusted Fixed held → exits at ~3s (was 60s)
+- `early_exit_s=0` → full duration runs
+- Alternating corrections-alive state → streak broken, full duration
+
+### Hardware validation pending
+
+Field run on `06_tennis_quadrat_pair` should now exit the dwell in
+~3–10s when corrections are fresh and receiver is warm, vs. the
+full 60s previously. Worst-case (slow convergence) still respects
+the 60s cap and runs to completion exactly as before.
+
+Bumps `0.9.1 → 0.9.2`.
+
+---
+
 ## 2026-05-18: v0.9.1 — Tighter Bearing Alignment + Dual Heading Metadata
 
 ### Scope
