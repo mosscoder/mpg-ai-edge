@@ -25,6 +25,7 @@ from PIL import Image
 from PIL.ExifTags import Base as ExifBase
 from PIL.ExifTags import GPS as ExifGPS
 
+from go2_survey.geometry import normalize_angle
 from go2_survey.gps import RTKPosition
 from go2_survey.vision.frames import FrameResult
 
@@ -50,9 +51,17 @@ def _deg_to_dms_floats(deg: float) -> tuple:
 def _build_gps_ifd(
     position: RTKPosition,
     bearing: float | None,
+    achieved_heading: float | None = None,
 ) -> dict[int, Any]:
     """Build the EXIF GPSInfo IFD dict. Keys are integer tags from
-    PIL.ExifTags.GPS."""
+    PIL.ExifTags.GPS.
+
+    GPSImgDirection holds the *actual* achieved heading at moment of
+    capture (what the photo shows), not the navigation intent.
+    `bearing` (target) goes into EXIF ImageDescription via the caller.
+    Falls back to `bearing` when achieved_heading isn't available
+    (e.g. nobrg captures with no rotation phase).
+    """
     gps_ifd: dict[int, Any] = {}
 
     gps_ifd[ExifGPS.GPSLatitudeRef] = "N" if position.latitude >= 0 else "S"
@@ -71,9 +80,10 @@ def _build_gps_ifd(
         gps_ifd[ExifGPS.GPSAltitudeRef] = 0 if position.altitude >= 0 else 1
         gps_ifd[ExifGPS.GPSAltitude] = float(abs(position.altitude))
 
-    if bearing is not None:
+    img_direction = achieved_heading if achieved_heading is not None else bearing
+    if img_direction is not None:
         gps_ifd[ExifGPS.GPSImgDirectionRef] = "T"  # true north
-        gps_ifd[ExifGPS.GPSImgDirection] = float(bearing % 360.0)
+        gps_ifd[ExifGPS.GPSImgDirection] = float(img_direction % 360.0)
 
     # Horizontal positioning error (meters) — EXIF 2.31+ GPSHPositioningError.
     gps_ifd[ExifGPS.GPSHPositioningError] = float(position.accuracy_horizontal)
@@ -91,15 +101,32 @@ def _build_gps_ifd(
     return gps_ifd
 
 
+def _heading_residual(
+    bearing: float | None, achieved_heading: float | None
+) -> float | None:
+    """Signed difference achieved − target, wrapped to (-180, 180]."""
+    if bearing is None or achieved_heading is None:
+        return None
+    return normalize_angle(achieved_heading - bearing)
+
+
 def _build_sidecar(
     frame: FrameResult,
     position: RTKPosition,
     bearing: float | None,
+    achieved_heading: float | None,
     heading_source: str,
     mission_context: dict[str, Any] | None,
     extra: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    """Everything EXIF can't represent cleanly lives in the sidecar JSON."""
+    """Everything EXIF can't represent cleanly lives in the sidecar JSON.
+
+    The `heading` block carries both target and achieved values plus
+    the pre-computed residual so downstream consumers (SfM, stitching,
+    geo-rectification) don't have to do their own angle-wrap math.
+    Legacy `degrees_true` key is retained alongside the explicit
+    `target_degrees_true` alias for back-compat with old readers.
+    """
     sidecar: dict[str, Any] = {
         "schema_version": 1,
         "captured_at_unix": position.timestamp,
@@ -113,7 +140,10 @@ def _build_sidecar(
         },
         "position": asdict(position),
         "heading": {
-            "degrees_true": bearing,
+            "degrees_true": bearing,  # legacy key = target (kept for back-compat)
+            "target_degrees_true": bearing,
+            "achieved_degrees_true": achieved_heading,
+            "residual_degrees": _heading_residual(bearing, achieved_heading),
             "source": heading_source,
         },
     }
@@ -129,12 +159,21 @@ def write_geotagged_jpeg(
     position: RTKPosition,
     bearing: float | None,
     out_path: Path,
+    achieved_heading: float | None = None,
     heading_source: str = "unknown",
     mission_context: dict[str, Any] | None = None,
     extra: dict[str, Any] | None = None,
     jpeg_quality: int = 92,
 ) -> Path:
     """Write the frame as `<out_path>.jpg` with EXIF GPSInfo + sidecar JSON.
+
+    `bearing` is the navigation target (e.g. 0.0 for b000 quadrat
+    capture, None for no-bearing). `achieved_heading` is the actual
+    camera direction at moment of capture; written to EXIF
+    GPSImgDirection so the photo's metadata reflects what the photo
+    *shows*, with the target carried in EXIF ImageDescription and
+    sidecar JSON. Falls back to `bearing` for GPSImgDirection when
+    `achieved_heading` is absent.
 
     Sidecar JSON is written to `<out_path>.json` (same basename,
     different extension). Returns the JPEG path.
@@ -160,7 +199,22 @@ def write_geotagged_jpeg(
         frame.timestamp, tz=timezone.utc
     ).strftime("%Y:%m:%d %H:%M:%S")
 
-    gps_ifd = _build_gps_ifd(position, bearing)
+    # ImageDescription carries the target + achieved + residual as a
+    # plain ASCII string. ASCII is the only thing every EXIF reader
+    # handles reliably without escaping fights; JSON-ish key=val;...
+    # parses cleanly with str.split.
+    if bearing is not None or achieved_heading is not None:
+        parts = []
+        if bearing is not None:
+            parts.append(f"target_bearing_deg={bearing:.2f}")
+        if achieved_heading is not None:
+            parts.append(f"achieved_heading_deg={achieved_heading:.2f}")
+        residual = _heading_residual(bearing, achieved_heading)
+        if residual is not None:
+            parts.append(f"residual_deg={residual:.2f}")
+        exif[ExifBase.ImageDescription] = ";".join(parts)
+
+    gps_ifd = _build_gps_ifd(position, bearing, achieved_heading=achieved_heading)
     exif.get_ifd(ExifBase.GPSInfo.value).update(gps_ifd)
 
     img.save(out_path, "JPEG", exif=exif, quality=jpeg_quality)
@@ -169,6 +223,7 @@ def write_geotagged_jpeg(
         frame=frame,
         position=position,
         bearing=bearing,
+        achieved_heading=achieved_heading,
         heading_source=heading_source,
         mission_context=mission_context,
         extra=extra,

@@ -138,7 +138,10 @@ class WaypointForwardStrategy(CaptureStrategy):
             logger.error(f"No GPS at capture point {wp_name}; skipping")
             return 0
 
-        bearing, heading_source = _current_bearing(ctx)
+        # waypoint_forward has no bearing TARGET — camera faces whatever
+        # direction the robot ended up in. The achieved heading from the
+        # IMU is what the photo shows; bearing stays None.
+        achieved_heading, heading_source = _current_bearing(ctx)
 
         frame_result = await capture_frame(
             ctx.robot,
@@ -149,14 +152,15 @@ class WaypointForwardStrategy(CaptureStrategy):
             logger.error(f"No fresh frame at {wp_name}; skipping")
             return 0
 
-        out_path = _capture_output_path(ctx, wp_name, bearing)
+        out_path = _capture_output_path(ctx, wp_name, None)
         write_geotagged_jpeg(
             frame=frame_result,
             position=position,
-            bearing=bearing,
+            bearing=None,
+            achieved_heading=achieved_heading,
             out_path=out_path,
             heading_source=heading_source,
-            mission_context=_mission_context(ctx, wp_name, self.name, bearing),
+            mission_context=_mission_context(ctx, wp_name, self.name, None),
         )
         log_banner(
             f"CAPTURE DONE @ {wp_name} | 1 frame", char="-", logger=logger
@@ -219,12 +223,13 @@ class RotatingQuadratStrategy(CaptureStrategy):
                 logger.error(f"No frame at {wp_name}/{bearing:.0f}°; skipping")
                 continue
 
-            _, heading_source = _current_bearing(ctx)
+            achieved_heading, heading_source = _current_bearing(ctx)
             out_path = _capture_output_path(ctx, wp_name, bearing)
             write_geotagged_jpeg(
                 frame=frame_result,
                 position=position,
                 bearing=bearing,
+                achieved_heading=achieved_heading,
                 out_path=out_path,
                 heading_source=heading_source,
                 mission_context=_mission_context(ctx, wp_name, self.name, bearing),
