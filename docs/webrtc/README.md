@@ -277,9 +277,187 @@ Pulled in by `unitree_webrtc_connect`:
 - Whether `pc.on("track")` fires again after toggling off + on, or
   whether the track is persistent across cycles.
 
+## Lidar data stream
+
+The Go2's 4D LiDAR L1 (360° × 90° FOV, 0.05 m minimum detection
+distance) is **not just a hardware feature behind obstacle avoidance**
+— `unitree_webrtc_connect` exposes a full set of lidar topics plus a
+built-in decoder. The driving discovery: `webrtc_datachannel.py`
+treats any data-channel message whose topic contains `"utlidar"` as
+a lidar frame and auto-runs it through the decoder before invoking
+subscribers, so once you subscribe + flip the right switch, frames
+arrive already in numpy/3D form.
+
+Everything in this section is **read from library source** at
+`site-packages/unitree_webrtc_connect/`; nothing here has been
+validated on the actual Go2 yet. Verify before relying.
+
+### Topics
+
+Direct lidar (raw / encoded voxel data):
+
+| Constant | Topic string | Notes |
+|---|---|---|
+| `ULIDAR` | `rt/utlidar/voxel_map` | Voxel map (uncompressed) |
+| `ULIDAR_ARRAY` | `rt/utlidar/voxel_map_compressed` | Compressed voxel map — preferred over uncompressed |
+| `ULIDAR_STATE` | `rt/utlidar/lidar_state` | Sensor health/status |
+| `ULIDAR_SWITCH` | `rt/utlidar/switch` | Enable/disable the sensor itself |
+| `ROBOTODOM` | `rt/utlidar/robot_pose` | Lidar-derived robot pose |
+
+uSLAM (lidar-based SLAM stack):
+
+| Constant | Topic string | Notes |
+|---|---|---|
+| `LIDAR_LOCALIZATION_CLOUD_POINT` | `rt/uslam/localization/cloud_world` | World-frame point cloud (localization) |
+| `LIDAR_LOCALIZATION_ODOM` | `rt/uslam/localization/odom` | Localization odometry |
+| `LIDAR_MAPPING_CLOUD_POINT` | `rt/uslam/frontend/cloud_world_ds` | World-frame downsampled mapping cloud |
+| `LIDAR_MAPPING_ODOM` | `rt/uslam/frontend/odom` | Mapping odometry |
+| `LIDAR_MAPPING_PCD_FILE` | `rt/uslam/cloud_map` | Persistent PCD-shaped map |
+| `LIDAR_MAPPING_CMD` | `rt/uslam/client_command` | Mapping control commands |
+| `LIDAR_MAPPING_SERVER_LOG` | `rt/uslam/server_log` | Mapping daemon log stream |
+| `LIDAR_NAVIGATION_GLOBAL_PATH` | `rt/uslam/navigation/global_path` | Planned path through the map |
+
+Two map-shaped (already 2D, "bitmap-friendly") topics:
+
+| Constant | Topic string | Notes |
+|---|---|---|
+| `GRID_MAP` | `rt/mapping/grid_map` | 2D occupancy grid |
+| `SLAM_PC_TO_IMAGE_LOCAL` | `rt/pctoimage_local` | Point cloud projected to image (local frame) |
+
+(Discovered by scanning `unitree_webrtc_connect.constants.RTC_TOPIC`
+for `lidar`/`scan`/`point`/`cloud`/`voxel`/`utlidar` substrings —
+nothing else matched.)
+
+### Built-in decoder
+
+`unitree_webrtc_connect.lidar.lidar_decoder_unified.UnifiedLidarDecoder`
+wraps two backends; default is `libvoxel`. Pick via
+`datachannel.set_decoder("libvoxel" | "native")`.
+
+**`libvoxel` (default — WASM, mesh-shaped output)**
+
+- Decoder file: `lidar/lidar_decoder_libvoxel.py`
+- Engine: `wasmtime` running `libvoxel.wasm` (shipped in the package)
+- `decode(compressed, metadata)` returns:
+  ```python
+  {
+      "point_count": int,
+      "face_count":  int,
+      "positions":   np.ndarray(uint8, faces*12 bytes),   # Three.js layout
+      "uvs":         np.ndarray(uint8, faces*8 bytes),
+      "indices":     np.ndarray(uint32, faces*6),
+  }
+  ```
+- Mesh-rendering shape, not a bare point cloud — built for the
+  Unitree web UI's 3D visualizer.
+
+**`native` (pure Python + lz4 — point-cloud-shaped output)**
+
+- Decoder file: `lidar/lidar_decoder_native.py`
+- Dependency: `lz4.block` (transitive)
+- `decode(compressed, metadata)` returns:
+  ```python
+  {"points": np.ndarray(float64, (N, 3))}   # world-frame (x, y, z) in meters
+  ```
+- Pipeline: `lz4.block.decompress` → unpack 16-byte-wide voxel
+  bitfield → mask nonzero bits → `bits * resolution + origin` →
+  numpy points.
+- **This is the obvious choice for a "lidar bitmap at capture
+  time"** use case — top-down rasterization of an (N, 3) numpy
+  array is one `np.histogram2d` call.
+
+Metadata fields the decoder consumes from the message payload:
+
+| Field | Used by | Notes |
+|---|---|---|
+| `origin` | both | `[x, y, z]` world-frame origin of the voxel grid |
+| `resolution` | native | Voxel size in meters (`bits_to_points` defaults to 0.05) |
+| `src_size` | native | Uncompressed lz4 payload size |
+
+### Auto-decode plumbing
+
+`webrtc_datachannel.WebRTCDataChannel.deal_array_buffer_for_normal`
+routes incoming binary messages:
+
+```python
+if "utlidar" in topic:
+    decoded_data = self.decoder.decode(binary_data, decoded_json['data'])
+    decoded_json['data']['data'] = decoded_data
+```
+
+Practical consequence: **subscriber callbacks for any `utlidar`
+topic receive `message['data']['data']` already decoded** — the
+decoder's return dict, not raw bytes. No manual decode step needed
+in user code.
+
+(A second binary frame shape — `header_1==2, header_2==0` — has its
+own `deal_array_buffer_for_lidar` path that always decodes, but the
+normal path is what `ULIDAR_ARRAY` flows through.)
+
+### Traffic-saving gate (likely required)
+
+`webrtc_datachannel.py` includes:
+
+```python
+# Should turn it on when subscribed to ulidar topic
+async def disableTrafficSaving(self, switch: bool):
+    ...
+```
+
+The library author's own comment indicates lidar streaming **requires
+explicitly disabling traffic saving** — otherwise the data channel
+likely throttles/suppresses high-bandwidth topics. So the minimum
+sequence to receive a lidar frame is:
+
+```python
+from unitree_webrtc_connect.constants import RTC_TOPIC
+
+def lidar_callback(message):
+    payload = message["data"]["data"]    # already decoded by the library
+    # native decoder: payload["points"] is (N, 3) float64 in world frame
+    # libvoxel:       payload["positions"], ["indices"], etc.
+
+conn.datachannel.set_decoder("native")                   # before subscribe
+conn.datachannel.pub_sub.subscribe(
+    RTC_TOPIC["ULIDAR_ARRAY"], lidar_callback,
+)
+await conn.datachannel.disableTrafficSaving(True)        # gate the stream open
+# ... frames now flow ...
+await conn.datachannel.disableTrafficSaving(False)       # stop when done
+```
+
+`set_decoder` is wired in `WebRTCDataChannel.__init__` to default to
+`libvoxel`; call it again to switch to `native`.
+
+### Unknowns to verify on hardware
+
+Source-reading establishes the API surface. The following need a
+probe mission before any feature work depends on them:
+
+- Whether `ULIDAR_ARRAY` actually streams once `disableTrafficSaving(True)`
+  is called, or whether `ULIDAR_SWITCH` must also be toggled first.
+- The publish rate and per-frame point count of `ULIDAR_ARRAY` (sets
+  the bandwidth + post-processing budget for capture-time bitmaps).
+- Whether the `native` decoder's `(N, 3)` output is robot-body frame
+  or world frame after the `origin + bits * resolution` transform —
+  the math suggests world frame keyed off `metadata.origin`, but
+  worth confirming against a known scene.
+- Whether `GRID_MAP` / `SLAM_PC_TO_IMAGE_LOCAL` actually publish on
+  the WebRTC channel (constants exist but no library code wires
+  subscribers — they may require uSLAM to be running on the robot).
+- Whether `libvoxel` and `native` decoders agree on geometry for the
+  same frame (validates that the WASM decoder isn't doing something
+  surprising).
+
+A `probe_lidar` mission analogous to `probe_gps` is the natural
+shape — subscribe, log frame metadata + first-frame shape, dump one
+PNG bitmap and one PCD to disk, exit. Save under
+`dev/missions/02_camera_test/runs/<TS>/` alongside log sidecars.
+
 ## Obstacle avoidance
 
-Obstacle avoidance is **enabled by default** on the Go2.
+Obstacle avoidance is the highest-level consumer of the lidar data
+described above. It's **enabled by default** on the Go2.
 
 ### Toggling via the RC controller
 
@@ -293,22 +471,24 @@ simultaneously — pick one control surface.
 
 ### Programmatic access
 
+The toggle topic exists but has no high-level wrapper:
+
 | Item | Details |
 |---|---|
 | Topic constant | `RTC_TOPIC["OBSTACLES_AVOID"]` |
 | Topic string | `rt/api/obstacles_avoid/request` |
-| High-level API | **None** |
-| Examples | **None** in the library |
-| Documentation | **None** |
+| High-level API | None |
+| Examples | None in the library |
+| Documentation | None |
 
-The topic exists in `constants.py` but nothing calls it. Using it
-would require low-level experimentation with `publish_request_new()`.
+Using it would require low-level experimentation with
+`publish_request_new()`. (Note: unlike the lidar topics above, this
+control topic has no decoder plumbing — it's purely a command
+endpoint.)
 
-### Sensor
+### Constraint
 
-Obstacle avoidance uses the 4D LiDAR L1 (360° × 90° FOV; 0.05 m
-minimum detection distance). It **only works when the robot is moving
-forward.**
+Obstacle avoidance **only works when the robot is moving forward.**
 
 ## References
 
@@ -329,4 +509,13 @@ forward.**
 - `site-packages/unitree_webrtc_connect/webrtc_video.py` — short file;
   worth reading in full.
 - `site-packages/unitree_webrtc_connect/webrtc_datachannel.py` —
-  `switchVideoChannel` lives here.
+  `switchVideoChannel`, `disableTrafficSaving`, `set_decoder`, and
+  the auto-decode plumbing for `utlidar` topics.
+- `site-packages/unitree_webrtc_connect/constants.py` — exhaustive
+  `RTC_TOPIC` dict. Scan it before assuming a feature is unavailable.
+- `site-packages/unitree_webrtc_connect/lidar/lidar_decoder_unified.py`
+  — decoder selector (`libvoxel` vs `native`).
+- `site-packages/unitree_webrtc_connect/lidar/lidar_decoder_native.py`
+  — pure-Python lz4 → numpy (N, 3) point cloud decoder.
+- `site-packages/unitree_webrtc_connect/lidar/lidar_decoder_libvoxel.py`
+  — WASM wrapper that returns Three.js mesh data.
