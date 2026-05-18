@@ -42,7 +42,8 @@ max_hacc                = 0.10   # meters — pause nav if hAcc degrades above t
 gps_fix_timeout         = 300    # seconds — max wait for INITIAL fix
 mid_mission_fix_timeout = 60     # seconds — max pause once underway before aborting the leg
 max_rtcm_age_s          = 5.0    # seconds — beyond this, RTK readings are treated as "coasting"
-stabilization_period_s  = 60     # seconds — robot stationary after initial fix, lets RTK soak to Fixed (0 disables)
+stabilization_period_s     = 60   # seconds — robot stationary after initial fix, lets RTK soak to Fixed (0 disables)
+stabilization_early_exit_s = 3.0  # seconds — if RTK Fixed + active corrections held this long, exit dwell early (0 disables)
 
 # [capture] block is optional — uncomment + set strategy to enable.
 # [capture]

@@ -814,8 +814,9 @@ class GPSManager:
         self,
         duration_s: float,
         progress_interval_s: float = 15.0,
+        early_exit_s: float = 0.0,
     ) -> dict:
-        """Poll GPS for `duration_s` seconds without moving the robot.
+        """Poll GPS for up to `duration_s` seconds without moving the robot.
 
         Soak-time between the initial fix and the start of navigation.
         Lets the F9P's carrier-phase ambiguity resolution complete
@@ -823,11 +824,18 @@ class GPSManager:
         quality baseline in gps.log. Polls get_position() at ~1 Hz,
         which feeds the telemetry sidecar for free.
 
+        If `early_exit_s > 0` and the receiver holds RTK Fixed (type 6)
+        WITH active NTRIP corrections for that many consecutive seconds,
+        the dwell returns early. The corrections gate prevents
+        float-coast (Fixed reported after RTCM dropped) from triggering
+        a false-positive early exit.
+
         Returns a summary dict with best_fix_type, mean_hacc, min_hacc,
-        mean_sats, tt_first_float, tt_first_fixed.
+        mean_sats, tt_first_float, tt_first_fixed, plus `early_exit`
+        (bool) and `elapsed_s` (actual dwell time, may be < duration_s).
         """
         if duration_s <= 0:
-            return {}
+            return {"early_exit": False, "elapsed_s": 0.0}
 
         start = time.monotonic()
         last_progress = start
@@ -836,10 +844,19 @@ class GPSManager:
         sats_samples: list[int] = []
         tt_first_float: float | None = None
         tt_first_fixed: float | None = None
+        consecutive_trusted_fixed_s = 0.0
+        last_poll = start
+        early_exit = False
         fix_names = {3: "3D", 4: "GNSS+DR", 5: "RTK Float", 6: "RTK Fixed"}
 
+        early_exit_note = (
+            f" (early-exit on {early_exit_s:.0f}s trusted Fixed)"
+            if early_exit_s > 0
+            else ""
+        )
         log_banner(
-            f"DWELL: {duration_s:.0f}s — robot stationary, RTK soaking",
+            f"DWELL: {duration_s:.0f}s — robot stationary, RTK soaking"
+            + early_exit_note,
             char="-",
             logger=logger,
         )
@@ -849,6 +866,10 @@ class GPSManager:
             if elapsed >= duration_s:
                 break
             pos = self.get_position()
+            poll_now = time.monotonic()
+            poll_dt = poll_now - last_poll
+            last_poll = poll_now
+
             if pos is not None:
                 if pos.fix_type > best_fix_type:
                     best_fix_type = pos.fix_type
@@ -859,8 +880,29 @@ class GPSManager:
                 hacc_samples.append(pos.accuracy_horizontal)
                 sats_samples.append(pos.satellites_used)
 
-            now = time.monotonic()
-            if now - last_progress >= progress_interval_s:
+                # Early-exit accumulator: count consecutive seconds where
+                # the receiver shows RTK Fixed AND NTRIP corrections are
+                # actively flowing (anti-coast guard).
+                if early_exit_s > 0:
+                    trusted_fixed = (
+                        pos.fix_type >= 6 and self.has_active_corrections()
+                    )
+                    if trusted_fixed:
+                        consecutive_trusted_fixed_s += poll_dt
+                        if consecutive_trusted_fixed_s >= early_exit_s:
+                            early_exit = True
+                            break
+                    elif consecutive_trusted_fixed_s > 0:
+                        # Streak broken — log once so post-mortem sees it
+                        logger.info(
+                            f"[stabilization] trusted-Fixed streak broken at "
+                            f"{consecutive_trusted_fixed_s:.1f}s "
+                            f"(fix={pos.fix_type} corrections_active="
+                            f"{self.has_active_corrections()})"
+                        )
+                        consecutive_trusted_fixed_s = 0.0
+
+            if poll_now - last_progress >= progress_interval_s:
                 age = (
                     self.ntrip.seconds_since_last_rtcm()
                     if self.ntrip
@@ -878,8 +920,10 @@ class GPSManager:
                     f"[stabilization] {elapsed:.0f}/{duration_s:.0f}s | "
                     f"fix={fix_repr} hAcc={hacc_repr} sats={sats_repr} | {age_str}"
                 )
-                last_progress = now
+                last_progress = poll_now
             time.sleep(1.0)
+
+        elapsed_total = time.monotonic() - start
 
         # Final summary
         mean_hacc = (
@@ -897,10 +941,18 @@ class GPSManager:
             f"{tt_first_fixed:.0f}s" if tt_first_fixed is not None else "—"
         )
 
+        completion_prefix = "DWELL EARLY EXIT" if early_exit else "DWELL COMPLETE"
+        early_note = (
+            f" | early@{elapsed_total:.0f}s/{duration_s:.0f}s "
+            f"(held trusted Fixed {early_exit_s:.0f}s)"
+            if early_exit
+            else ""
+        )
         log_banner(
-            f"DWELL COMPLETE | best={best_label} min_hAcc={min_hacc:.3f}m | "
+            f"{completion_prefix} | best={best_label} min_hAcc={min_hacc:.3f}m | "
             f"mean hAcc={mean_hacc:.3f}m sats={mean_sats:.1f} | "
-            f"TTFloat={tt_float_str} TTFixed={tt_fixed_str}",
+            f"TTFloat={tt_float_str} TTFixed={tt_fixed_str}"
+            + early_note,
             char="=",
             logger=logger,
         )
@@ -912,6 +964,8 @@ class GPSManager:
             "tt_first_float": tt_first_float,
             "tt_first_fixed": tt_first_fixed,
             "samples": len(hacc_samples),
+            "early_exit": early_exit,
+            "elapsed_s": elapsed_total,
         }
 
     def wait_for_fix(self, timeout: float = 300.0, min_fix_type: int = 4) -> bool:

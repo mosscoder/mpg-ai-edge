@@ -80,6 +80,11 @@ class NavigationSettings:
     # complete (Float -> Fixed typically takes 30-60s) and captures a
     # clean quality baseline in gps.log. Set to 0 to disable the dwell.
     stabilization_period_s: int = 60
+    # Early-exit threshold: if the receiver holds RTK Fixed (type 6)
+    # WITH active NTRIP corrections for this many consecutive seconds,
+    # the dwell exits early. Cuts wallclock when RTK converges fast.
+    # Set to 0 to disable early exit (force full duration).
+    stabilization_early_exit_s: float = 3.0
     # Refresh the IMU→true-north offset on each waypoint arrival using
     # GPS+IMU samples already collected during the walk leg. Disable to
     # preserve the legacy single-shot calibration set on the first leg.

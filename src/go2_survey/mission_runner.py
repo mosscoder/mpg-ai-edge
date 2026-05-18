@@ -236,7 +236,10 @@ async def run_mission(runner: MissionRunner) -> bool:
             char="-",
             logger=logger,
         )
-        gps.stabilization_dwell(settings.navigation.stabilization_period_s)
+        gps.stabilization_dwell(
+            settings.navigation.stabilization_period_s,
+            early_exit_s=settings.navigation.stabilization_early_exit_s,
+        )
 
         log_banner("PHASE 3: ROBOT", char="-", logger=logger)
         if not await robot.connect():
@@ -368,7 +371,10 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
                 char="-",
                 logger=logger,
             )
-            gps.stabilization_dwell(settings.navigation.stabilization_period_s)
+            gps.stabilization_dwell(
+                settings.navigation.stabilization_period_s,
+                early_exit_s=settings.navigation.stabilization_early_exit_s,
+            )
 
         robot_ip = settings.robot.ip
         if (
