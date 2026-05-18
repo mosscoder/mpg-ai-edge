@@ -1,5 +1,70 @@
 # Navigation Changelog
 
+## 2026-05-18: v0.10.0 — Captures Co-located with Logs (runs/ Layout)
+
+### Scope
+
+Per-run forensics used to require manual timestamp correlation between
+two sibling directories: logs lived at `<mission>/logs/<TS>/{main,imu,
+gps}.log` while captures landed in a flat shared `<mission>/captures/`
+that mixed every run's output. From v0.10.0 every artifact for a
+single mission run shares one directory under `<mission>/runs/<TS>/`.
+
+**Breaking layout change.** External tooling that globs
+`<mission>/captures/**/*.jpg` needs to switch to
+`<mission>/runs/*/captures/**/*.jpg`. The migration script handles
+legacy data in this repo; downstream consumers update once.
+
+### Change (`7b5441a`)
+
+**Code:**
+- `cli.py`: `setup_logging` writes to `runs/` (was `logs/`).
+- `mission_runner.py`: `MissionRunner` gains `run_dir` field; threaded
+  into both `CaptureContext` construction sites (waypoint + static).
+- `capture.py`: `CaptureContext` gains `run_dir`; `_capture_output_path`
+  builds `<run_dir>/<output_subdir>/<wp>/<bearing>_<TS>.jpg` and
+  mkdirs the per-waypoint subdir.
+- `_template/mission.toml`: documents the new layout in `[capture]`
+  block comments.
+- `.gitignore`: scopes the legacy `runs/` rule to `/runs/` (root only).
+  Without this scope fix the new per-mission `runs/` subtrees would
+  have been silently ignored.
+
+**Filename keeps the timestamp.** `b000_2026-05-15T14-01-50.jpg` —
+redundant with the run-dir TS by 1-2 minutes, but disambiguates
+within-run retries (rotating_quadrat re-capturing the same bearing
+on a misalignment, for example).
+
+**Per-waypoint subdir.** `<run>/captures/<wp>/<bearing>_<TS>.jpg`
+rather than flat — keeps coverage spot-checks easy once waypoint
+counts grow past a handful.
+
+### Migration
+
+`dev/scripts/migrate_to_runs_layout.py`:
+- Renames each `<mission>/logs/` → `<mission>/runs/`.
+- Promotes the oldest flat `<run>.log` files (pre per-run sidecar
+  split) into `<run>/main.log` per-run dirs, so every run has a
+  uniform shape regardless of vintage.
+- Moves each capture (+ matching `.json` sidecar) into the matching
+  run dir based on embedded timestamp (latest run whose TS ≤ capture
+  TS). Orphans (no matching run window) land under `runs/_orphans/`
+  so nothing is silently dropped.
+- Idempotent; `--dry-run` flag previews moves.
+
+All seven existing missions migrated in this commit (0 orphans, 0
+skipped). Flat `captures/` and `logs/` dirs are gone repo-wide.
+
+### Hardware validation pending
+
+Next field run should write directly to
+`<mission>/runs/<mission>_<TS>/{main,imu,gps}.log` plus
+`captures/<wp>/<bearing>_<TS>.{jpg,json}` — no flat dirs anywhere.
+
+Bumps `0.9.3 → 0.10.0`.
+
+---
+
 ## 2026-05-18: v0.9.3 — wait_for_fix Self-Rescue + RTCM-Stalled Diagnosis
 
 ### Scope
