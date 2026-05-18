@@ -80,6 +80,56 @@ class SportModeStateOnlyFilter(logging.Filter):
 GPS_TELEMETRY_LOGGER_NAME = "go2_survey.gps.telemetry"
 
 
+# Sticky teardown flag. mission_runner.py flips this True in its finally
+# block (at the *start* of teardown, before any cleanup runs). The
+# WebRTCTeardownNoiseFilter consults it to suppress library-side noise
+# that fires when we deliberately close the peer connection. We never
+# reset to False because one CLI invocation runs exactly one mission
+# and the process exits at end-of-teardown — a sticky True is the
+# elegant choice here. If that contract ever changes, add a reset.
+_teardown_in_progress = False
+
+
+def set_teardown_in_progress(value: bool) -> None:
+    """Signal the WebRTC noise filter that we're tearing down on purpose."""
+    global _teardown_in_progress
+    _teardown_in_progress = value
+
+
+class WebRTCTeardownNoiseFilter(logging.Filter):
+    """Suppress library-side stream-end noise during intentional teardown.
+
+    Two distinct patterns fire after every successful mission:
+
+    1. asyncio "Exception in callback ... StreamError()" + the multi-line
+       traceback ending in `aiortc.mediastreams.MediaStreamError`. Source:
+       unitree_webrtc_connect/webrtc_driver.py:on_track has three
+       `await track.recv()` calls with no try/except. When pc.close()
+       runs, recv() raises MediaStreamError (aiortc's normal end-of-stream
+       signal); pyee converts it to an "error" event with no listener;
+       asyncio's default handler dumps the traceback at ERROR.
+
+    2. `aiortc.codecs.h264: H264Decoder() failed to decode, skipping
+       package: Invalid data found...`. An H.264 packet was mid-decode
+       when the track died; the orphaned packet looks corrupt.
+
+    Both are cosmetic at teardown time but read as scary failures.
+    Filter only applies when set_teardown_in_progress(True) has been
+    called, so the same patterns mid-mission (which would indicate a
+    real problem) still surface normally.
+    """
+
+    SUPPRESSED_SUBSTRINGS = (
+        "MediaStreamError",
+        "H264Decoder() failed to decode",
+    )
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        if not _teardown_in_progress:
+            return True
+        return not any(s in record.getMessage() for s in self.SUPPRESSED_SUBSTRINGS)
+
+
 class GPSTelemetryFilter(logging.Filter):
     """Drop dense GPS telemetry records — they belong in gps.log only.
 

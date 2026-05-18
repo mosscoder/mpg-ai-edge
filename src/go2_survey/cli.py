@@ -24,6 +24,7 @@ from go2_survey.logging_utils import (
     SportModeStateFilter,
     SportModeStateOnlyFilter,
     WebRTCFallbackNoiseFilter,
+    WebRTCTeardownNoiseFilter,
 )
 from go2_survey.mission_runner import MissionRunner, run_mission
 
@@ -114,6 +115,7 @@ def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
         SportModeStateFilter(),
         GPSTelemetryFilter(),
         WebRTCFallbackNoiseFilter(),
+        WebRTCTeardownNoiseFilter(),
     ]
     for handler in (
         logging.StreamHandler(sys.stdout),

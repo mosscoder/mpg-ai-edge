@@ -16,7 +16,7 @@ from go2_survey.capture import CaptureContext, build_strategy
 from go2_survey.config import MissionSettings, load_mission_config
 from go2_survey.discovery import find_robot_ips
 from go2_survey.gps import GPSManager, RTKPosition
-from go2_survey.logging_utils import log_banner
+from go2_survey.logging_utils import log_banner, set_teardown_in_progress
 from go2_survey.navigator import WaypointNavigator
 from go2_survey.probes import run_f9r_probe
 from go2_survey.robot import Go2Robot
@@ -300,6 +300,10 @@ async def run_mission(runner: MissionRunner) -> bool:
         logger.error(f"Mission error: {e}", exc_info=True)
         return False
     finally:
+        # Suppress library-side stream-end noise from the WebRTC
+        # teardown that follows. Mid-mission instances of the same
+        # patterns still surface — the filter only activates from here.
+        set_teardown_in_progress(True)
         try:
             await robot.disable_video()
         except Exception:
@@ -444,6 +448,7 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
         logger.error(f"Static capture error: {e}", exc_info=True)
         return False
     finally:
+        set_teardown_in_progress(True)
         if robot is not None:
             try:
                 await robot.disable_video()

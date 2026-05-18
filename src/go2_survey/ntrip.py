@@ -110,7 +110,12 @@ class EmlidNTRIPClient:
             try:
                 data = self.socket.recv(4096)
                 if not data:
-                    logger.warning("NTRIP connection lost")
+                    # Don't WARN when the main thread shut down our
+                    # socket on purpose (matches the except-branch
+                    # treatment below). Mid-mission empty-recv still
+                    # logs so the navigator's reconnect path can react.
+                    if self.running:
+                        logger.warning("NTRIP connection lost")
                     self.connection_alive = False
                     break
                 buffer += data
