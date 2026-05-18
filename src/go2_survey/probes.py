@@ -1,5 +1,5 @@
 """Diagnostic probes for hardware whose behavior we don't yet fully
-characterize. Used by mission_runner mode="probe_gps".
+characterize. Used by mission_runner modes "probe_gps" and "probe_lidar".
 
 The F9R probe runs three phases:
 
@@ -11,13 +11,19 @@ The F9R probe runs three phases:
        Each sample written as one JSON line.
     3. Report — markdown summary answering each outstanding question.
 
-No robot, no navigation. Just the GPS on USB + NTRIP corrections.
+The lidar probe verifies the WebRTC voxel-map topic streams, captures
+one decoded frame to .npy for offline rasterizer development, and
+emits three quick-look PNGs (BEV / side elevation / forward cone) so
+the operator can eyeball whether the data is sensible before any
+downstream code consumes it.
 """
 
 import asyncio
 import json
 import logging
+import math
 import statistics
+import threading
 import time
 from collections import Counter
 from pathlib import Path
@@ -401,3 +407,386 @@ def _format_summary_banner(summary: dict) -> list[str]:
         )
     lines.append("=" * 60)
     return lines
+
+
+# ---------------------------------------------------------------------------
+# Lidar probe — RTC_TOPIC["ULIDAR_ARRAY"] (rt/utlidar/voxel_map_compressed)
+# ---------------------------------------------------------------------------
+#
+# Goal: confirm the library's documented lidar plumbing actually works
+# end-to-end before any feature code is built on top. See
+# docs/webrtc/README.md "Lidar data stream" for the source-derived
+# expectations being verified here.
+
+# Default probe duration (seconds). 30s gives 100-300 frames at typical
+# lidar rates — enough to compute a stable mean rate and catch
+# intermittent dropouts without parking the operator for too long.
+LIDAR_PROBE_DURATION_S = 30.0
+
+# Settle period before counting frames. The first 1-2s after subscribe
+# tends to be empty while the data channel toggles state.
+LIDAR_PROBE_SETTLE_S = 2.0
+
+
+async def run_lidar_probe(
+    robot,
+    out_dir: Path,
+    duration_sec: float = LIDAR_PROBE_DURATION_S,
+) -> dict:
+    """Subscribe to the Go2's compressed voxel-map topic, log per-frame
+    metadata for `duration_sec`, and dump the first valid frame to
+    .npy + three quick-look PNGs (BEV, side elevation, forward cone).
+
+    Returns a summary dict with frame count, mean rate, per-frame point
+    count distribution, and the metadata seen on the first frame.
+
+    The robot must already be connected. This probe does not move the
+    robot — it only reads from the data channel.
+    """
+    from unitree_webrtc_connect.constants import RTC_TOPIC
+
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    # Frame cache populated by the (synchronous) subscriber callback.
+    # Holds the most recent decoded frame so the sampling loop can
+    # snapshot it once per second without racing the producer.
+    lock = threading.Lock()
+    state: dict = {
+        "frames": [],          # list of dicts: ts, point_count, origin, resolution, extents
+        "first_payload": None,  # full message['data'] of the first frame (for offline replay)
+        "first_points": None,   # np.ndarray(N, 3) of the first frame
+        "errors": [],           # decode/shape errors caught from the callback
+    }
+
+    def on_lidar(message: dict) -> None:
+        try:
+            payload = message.get("data", {}) or {}
+            decoded = payload.get("data")
+            if decoded is None:
+                state["errors"].append("payload missing data.data")
+                return
+            # native decoder returns {"points": np.ndarray(N, 3)};
+            # libvoxel returns {"point_count", "positions", ...}. We
+            # called set_decoder('native') so we expect the former,
+            # but tolerate the latter for diagnostic visibility.
+            points = decoded.get("points") if isinstance(decoded, dict) else None
+            point_count = (
+                int(points.shape[0]) if points is not None and hasattr(points, "shape")
+                else int(decoded.get("point_count", 0)) if isinstance(decoded, dict)
+                else 0
+            )
+            extents = None
+            if points is not None and hasattr(points, "shape") and points.shape[0] > 0:
+                import numpy as _np
+                extents = {
+                    "x": [float(_np.min(points[:, 0])), float(_np.max(points[:, 0]))],
+                    "y": [float(_np.min(points[:, 1])), float(_np.max(points[:, 1]))],
+                    "z": [float(_np.min(points[:, 2])), float(_np.max(points[:, 2]))],
+                }
+            entry = {
+                "ts": time.time(),
+                "point_count": point_count,
+                "origin": list(payload.get("origin", [])) or None,
+                "resolution": payload.get("resolution"),
+                "src_size": payload.get("src_size"),
+                "extents": extents,
+            }
+            with lock:
+                state["frames"].append(entry)
+                if state["first_points"] is None and points is not None and point_count > 0:
+                    # Strip the points array out of the payload echo so
+                    # the diagnostic dump is lightweight metadata only.
+                    meta_only = {k: v for k, v in payload.items() if k != "data"}
+                    state["first_payload"] = meta_only
+                    state["first_points"] = points
+        except Exception as e:
+            state["errors"].append(f"{type(e).__name__}: {e}")
+
+    # Switch the decoder to the lz4→numpy backend before subscribing.
+    # Default is libvoxel which returns Three.js mesh data — unhelpful
+    # for our use case. See docs/webrtc/README.md.
+    log_banner("LIDAR PROBE — PHASE 1: WIRE UP", char="-", logger=logger)
+    robot.conn.datachannel.set_decoder("native")
+    logger.info("decoder set to: native (lz4 → numpy (N,3) point cloud)")
+
+    robot.conn.datachannel.pub_sub.subscribe(RTC_TOPIC["ULIDAR_ARRAY"], on_lidar)
+    logger.info(
+        f"subscribed to {RTC_TOPIC['ULIDAR_ARRAY']!r} "
+        f"(constant: ULIDAR_ARRAY)"
+    )
+
+    # The library author flags this as required for utlidar topics in
+    # an inline comment. Probe verifies whether it's truly required vs
+    # optional — if frames arrive before we call it, that's worth
+    # knowing.
+    pre_call_count_t0 = time.monotonic()
+    await asyncio.sleep(LIDAR_PROBE_SETTLE_S)
+    with lock:
+        pre_call_frames = len(state["frames"])
+    logger.info(
+        f"after {LIDAR_PROBE_SETTLE_S:.0f}s settle (before disableTrafficSaving): "
+        f"{pre_call_frames} frames received"
+    )
+
+    try:
+        await robot.conn.datachannel.disableTrafficSaving(True)
+        logger.info("disableTrafficSaving(True) accepted")
+        traffic_call_ok = True
+    except Exception as e:
+        logger.warning(f"disableTrafficSaving(True) raised: {e!r}")
+        traffic_call_ok = False
+
+    log_banner(
+        f"LIDAR PROBE — PHASE 2: SAMPLE ({duration_sec:.0f}s)",
+        char="-",
+        logger=logger,
+    )
+    sample_t0 = time.monotonic()
+    last_log_t = sample_t0
+    last_log_count = pre_call_frames
+    while time.monotonic() - sample_t0 < duration_sec:
+        await asyncio.sleep(1.0)
+        now = time.monotonic()
+        with lock:
+            n = len(state["frames"])
+            latest = state["frames"][-1] if state["frames"] else None
+            err_count = len(state["errors"])
+        dt = max(now - last_log_t, 1e-6)
+        rate_hz = (n - last_log_count) / dt
+        elapsed = now - sample_t0
+        if latest is not None and latest.get("extents") is not None:
+            ex = latest["extents"]
+            logger.info(
+                f"t={elapsed:5.1f}s  frames={n:4d}  rate={rate_hz:4.1f}Hz  "
+                f"last pts={latest['point_count']:5d}  "
+                f"x=[{ex['x'][0]:+5.1f},{ex['x'][1]:+5.1f}] "
+                f"y=[{ex['y'][0]:+5.1f},{ex['y'][1]:+5.1f}] "
+                f"z=[{ex['z'][0]:+5.1f},{ex['z'][1]:+5.1f}]  "
+                f"errs={err_count}"
+            )
+        else:
+            logger.info(
+                f"t={elapsed:5.1f}s  frames={n:4d}  rate={rate_hz:4.1f}Hz  "
+                f"no frames yet  errs={err_count}"
+            )
+        last_log_t = now
+        last_log_count = n
+
+    # Drop traffic saving back on (default state) so we don't leave the
+    # robot in an unexpected mode after the probe ends.
+    try:
+        await robot.conn.datachannel.disableTrafficSaving(False)
+        logger.info("disableTrafficSaving(False) — restored default")
+    except Exception as e:
+        logger.warning(f"disableTrafficSaving(False) raised: {e!r}")
+
+    log_banner("LIDAR PROBE — PHASE 3: REPORT", char="-", logger=logger)
+    with lock:
+        frames = list(state["frames"])
+        first_payload = state["first_payload"]
+        first_points = state["first_points"]
+        errors = list(state["errors"])
+
+    summary = _summarize_lidar_probe(
+        frames=frames,
+        first_payload=first_payload,
+        errors=errors,
+        duration_sec=duration_sec,
+        pre_call_frames=pre_call_frames,
+        traffic_call_ok=traffic_call_ok,
+    )
+
+    summary_path = out_dir / "lidar_probe_summary.json"
+    summary_path.write_text(json.dumps(summary, indent=2, default=str))
+    logger.info(f"summary: {summary_path}")
+
+    if first_points is not None and first_points.shape[0] > 0:
+        npy_path = out_dir / "lidar_first_frame.npy"
+        try:
+            import numpy as _np
+            _np.save(npy_path, first_points)
+            logger.info(
+                f"first frame: {npy_path} "
+                f"(shape={first_points.shape}, dtype={first_points.dtype})"
+            )
+        except Exception as e:
+            logger.warning(f"could not save .npy: {e!r}")
+
+        _write_lidar_rasters(first_points, out_dir)
+    else:
+        logger.error(
+            "no valid frame captured — cannot dump .npy or rasters. "
+            "Probe failed to verify the lidar stream."
+        )
+
+    for line in _format_lidar_summary_banner(summary):
+        logger.info(line)
+
+    return summary
+
+
+def _summarize_lidar_probe(
+    *,
+    frames: list,
+    first_payload: dict | None,
+    errors: list,
+    duration_sec: float,
+    pre_call_frames: int,
+    traffic_call_ok: bool,
+) -> dict:
+    """Roll up the per-frame log into a single summary dict."""
+    point_counts = [f["point_count"] for f in frames if f.get("point_count")]
+    n_frames = len(frames)
+    n_with_points = len(point_counts)
+    mean_rate = n_frames / duration_sec if duration_sec > 0 else 0.0
+
+    return {
+        "duration_sec": duration_sec,
+        "frame_count_total": n_frames,
+        "frame_count_with_points": n_with_points,
+        "mean_rate_hz": round(mean_rate, 2),
+        "frames_before_disableTrafficSaving": pre_call_frames,
+        "disableTrafficSaving_call_ok": traffic_call_ok,
+        "point_count_stats": (
+            {
+                "min": int(min(point_counts)),
+                "mean": int(statistics.mean(point_counts)),
+                "max": int(max(point_counts)),
+                "stdev": (
+                    round(statistics.stdev(point_counts), 1)
+                    if len(point_counts) > 1 else 0.0
+                ),
+            }
+            if point_counts else None
+        ),
+        "first_frame_metadata": first_payload,
+        "error_count": len(errors),
+        "errors_sample": errors[:5],
+    }
+
+
+def _format_lidar_summary_banner(summary: dict) -> list:
+    lines = ["=" * 60, "LIDAR PROBE SUMMARY", "=" * 60]
+    lines.append(f"duration:            {summary['duration_sec']:.1f}s")
+    lines.append(f"frames total:        {summary['frame_count_total']}")
+    lines.append(f"frames w/ points:    {summary['frame_count_with_points']}")
+    lines.append(f"mean rate:           {summary['mean_rate_hz']:.1f} Hz")
+    lines.append(
+        f"frames before disableTrafficSaving(True): "
+        f"{summary['frames_before_disableTrafficSaving']}  "
+        f"-> {'gate required' if summary['frames_before_disableTrafficSaving'] == 0 else 'gate optional'}"
+    )
+    pc = summary.get("point_count_stats")
+    if pc:
+        lines.append(
+            f"point counts:        "
+            f"min={pc['min']}  mean={pc['mean']}  max={pc['max']}  "
+            f"stdev={pc['stdev']}"
+        )
+    meta = summary.get("first_frame_metadata") or {}
+    if meta.get("origin"):
+        lines.append(f"first-frame origin:  {meta['origin']}")
+    if meta.get("resolution"):
+        lines.append(f"first-frame res:     {meta['resolution']} m")
+    if summary["error_count"]:
+        lines.append(f"errors observed:     {summary['error_count']} (see summary.json)")
+    lines.append("=" * 60)
+    return lines
+
+
+# ---------------------------------------------------------------------------
+# Quick-look rasterizers — three projections to eyeball before committing
+# to a single capture-time companion. See "Stage 2" plan in the README.
+# ---------------------------------------------------------------------------
+
+# Output bitmap size for the quick-look PNGs. Small enough to render
+# instantly, large enough to read structure by eye.
+_LIDAR_RASTER_PX = 480
+
+# Range cap (meters) for the quick-look PNGs. Points beyond this are
+# dropped before rasterization — keeps the 480px grid from being
+# dominated by far returns.
+_LIDAR_RASTER_RANGE_M = 8.0
+
+
+def _write_lidar_rasters(points, out_dir: Path) -> None:
+    """Render three quick-look PNGs from the first captured frame.
+
+    These are diagnostic — the goal is "yes, the room is in there" not
+    metric accuracy. The final capture-time companion bitmap will be
+    designed once we know which projection reads best on real data.
+    """
+    try:
+        import numpy as np
+        from PIL import Image
+    except ImportError as e:
+        logger.warning(f"raster output skipped (missing dep): {e}")
+        return
+
+    pts = np.asarray(points)
+    if pts.ndim != 2 or pts.shape[1] != 3:
+        logger.warning(f"raster output skipped (bad shape: {pts.shape})")
+        return
+
+    # Cap to a sensible local range so far outliers don't dominate
+    # auto-scaling. Lidar in world frame can have arbitrary origin
+    # offsets — we re-center each projection around its own median for
+    # interpretability.
+    r = np.linalg.norm(pts[:, :2], axis=1)
+    near = pts[r < _LIDAR_RASTER_RANGE_M]
+    if near.shape[0] == 0:
+        logger.warning("no points within range cap — rasters will be empty")
+        return
+    logger.info(
+        f"raster input: {near.shape[0]} of {pts.shape[0]} points "
+        f"within {_LIDAR_RASTER_RANGE_M:.0f}m"
+    )
+
+    bev_png = out_dir / "lidar_first_frame_bev.png"
+    side_png = out_dir / "lidar_first_frame_side.png"
+    front_png = out_dir / "lidar_first_frame_front.png"
+
+    _save_density_raster(
+        near, axis_h=0, axis_v=1, label="BEV (top-down: X forward, Y lateral)",
+        path=bev_png,
+    )
+    _save_density_raster(
+        near, axis_h=0, axis_v=2, label="SIDE (X forward, Z up)",
+        path=side_png,
+    )
+    _save_density_raster(
+        near, axis_h=1, axis_v=2, label="FRONT (Y lateral, Z up)",
+        path=front_png,
+    )
+
+
+def _save_density_raster(
+    pts, *, axis_h: int, axis_v: int, label: str, path: Path
+) -> None:
+    """Histogram2d-based density raster of `pts` projected onto two axes."""
+    import numpy as np
+    from PIL import Image
+
+    h = pts[:, axis_h]
+    v = pts[:, axis_v]
+    # Symmetric square extent around the median so the grid origin
+    # lands in the middle of the visible area regardless of world-frame
+    # offset.
+    h_med, v_med = float(np.median(h)), float(np.median(v))
+    half = _LIDAR_RASTER_RANGE_M
+    bins = _LIDAR_RASTER_PX
+    H, _, _ = np.histogram2d(
+        v - v_med, h - h_med,  # row = vertical axis, col = horizontal
+        bins=bins,
+        range=[[-half, half], [-half, half]],
+    )
+    # Log-compress + normalize to 8-bit so even sparse cells show.
+    H = np.log1p(H)
+    if H.max() > 0:
+        H = (255.0 * H / H.max()).astype(np.uint8)
+    else:
+        H = H.astype(np.uint8)
+    # Flip vertically so positive axis goes up in the rendered image.
+    img = np.flipud(H)
+    Image.fromarray(img).save(path)
+    logger.info(f"raster: {path.name}  ({label})")

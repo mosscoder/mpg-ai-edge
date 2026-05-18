@@ -18,7 +18,7 @@ from go2_survey.discovery import find_robot_ips
 from go2_survey.gps import GPSManager, RTKPosition
 from go2_survey.logging_utils import log_banner, set_teardown_in_progress
 from go2_survey.navigator import WaypointNavigator
-from go2_survey.probes import run_f9r_probe
+from go2_survey.probes import run_f9r_probe, run_lidar_probe
 from go2_survey.robot import Go2Robot
 from go2_survey.waypoints import Waypoint, load_waypoints
 
@@ -109,6 +109,9 @@ async def run_mission(runner: MissionRunner) -> bool:
 
     if settings.mode == "probe_gps":
         return await _run_probe_gps(runner, settings)
+
+    if settings.mode == "probe_lidar":
+        return await _run_probe_lidar(runner, settings)
 
     if settings.mode in ("static_camera", "static_geotag"):
         return await _run_static(runner, settings)
@@ -542,3 +545,90 @@ async def _run_probe_gps(runner: MissionRunner, settings: MissionSettings) -> bo
         except Exception:
             logger.debug("gps.disconnect raised during teardown", exc_info=True)
         logger.info("GPS disconnected")
+
+
+async def _run_probe_lidar(runner: MissionRunner, settings: MissionSettings) -> bool:
+    """Lidar diagnostic probe. Robot connection only — no GPS, no navigation.
+
+    Verifies the documented ``rt/utlidar/voxel_map_compressed`` stream
+    works end-to-end and emits a per-frame log + first-frame .npy +
+    three quick-look raster PNGs into the run directory.
+    """
+    logger.info(
+        f"Lidar probe: duration={settings.probe.duration_sec:.0f}s | "
+        f"Robot: {settings.robot.connection_mode}"
+        + (f" ip={settings.robot.ip}" if settings.robot.ip else "")
+    )
+
+    if runner.dry_run:
+        log_banner("DRY RUN — not connecting to hardware", logger=logger)
+        return True
+
+    robot_ip = settings.robot.ip
+    if (
+        robot_ip is None
+        and settings.robot.serial is None
+        and settings.robot.connection_mode == "LocalSTA"
+    ):
+        log_banner(
+            f"AUTO-DISCOVERING ROBOT IP "
+            f"(up to {ROBOT_DISCOVERY_ATTEMPTS} attempts, "
+            f"{ROBOT_DISCOVERY_DELAY_S:.0f}s between)",
+            char="-",
+            logger=logger,
+        )
+        try:
+            robot_ip = _discover_robot_ip_with_retry()
+        except RuntimeError as e:
+            logger.error(f"Robot IP auto-discovery failed: {e}")
+            return False
+        if robot_ip is None:
+            logger.error(
+                f"Robot IP auto-discovery found no Go2 after "
+                f"{ROBOT_DISCOVERY_ATTEMPTS} attempts"
+            )
+            return False
+        log_banner(
+            f"ROBOT IP DISCOVERED | {robot_ip}",
+            char="-",
+            logger=logger,
+        )
+
+    robot = Go2Robot(
+        connection_mode=settings.robot.connection_mode,
+        robot_ip=robot_ip,
+        robot_serial=settings.robot.serial,
+    )
+
+    try:
+        log_banner("PHASE 1: ROBOT", char="-", logger=logger)
+        if not await robot.connect():
+            logger.error("Failed to connect to robot")
+            return False
+
+        log_banner(
+            f"PHASE 2: LIDAR PROBE ({settings.probe.duration_sec:.0f}s)",
+            char="-",
+            logger=logger,
+        )
+        await run_lidar_probe(
+            robot=robot,
+            out_dir=runner.run_dir,
+            duration_sec=settings.probe.duration_sec,
+        )
+        log_banner("LIDAR PROBE COMPLETE", logger=logger)
+        return True
+
+    except KeyboardInterrupt:
+        logger.warning("Lidar probe interrupted by user")
+        return False
+    except Exception as e:
+        logger.error(f"Lidar probe error: {e}", exc_info=True)
+        return False
+    finally:
+        set_teardown_in_progress(True)
+        try:
+            await robot.close()
+        except Exception:
+            logger.debug("robot.close raised during teardown", exc_info=True)
+        logger.info("Robot disconnected")

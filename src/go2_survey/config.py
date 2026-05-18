@@ -128,7 +128,7 @@ class CaptureSettings:
 class MissionSettings:
     name: str = ""
     description: str = ""
-    mode: str = "nav"  # "nav" | "static_camera" | "static_geotag" | "probe_gps"
+    mode: str = "nav"  # "nav" | "static_camera" | "static_geotag" | "probe_gps" | "probe_lidar"
     gps: GPSSettings = field(default_factory=GPSSettings)
     ntrip: NTRIPSettings = field(default_factory=NTRIPSettings)
     robot: RobotSettings = field(default_factory=RobotSettings)

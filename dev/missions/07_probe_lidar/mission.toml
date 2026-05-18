@@ -1,0 +1,31 @@
+# Diagnostic probe: verify the Go2's WebRTC lidar stream works
+# end-to-end before any feature code (e.g. capture-time depth-image
+# sidecars) is built on top.
+#
+# Run with:
+#   go2-survey run 07_probe_lidar
+#
+# Writes the following into the run directory:
+#   - lidar_probe_summary.json   — frame counts, rate, point-count stats
+#   - lidar_first_frame.npy      — (N, 3) numpy array of the first frame
+#                                  (use offline to develop the rasterizer)
+#   - lidar_first_frame_bev.png  — top-down (X-Y) density quick-look
+#   - lidar_first_frame_side.png — side elevation (X-Z) quick-look
+#   - lidar_first_frame_front.png— front elevation (Y-Z) quick-look
+#
+# Goal: confirm the documented unitree_webrtc_connect plumbing actually
+# delivers frames; characterize publish rate, point density, and
+# coordinate frame; decide which projection makes the best capture-time
+# companion bitmap. See docs/webrtc/README.md "Lidar data stream" for
+# the source-derived expectations being verified here.
+
+name        = "probe_lidar"
+description = "Verify ULIDAR_ARRAY stream + characterize rate / density / extents"
+mode        = "probe_lidar"
+
+[robot]
+connection_mode = "LocalSTA"
+# ip     = "192.168.1.105"    # optional; if omitted, discovery is attempted
+
+[probe]
+duration_sec = 30.0           # seconds of steady-state sampling
