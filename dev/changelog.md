@@ -1,5 +1,91 @@
 # Navigation Changelog
 
+## 2026-05-18: v0.11.0 — Lidar Probe Mission
+
+### Scope
+
+Stage 1 of the lidar-bitmap-companion plan. The earlier `docs/webrtc/
+README.md` rewrite revealed the library has a complete (but
+undocumented-in-the-README) lidar stack: 13 lidar-shaped topics in
+`RTC_TOPIC` and two decoder backends. Before building any capture-
+time integration on top of that surface, this commit lands a probe
+mission that verifies the documented plumbing actually delivers
+frames end-to-end on real hardware. Follows the project's "probe
+hardware unknowns before building on them" guideline.
+
+### Change (`ce32c30`)
+
+**New mission**: `dev/missions/07_probe_lidar/` with `mode = "probe_lidar"`.
+Robot-only — no GPS, no navigation, no waypoints.
+
+**Probe logic** (`src/go2_survey/probes.py::run_lidar_probe`):
+
+1. `datachannel.set_decoder("native")` — switch from the default
+   `libvoxel` WASM mesh backend (returns Three.js-style mesh) to the
+   `native` lz4-to-numpy backend (returns `{"points": ndarray(N, 3)}`).
+2. Subscribe to `RTC_TOPIC["ULIDAR_ARRAY"]` with a counting callback.
+   Auto-decode plumbing in `webrtc_datachannel.py` routes the binary
+   payload through the active decoder before the callback fires.
+3. Settle for 2 s and count frames received **before**
+   `disableTrafficSaving(True)`. The library author's inline comment
+   flags this gate as required for utlidar topics; this measurement
+   confirms whether it's truly required or just recommended.
+4. Open the gate, then sample for `[probe] duration_sec` (default 30 s)
+   with 1 Hz progress logging: frames, rate, last-frame point count,
+   XYZ extents, error count.
+5. Restore the default traffic-saving state at the end.
+6. Dump the first valid `(N, 3)` frame to `lidar_first_frame.npy` so
+   the rasterizer can be developed and tuned offline without holding
+   a live robot.
+7. Generate three quick-look 480×480 grayscale PNGs from that frame:
+   BEV (X-Y density), side elevation (X-Z), front elevation (Y-Z).
+   These are diagnostic — the goal is "yes, the room is in there"
+   not metric accuracy.
+8. Write `lidar_probe_summary.json` with frame count, mean rate,
+   point-count stats, and first-frame metadata.
+
+**Dispatcher** (`src/go2_survey/mission_runner.py::_run_probe_lidar`):
+mirrors `_run_probe_gps` shape — IP discovery with retry, robot
+connect, teardown noise suppression. Phases logged as PHASE 1: ROBOT
+then PHASE 2: LIDAR PROBE.
+
+**Config** (`src/go2_survey/config.py`): `MissionSettings.mode`
+docstring gains `"probe_lidar"`. Reuses existing `[probe]
+duration_sec` field — no new TOML schema.
+
+### Hardware validation pending
+
+This entire feature is the validation step for the previous commit's
+docs claims. Expected on first run:
+
+- Frames begin arriving within ~3 s of subscribe + gate open
+- Mean rate stable across the 30 s window (no dropouts)
+- Point count per frame in the thousands (L1 typically produces tens
+  of thousands of valid voxels in indoor scenes)
+- BEV PNG shows recognizable room geometry; side/front show vertical
+  structure
+
+Anti-expectations (any of these would change Stage 2 design):
+- Zero frames received → topic doesn't fire without `ULIDAR_SWITCH`
+  toggle first, or `OBSTACLES_AVOID` controls the lidar power state
+- Frames arrive before `disableTrafficSaving(True)` → gate is
+  optional, simpler Stage 2 plumbing
+- Decoder error or shape mismatch → library version drift; rebuild
+  against documented `webrtc_datachannel.deal_array_buffer_for_normal`
+  pathway
+
+### Deferred — Stage 2
+
+Capture-time companion bitmap (separate PNG saved next to each JPG
+with sidecar entries documenting projection method + lidar timestamp
+delta). Intentionally not built here. The probe's first-frame `.npy`
++ three quick-looks will inform projection choice, raster size, and
+encoding before any capture-path code is touched.
+
+Bumps `0.10.0 → 0.11.0` (new sensor surface).
+
+---
+
 ## 2026-05-18: v0.10.0 — Captures Co-located with Logs (runs/ Layout)
 
 ### Scope
