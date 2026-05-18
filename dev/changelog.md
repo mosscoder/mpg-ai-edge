@@ -1,5 +1,99 @@
 # Navigation Changelog
 
+## 2026-05-18: v0.9.1 — Tighter Bearing Alignment + Dual Heading Metadata
+
+### Scope
+
+The 2026-05-15 quadrat captures (missions 05, 06) all completed
+successfully — every capture landed within ±5° of target, which is
+exactly what the bang-bang turn_to_bearing loop guarantees at the
+current 0.8 rad/s rotation rate (latency window between "in
+tolerance" and stop-command-landing is the alignment floor). The
+downstream consumer (SfM, stitching, geo-rectification) wants
+tighter alignment AND ground-truth heading metadata even when
+residual remains. Two coordinated commits.
+
+### 1. P-controller bearing alignment (`d923109`)
+
+`navigator.turn_to_bearing` is now a proportional controller with a
+dead-band floor:
+
+```
+rate = clamp(|kp * error|, min_rate_rad_s, self.rotation_rate)
+```
+
+`kp = 0.04` commands full `rotation_rate` at error ≥ 20°, linear
+decel below. `min_rate_rad_s = 0.15` floors above Go2 motor stiction
+— a pure P controller stalls sub-threshold near zero error and
+never converges. Stop command lands before overshoot, so 2° alignment
+is reachable without hunting.
+
+`CaptureSettings` defaults:
+- `turn_tolerance_deg` 5.0 → 2.0
+- `turn_kp = 0.04` (new)
+- `turn_min_rate_rad_s = 0.15` (new)
+
+All three field-tunable per-mission. The `[turn→N°]` log line now
+includes `rate=Xrad/s` so post-mortem can verify the controller is
+actually decelerating on approach (expect ~0.8 → ~0.15 across a
+turn).
+
+Production missions `05_tennis_single_quadrat` and
+`06_tennis_quadrat_pair` updated from explicit
+`turn_tolerance_deg = 5.0` to `2.0` to pick up the new default.
+
+### 2. Dual heading (target + achieved) in EXIF + sidecar (`aef59bd`)
+
+**Semantic change to EXIF — flag for downstream consumers**: EXIF
+`GPSImgDirection` now holds the *actual achieved heading* at moment
+of capture, not the navigation target. Photo metadata describes
+what the photo shows, not the intent. Before today, b090 captures
+wrote `GPSImgDirection = 90.0` even when the camera actually
+pointed at 91.5°. Now it writes `GPSImgDirection = 91.5`.
+
+The target bearing moves to EXIF `ImageDescription` as a parseable
+ASCII string:
+
+```
+target_bearing_deg=90.00;achieved_heading_deg=91.50;residual_deg=1.50
+```
+
+The sidecar JSON `heading` block expands to carry both:
+
+```json
+"heading": {
+  "degrees_true": 90.0,                 // legacy alias kept for back-compat
+  "target_degrees_true": 90.0,
+  "achieved_degrees_true": 91.5,
+  "residual_degrees": 1.5,              // pre-computed: achieved − target, wrap-safe
+  "source": "robot_imu_calibrated"
+}
+```
+
+`residual_degrees` uses `geometry.normalize_angle` so the
+target=355° → achieved=2° edge case correctly produces `+7.0`, not
+`-353.0`. Downstream consumers can use this value directly without
+their own angle-wrap math.
+
+`WaypointForwardStrategy` (the `nobrg` single-capture mode) also
+fixed alongside: it now correctly writes `bearing=None` (no target)
+and `achieved_heading=<imu>`, instead of conflating the achieved
+value into the `target_bearing_deg_true` mission-context field.
+
+Verified with mock round-trip: three cases (rotating_quadrat with
+residual, waypoint_forward with no target, wrap-around 355°→2°)
+all produce the expected EXIF + sidecar contents.
+
+### Hardware validation pending
+
+Local unit tests + dry-run config plumbing verified. Field
+validation: run `06_tennis_quadrat_pair`; expect tighter alignment
+(`err ≤ 2°` consistently), decelerating `rate=X.XXrad/s` in turn
+logs, and cross-consistent navigator log ↔ EXIF GPSImgDirection ↔
+sidecar `achieved_degrees_true` values per capture.
+
+---
+
 ## 2026-05-15: v0.8.3 — Robot IP Discovery Retry
 
 ### Scope
