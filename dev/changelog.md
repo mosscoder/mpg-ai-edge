@@ -1,5 +1,126 @@
 # Navigation Changelog
 
+## 2026-05-18: v0.12.0 — `--cog-fusion` CLI Flag (Experimental Recompute Backend)
+
+### Scope
+
+Per-arrival IMU recompute today computes a GPS bearing from the
+endpoints (A → B) of the per-leg trajectory buffer. The forensic
+analysis of the 5/15 quadrat runs showed this recompute is dominated
+by GPS noise at typical baseline lengths: ±10-15° of recompute noise
+on 5-10 m baselines, which exceeds the actual IMU drift it's trying
+to correct. Tightly-spaced waypoints in upcoming surveys make the
+baseline shorter and the problem worse.
+
+This commit adds an opt-in alternative that fuses every qualifying
+GPS course-over-ground (COG) sample buffered during the leg via an
+inverse-variance-weighted circular mean (weight = speed²). Precision
+scales with sample count rather than baseline length, so even short
+legs (2-3 m) get useful recomputes from the ~10 Hz GPS stream.
+
+### Change (`4a5bb50`)
+
+**Flag**: `--cog-fusion` on `go2-survey run`. Default off — the
+existing endpoint method runs unchanged. No TOML schema changes; the
+flag is CLI-only because the experimental phase wants run-time A/B
+without editing mission files. A future commit may promote the
+better-performing method to a TOML setting with CLI override.
+
+**Mission-start log line** (in both modes, before the dry-run exit):
+`Bearing recompute method: endpoint` or `Bearing recompute method:
+cog_fusion`. The choice is also tagged on every per-arrival recal
+banner:
+
+```
+- IMU RECAL [endpoint] | 125.4° → 115.0° (Δ -10.4°) | n=42 bsl=10.07m -
+- IMU RECAL [cog_fusion] | 125.4° → 117.8° (Δ -7.6°) | n=58 avg_speed=0.61m/s -
+```
+
+post-hoc analysis can `grep` either tag to see which method produced
+which recal.
+
+**Algorithm** (`navigator.py::_recalibrate_cog_fusion`):
+
+Per-tick COG samples have angular noise σ_θ ≈ σ_pos / (v · Δt), so
+variance scales as 1/v². Optimal inverse-variance weighting
+therefore weights each sample by v². The vector-sum form of the
+circular mean handles 0°/360° wrap-around correctly (averaging 359°
+and 1° gives ~0°, not 180°):
+
+```python
+xs = Σ (vᵢ² · cos(cogᵢ))
+ys = Σ (vᵢ² · sin(cogᵢ))
+fused_bearing_deg = atan2(ys, xs) (mod 360°)
+new_offset = normalize(fused_bearing_deg + last_imu_yaw)
+```
+
+The math is the closed-form solution to a 1D Kalman filter with
+process noise Q = 0 (heading constant during the straight-walk
+phase, which the existing `RECAL_STRAIGHT_VZ_THRESHOLD` gate
+enforces). It's also the standard "mean of circular quantities"
+recipe from directional statistics (Mardia & Jupp 1999).
+
+**Sample gating** (additive to the existing endpoint-method gates):
+- `speed > 0.2 m/s` — below this, single-sample noise saturates
+- `cog is not None` — receiver only emits COG above ~0.1 m/s anyway
+
+**Guardrails inherited from endpoint method**:
+- `RECAL_MIN_SAMPLES = 10` (qualifying-sample minimum, not total)
+- `RECAL_MAX_DELTA_DEG = 30°` (still rejects gross shifts)
+- Same `imu_recalibrate_on_arrival` master switch
+
+### Files changed
+
+- `src/go2_survey/cli.py` — `--cog-fusion` flag, bearing_method string
+- `src/go2_survey/mission_runner.py` — bearing_method field on
+  MissionRunner, threaded into WaypointNavigator, mission-start log line
+- `src/go2_survey/navigator.py` — _TrajSample extended with optional
+  cog+speed; _maybe_buffer_sample captures them unconditionally;
+  __init__ gains bearing_method kwarg with validation;
+  _recalibrate_from_buffer refactored into dispatcher +
+  _recalibrate_endpoint + _recalibrate_cog_fusion;
+  COG_FUSION_MIN_SPEED_M_S constant
+- `src/go2_survey/gps.py` — RTKPosition gains speed_over_ground field,
+  populated in get_position() from existing pvt["gSpeed"] parse
+
+### Verification offline
+
+- Syntax check on all four edited files
+- All existing missions parse with no TOML changes
+- Algorithm sanity tests:
+  - All-north samples → fused 0° ✓
+  - 359°/1° wrap test → ~0° (wrap-around correct, NOT 180°) ✓
+  - Speed-weighted (10×1° at 1m/s vs 10×91° at 0.1m/s) → 1.57°
+    (variance weighting prefers faster samples, NOT 46° midpoint) ✓
+- Dry-run with flag off logs `endpoint`; with `--cog-fusion` logs
+  `cog_fusion`; `run --help` shows the flag
+
+### Hardware validation pending
+
+The two-back-to-back A/B comparison:
+1. Run `06_tennis_quadrat_pair` with no flag (endpoint baseline).
+2. Run `06_tennis_quadrat_pair --cog-fusion` within 5 min, same
+   conditions (battery state, sky, temperature similar).
+3. Compare:
+   - `IMU RECAL [endpoint]` Δ magnitudes vs `IMU RECAL [cog_fusion]` Δ
+     magnitudes across the legs. Expect cog_fusion Δs to be tighter
+     (sub-degree corrections, not the ±15° swings seen on 5/15).
+   - Sidecar `residual_degrees` distributions across the 8 captures
+     per run. If cog_fusion offset is tighter AND the P-controller's
+     tolerance isn't the binding constraint, residuals should also
+     tighten.
+   - Sample count tags in the banner — endpoint uses N=2 effectively
+     (just A and B); cog_fusion typically uses N≈40-100 per leg.
+
+If cog_fusion residuals are equal-or-worse, the flag stays opt-in
+and the endpoint method retains its default position. If tighter, a
+future version promotes cog_fusion to default and adds a TOML
+setting for opt-out.
+
+Bumps `0.11.0 → 0.12.0`.
+
+---
+
 ## 2026-05-18: v0.11.0 — Lidar Probe Mission
 
 ### Scope
