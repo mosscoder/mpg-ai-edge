@@ -1,5 +1,68 @@
 # Navigation Changelog
 
+## 2026-05-18: v0.9.3 — wait_for_fix Self-Rescue + RTCM-Stalled Diagnosis
+
+### Scope
+
+Closes both carry-overs from the 2026-05-15 13:22 failure post-mortem
+in a single commit. That failure exposed a missing path: NTRIP socket
+nominally connected, msgs counter at 4, RTCM flow died silently
+after the initial handshake — rtcm_age climbed monotonically from
+13s → 287s while the receiver sat at type 3. The dwell aborted with
+'see NTRIP attempts above' (unhelpful) and the mission had no
+self-rescue path. Mid-mission the navigator's stale-detection would
+have fired `reconnect_ntrip_async()`, but PHASE 1 `wait_for_fix` had
+no equivalent.
+
+### Change (`da542ff`)
+
+Two coupled fixes in `gps.py:wait_for_fix`:
+
+**(1) Mid-wait self-rescue.** When `state == 'connected'` AND
+`has_active_corrections()` is False, the loop fires
+`reconnect_ntrip_async()`. Idempotent — the manager's reconnect_lock
+prevents re-entry while one is in flight. Stays fire-once-per-stall-
+incident via a local flag; re-arms when corrections return so a
+second stall in the same wait window also gets a rescue attempt.
+
+**(2) Fifth cause-attribution bucket.** When state ∈ ('connected',
+'reconnecting') at timeout AND `not has_active_corrections()`, the
+new branch reads:
+
+```
+NTRIP connected, last RTCM 287.0s ago, forwarded 4 msgs |
+Likely cause: NTRIP connected but RTCM stalled
+(caster delivery issue / upstream cellular)
+```
+
+Ordering matters: the new bucket goes between the 'healthy' branch
+and the 'disabled'/'gnss_only' branches, so the path that previously
+fell through to 'see NTRIP attempts above' now gets the diagnosis.
+
+Unit-tested:
+- Reconnect fires once per stall (Test 1)
+- Re-arms on recovery and fires again on second stall (Test 2)
+- Timeout banner contains the new cause text instead of the unhelpful
+  default (Test 3)
+
+The 5/15 13:22 scenario would now likely self-recover during PHASE 1
+instead of aborting. Worst case (caster truly dead, retry budget
+exhausted) still hits the 300s timeout, but the banner now names the
+actual cause so post-mortem doesn't need log archaeology.
+
+### Hardware validation pending
+
+Field validation: force RTCM stall during PHASE 1 (e.g. kill cell
+briefly between NTRIP connect and first fix). Expect to see
+'wait_for_fix: RTCM stalled ... firing reconnect_ntrip_async()'
+followed by mission recovery. If cell stays dead, expect timeout
+banner to read 'NTRIP connected but RTCM stalled' instead of 'see
+NTRIP attempts above'.
+
+Bumps `0.9.2 → 0.9.3`. Closes carry-over tasks #15 and #16.
+
+---
+
 ## 2026-05-18: v0.9.2 — Stabilization Early Exit
 
 ### Scope
