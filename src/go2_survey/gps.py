@@ -992,6 +992,10 @@ class GPSManager:
         last_progress = start
         last_pos: RTKPosition | None = None
         suspect_logged = False
+        # Fire-once-per-stall-incident flag for the mid-wait reconnect
+        # trigger. Reset when corrections return so a second stall in
+        # the same wait window also gets a rescue attempt.
+        stall_reconnect_fired = False
 
         while time.time() - start < timeout:
             pos = self.get_position()
@@ -1033,6 +1037,37 @@ class GPSManager:
                     logger=logger,
                 )
                 return True
+
+            # Mid-wait self-rescue: if the NTRIP socket is nominally
+            # connected but RTCM has stopped flowing, fire a reconnect
+            # in the background. Without this, the 2026-05-15 13:22 run
+            # sat at type 3 for 300s and aborted because nothing kicked
+            # the dead-but-not-closed stream. Idempotent — the manager's
+            # reconnect_lock prevents re-entry while one is in flight.
+            if (
+                self.ntrip is not None
+                and self.state == "connected"
+                and not corrections_active
+            ):
+                if not stall_reconnect_fired:
+                    age = self.ntrip.seconds_since_last_rtcm()
+                    age_str = f"{age:.1f}s" if age is not None else "∞"
+                    logger.warning(
+                        f"wait_for_fix: RTCM stalled "
+                        f"(state={self.state}, rtcm_age={age_str}, "
+                        f"alive={self.ntrip.connection_alive}) "
+                        f"— firing reconnect_ntrip_async()"
+                    )
+                    self.reconnect_ntrip_async()
+                    stall_reconnect_fired = True
+            elif corrections_active and stall_reconnect_fired:
+                # Stream is healthy again — arm the trigger for any
+                # subsequent stall in this wait window.
+                logger.info(
+                    "wait_for_fix: RTCM flow restored; re-arming "
+                    "stall-reconnect trigger"
+                )
+                stall_reconnect_fired = False
 
             # One-time "RTK FLOAT SUSPECT" warning when receiver claims
             # RTK without active corrections — the float-coast scenario.
@@ -1089,13 +1124,35 @@ class GPSManager:
             time.sleep(1.0)
 
         elapsed = time.time() - start
-        # Cause attribution: NTRIP healthy → sky issue, NTRIP dead → corrections
+        # Cause attribution: order matters — check "connected but
+        # stalled" before falling through to "see NTRIP attempts" so
+        # the misleading branch from the 2026-05-15 13:22 failure
+        # ("rtcm_age=287s | NTRIP state=connected | see NTRIP
+        # attempts above") gets a real diagnosis instead.
         if self.has_active_corrections():
             cause = "Likely cause: poor sky view / multipath"
             ntrip_summary = (
                 f"NTRIP healthy (msgs={self.ntrip.correction_count})"
                 if self.ntrip
                 else "NTRIP healthy"
+            )
+        elif (
+            self.ntrip is not None
+            and self.state in ("connected", "reconnecting")
+        ):
+            # Socket alive but RTCM not flowing. Distinct from
+            # "NTRIP unavailable" — here the caster is reachable but
+            # not delivering. Usually a caster-side blip or upstream
+            # cellular dropout that didn't close the socket cleanly.
+            age = self.ntrip.seconds_since_last_rtcm()
+            age_str = f"{age:.1f}s ago" if age is not None else "never received"
+            cause = (
+                "Likely cause: NTRIP connected but RTCM stalled "
+                "(caster delivery issue / upstream cellular)"
+            )
+            ntrip_summary = (
+                f"NTRIP {self.state}, last RTCM {age_str}, "
+                f"forwarded {self.ntrip.correction_count} msgs"
             )
         elif self.state in ("disabled",):
             cause = "Likely cause: NTRIP disabled (RTK unreachable by design)"
