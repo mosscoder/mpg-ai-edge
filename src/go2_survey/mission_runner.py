@@ -93,6 +93,7 @@ class MissionRunner:
     mission_dir: Path
     run_dir: Path
     dry_run: bool = False
+    bearing_method: str = "endpoint"  # "endpoint" | "cog_fusion"
     on_waypoint_reached: WaypointHook | None = None
     on_gps_update: PositionHook | None = None
 
@@ -145,6 +146,7 @@ async def run_mission(runner: MissionRunner) -> bool:
         f"minFix={settings.navigation.min_fix_type} "
         f"maxHacc={settings.navigation.max_hacc}m"
     )
+    logger.info(f"Bearing recompute method: {runner.bearing_method}")
 
     if runner.dry_run:
         log_banner("DRY RUN — not connecting to hardware", logger=logger)
@@ -212,6 +214,7 @@ async def run_mission(runner: MissionRunner) -> bool:
         max_hacc=settings.navigation.max_hacc,
         gps_timeout=settings.navigation.mid_mission_fix_timeout,
         imu_recalibrate_on_arrival=settings.navigation.imu_recalibrate_on_arrival,
+        bearing_method=runner.bearing_method,
     )
 
     try:

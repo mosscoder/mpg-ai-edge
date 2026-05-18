@@ -2,6 +2,8 @@
 
 import asyncio
 import logging
+import math
+import statistics
 import time
 from collections import deque
 from typing import NamedTuple
@@ -14,14 +16,28 @@ from go2_survey.waypoints import Waypoint
 
 logger = logging.getLogger(__name__)
 
+# COG samples below this speed have too much per-sample angular noise to
+# contribute usefully to the inverse-variance-weighted circular mean.
+# At 0.2 m/s with 100ms tick and ~2cm GPS noise, single-sample bearing
+# uncertainty is already ~atan(0.02/0.02) ≈ 45° — saturating the noise
+# model. Above 0.2 m/s noise drops below ~30° per sample, which the
+# weighting + averaging can usefully reduce.
+COG_FUSION_MIN_SPEED_M_S = 0.2
+
 
 class _TrajSample(NamedTuple):
-    """One (time, position, IMU yaw) sample collected while walking."""
+    """One (time, position, IMU yaw, GPS COG, GPS speed) sample collected
+    while walking. `cog`/`speed` may be None — endpoint recompute only
+    uses the position fields, so older code paths remain valid; cog_fusion
+    requires both.
+    """
 
     t: float
     lat: float
     lon: float
     imu_yaw: float
+    cog: float | None = None
+    speed: float | None = None
 
 
 class WaypointNavigator:
@@ -60,6 +76,7 @@ class WaypointNavigator:
         calibration_timeout: float = 30.0,
         calibration_hacc: float = 0.1,
         imu_recalibrate_on_arrival: bool = True,
+        bearing_method: str = "endpoint",
     ):
         self.gps = gps
         self.robot = robot
@@ -72,6 +89,12 @@ class WaypointNavigator:
         self.calibration_timeout = calibration_timeout
         self.calibration_hacc = calibration_hacc
         self.imu_recalibrate_on_arrival = imu_recalibrate_on_arrival
+        if bearing_method not in ("endpoint", "cog_fusion"):
+            raise ValueError(
+                f"bearing_method must be 'endpoint' or 'cog_fusion', "
+                f"got {bearing_method!r}"
+            )
+        self.bearing_method = bearing_method
 
         self._running = False
         self._paused = False
@@ -567,11 +590,32 @@ class WaypointNavigator:
                 lat=pos.latitude,
                 lon=pos.longitude,
                 imu_yaw=imu_yaw,
+                cog=pos.course_over_ground,
+                speed=pos.speed_over_ground,
             )
         )
 
     def _recalibrate_from_buffer(self) -> None:
-        """Refresh `_imu_north_offset` at arrival from buffered samples.
+        """Dispatch to the configured per-arrival recompute algorithm.
+
+        Both backends share the early-skip guards (feature disabled,
+        first-leg cal not yet complete) before branching. See
+        `_recalibrate_endpoint` and `_recalibrate_cog_fusion` for the
+        per-algorithm logic and log-banner shape.
+        """
+        if not self.imu_recalibrate_on_arrival:
+            return
+        if self._imu_north_offset is None:
+            # First-leg cal walk hasn't completed; nothing to refine.
+            return
+
+        if self.bearing_method == "cog_fusion":
+            self._recalibrate_cog_fusion()
+        else:
+            self._recalibrate_endpoint()
+
+    def _recalibrate_endpoint(self) -> None:
+        """Refresh `_imu_north_offset` from the leg's GPS endpoints.
 
         Picks the longest available straight-line baseline in the buffer:
         A = earliest sample, B = most recent sample (after dropping the
@@ -582,25 +626,18 @@ class WaypointNavigator:
         `_calibrate_imu`.
 
         Skips with a warning if any of:
-          - feature disabled in config
           - too few samples ever buffered
           - too few samples remain after dropping the deceleration zone
           - resulting baseline shorter than `RECAL_MIN_BASELINE_M`
           - proposed offset shift exceeds `RECAL_MAX_DELTA_DEG` (likely
             a corrupt sample, not real drift in a single leg)
         """
-        if not self.imu_recalibrate_on_arrival:
-            return
-
-        if self._imu_north_offset is None:
-            # First leg's cal walk hasn't completed; nothing to refine.
-            return
-
         n = len(self._traj_buf)
         if n < self.RECAL_MIN_SAMPLES:
             logger.warning(
-                f"IMU recal: only {n}/{self.RECAL_MIN_SAMPLES} samples in "
-                f"buffer; keeping offset {self._imu_north_offset:.1f}°"
+                f"IMU recal [endpoint]: only {n}/{self.RECAL_MIN_SAMPLES} "
+                f"samples in buffer; keeping offset "
+                f"{self._imu_north_offset:.1f}°"
             )
             return
 
@@ -608,8 +645,8 @@ class WaypointNavigator:
         candidates = [s for s in self._traj_buf if s.t <= cutoff]
         if len(candidates) < 2:
             logger.warning(
-                f"IMU recal: only {len(candidates)} samples remain after "
-                f"dropping last {self.RECAL_DROP_RECENT_SEC:.1f}s; "
+                f"IMU recal [endpoint]: only {len(candidates)} samples "
+                f"remain after dropping last {self.RECAL_DROP_RECENT_SEC:.1f}s; "
                 f"keeping offset {self._imu_north_offset:.1f}°"
             )
             return
@@ -619,7 +656,7 @@ class WaypointNavigator:
         baseline = haversine_distance(a.lat, a.lon, b.lat, b.lon)
         if baseline < self.RECAL_MIN_BASELINE_M:
             logger.warning(
-                f"IMU recal: baseline {baseline:.2f}m < "
+                f"IMU recal [endpoint]: baseline {baseline:.2f}m < "
                 f"{self.RECAL_MIN_BASELINE_M:.1f}m minimum across "
                 f"{len(candidates)} samples; keeping offset "
                 f"{self._imu_north_offset:.1f}°"
@@ -632,8 +669,8 @@ class WaypointNavigator:
 
         if abs(delta) > self.RECAL_MAX_DELTA_DEG:
             logger.warning(
-                f"IMU recal: proposed shift {delta:+.1f}° exceeds "
-                f"{self.RECAL_MAX_DELTA_DEG:.0f}° guardrail "
+                f"IMU recal [endpoint]: proposed shift {delta:+.1f}° "
+                f"exceeds {self.RECAL_MAX_DELTA_DEG:.0f}° guardrail "
                 f"(bsl={baseline:.2f}m, n={len(candidates)}); "
                 f"keeping offset {self._imu_north_offset:.1f}°"
             )
@@ -642,8 +679,89 @@ class WaypointNavigator:
         old = self._imu_north_offset
         self._imu_north_offset = new_offset
         log_banner(
-            f"IMU RECAL | {old:.1f}° → {new_offset:.1f}° "
+            f"IMU RECAL [endpoint] | {old:.1f}° → {new_offset:.1f}° "
             f"(Δ {delta:+.1f}°) | n={len(candidates)} bsl={baseline:.2f}m",
+            char="-",
+            logger=logger,
+        )
+
+    def _recalibrate_cog_fusion(self) -> None:
+        """Refresh `_imu_north_offset` via inverse-variance-weighted
+        circular mean of GPS course-over-ground samples.
+
+        Each per-tick COG sample has angular noise σ_θ ≈ σ_pos / (v·Δt),
+        so variance scales as 1/v². Optimal inverse-variance weighting
+        therefore weights each sample by v². The vector-sum form of the
+        circular mean (`atan2(Σw·sin, Σw·cos)`) handles the 0°/360°
+        wrap-around correctly.
+
+        Falls back to the same `RECAL_MAX_DELTA_DEG` guardrail as the
+        endpoint method. Skips with a warning if:
+          - fewer than `RECAL_MIN_SAMPLES` qualify (after speed gate)
+          - the weighted vector sum is degenerate (samples cancel out)
+          - proposed offset shift exceeds the delta guardrail
+
+        Note: the per-sample speed/cog gate (`s.speed > MIN_SPEED`,
+        `s.cog is not None`) is on top of the `_maybe_buffer_sample`
+        gating that already requires `min_fix_type`, `max_hacc`, and
+        small `|vz|`. The remaining samples are good-quality, nearly-
+        straight motion above the noise-floor speed.
+        """
+        qualifying = [
+            s for s in self._traj_buf
+            if s.cog is not None
+            and s.speed is not None
+            and s.speed > COG_FUSION_MIN_SPEED_M_S
+        ]
+        if len(qualifying) < self.RECAL_MIN_SAMPLES:
+            logger.warning(
+                f"IMU recal [cog_fusion]: only {len(qualifying)}/"
+                f"{self.RECAL_MIN_SAMPLES} qualifying samples (need cog + "
+                f"speed > {COG_FUSION_MIN_SPEED_M_S}m/s); keeping offset "
+                f"{self._imu_north_offset:.1f}°"
+            )
+            return
+
+        # Inverse-variance weighting (weight = v²) + vector-sum circular
+        # mean. cog is in degrees; convert to radians for the trig.
+        xs = sum(
+            (s.speed ** 2) * math.cos(math.radians(s.cog))
+            for s in qualifying
+        )
+        ys = sum(
+            (s.speed ** 2) * math.sin(math.radians(s.cog))
+            for s in qualifying
+        )
+        if xs * xs + ys * ys < 1e-9:
+            logger.warning(
+                f"IMU recal [cog_fusion]: degenerate vector sum "
+                f"(n={len(qualifying)} samples cancelled out); keeping "
+                f"offset {self._imu_north_offset:.1f}°"
+            )
+            return
+
+        fused_bearing_deg = math.degrees(math.atan2(ys, xs)) % 360.0
+        # Anchor to the most-recent qualifying sample's IMU yaw, mirroring
+        # the endpoint method's use of B.imu_yaw.
+        new_offset = normalize_angle(fused_bearing_deg + qualifying[-1].imu_yaw)
+        delta = normalize_angle(new_offset - self._imu_north_offset)
+
+        if abs(delta) > self.RECAL_MAX_DELTA_DEG:
+            logger.warning(
+                f"IMU recal [cog_fusion]: proposed shift {delta:+.1f}° "
+                f"exceeds {self.RECAL_MAX_DELTA_DEG:.0f}° guardrail "
+                f"(n={len(qualifying)}); keeping offset "
+                f"{self._imu_north_offset:.1f}°"
+            )
+            return
+
+        old = self._imu_north_offset
+        self._imu_north_offset = new_offset
+        avg_speed = statistics.mean(s.speed for s in qualifying)
+        log_banner(
+            f"IMU RECAL [cog_fusion] | {old:.1f}° → {new_offset:.1f}° "
+            f"(Δ {delta:+.1f}°) | n={len(qualifying)} "
+            f"avg_speed={avg_speed:.2f}m/s",
             char="-",
             logger=logger,
         )

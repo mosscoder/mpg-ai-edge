@@ -49,6 +49,7 @@ class RTKPosition:
     altitude_msl: float | None = None
     pdop: float | None = None
     correction_age_bin: int | None = None
+    speed_over_ground: float | None = None  # m/s, from NAV-PVT gSpeed
 
 
 class UBloxRTKGPS:
@@ -517,6 +518,7 @@ class UBloxRTKGPS:
             altitude_msl=pvt["hMSL"],
             pdop=pvt["pDOP"],
             correction_age_bin=pvt["lastCorrectionAge"],
+            speed_over_ground=pvt["gSpeed"],
         )
 
     def wait_for_rtk_fix(self, timeout: float = 300.0, min_fix_type: int = 4) -> bool:
