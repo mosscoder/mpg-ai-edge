@@ -12,7 +12,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Awaitable, Callable
 
-from go2_survey.capture import CaptureContext, build_strategy
+from go2_survey.capture import (
+    CaptureContext,
+    DriveByStrategy,
+    build_strategy,
+    write_drive_by_capture,
+)
 from go2_survey.config import MissionSettings, load_mission_config
 from go2_survey.discovery import find_robot_ips
 from go2_survey.gps import GPSManager, RTKPosition
@@ -268,18 +273,15 @@ async def run_mission(runner: MissionRunner) -> bool:
             char="-",
             logger=logger,
         )
-        for i, wp in enumerate(waypoints, start=1):
-            log_banner(
-                f"WAYPOINT {i}/{len(waypoints)}: {wp.name}", logger=logger
-            )
-            reached = await navigator.navigate_to(wp)
-            if not reached:
-                logger.error(f"Failed to reach waypoint {i}: {wp.name}")
-                return False
 
-            arrival_pos = gps.get_position()
-
-            if settings.capture.strategy != "none":
+        if settings.capture.strategy == DriveByStrategy.name:
+            # Drive-by mode runs the route end-to-end inside the
+            # navigator; per-waypoint capture fires as a callback at
+            # closest pass. The per-wp navigate_to + capture_strategy
+            # loop is bypassed entirely.
+            async def _drive_by_capture_cb(
+                wp, position, distance_at_trigger, commanded_speed
+            ):
                 ctx = CaptureContext(
                     mission_name=settings.name or mission_dir.name,
                     mission_dir=mission_dir,
@@ -289,12 +291,58 @@ async def run_mission(runner: MissionRunner) -> bool:
                     navigator=navigator,
                     settings=settings.capture,
                     waypoint=wp,
-                    arrival_position=arrival_pos,
+                    arrival_position=position,
                 )
-                await capture_strategy.execute(ctx)
+                n_written = await write_drive_by_capture(
+                    ctx,
+                    wp_name=wp.name,
+                    position=position,
+                    distance_at_trigger_m=distance_at_trigger,
+                    commanded_speed_m_s=commanded_speed,
+                )
+                if runner.on_waypoint_reached is not None:
+                    await runner.on_waypoint_reached(wp, position)
+                return n_written
 
-            if runner.on_waypoint_reached is not None and arrival_pos is not None:
-                await runner.on_waypoint_reached(wp, arrival_pos)
+            success = await navigator.navigate_through(
+                waypoints=waypoints,
+                on_capture_cb=_drive_by_capture_cb,
+                cruise_speed=settings.capture.cruise_speed,
+                valley_speed=settings.capture.valley_speed,
+                valley_radius_m=settings.capture.valley_radius_m,
+                sharp_turn_deg=settings.capture.sharp_turn_deg,
+            )
+            if not success:
+                logger.error("Drive-by route failed")
+                return False
+        else:
+            for i, wp in enumerate(waypoints, start=1):
+                log_banner(
+                    f"WAYPOINT {i}/{len(waypoints)}: {wp.name}", logger=logger
+                )
+                reached = await navigator.navigate_to(wp)
+                if not reached:
+                    logger.error(f"Failed to reach waypoint {i}: {wp.name}")
+                    return False
+
+                arrival_pos = gps.get_position()
+
+                if settings.capture.strategy != "none":
+                    ctx = CaptureContext(
+                        mission_name=settings.name or mission_dir.name,
+                        mission_dir=mission_dir,
+                        run_dir=runner.run_dir,
+                        robot=robot,
+                        gps=gps,
+                        navigator=navigator,
+                        settings=settings.capture,
+                        waypoint=wp,
+                        arrival_position=arrival_pos,
+                    )
+                    await capture_strategy.execute(ctx)
+
+                if runner.on_waypoint_reached is not None and arrival_pos is not None:
+                    await runner.on_waypoint_reached(wp, arrival_pos)
 
         log_banner("MISSION COMPLETE", logger=logger)
         final = gps.get_position()

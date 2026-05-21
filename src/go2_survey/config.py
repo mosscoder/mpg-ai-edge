@@ -104,7 +104,7 @@ class ProbeSettings:
 class CaptureSettings:
     """Per-waypoint capture behavior. See `capture.py::STRATEGIES`."""
 
-    strategy: str = "none"              # "none" | "frame_only" | "waypoint_forward" | "rotating_quadrat"
+    strategy: str = "none"              # "none" | "frame_only" | "waypoint_forward" | "rotating_quadrat" | "drive_by"
     settle_time: float = 2.0            # seconds after stop before sampling
     gps_avg_sec: float = 3.0            # GPS averaging window (0 disables)
     bearings: list = field(default_factory=lambda: [0.0, 90.0, 180.0, 270.0])
@@ -120,8 +120,19 @@ class CaptureSettings:
     # (a pure P controller stalls sub-threshold and never converges).
     turn_tolerance_deg: float = 2.0     # was 5.0; the P-controller makes 2° reachable
     turn_kp: float = 0.04               # P-controller gain (rad/s per degree of error)
-    turn_min_rate_rad_s: float = 0.15   # dead-band floor (rad/s); below = no motion
+    turn_min_rate_rad_s: float = 0.45   # dead-band floor (rad/s); Go2 won't rotate in place below ~0.4
     turn_timeout_sec: float = 15.0      # per-bearing rotation timeout
+    # drive_by strategy: walk continuously through waypoints with a
+    # sinusoidal-valley velocity profile. cruise_speed is the between-wp
+    # forward velocity; within valley_radius_m of the next wp the dog
+    # linearly decelerates to valley_speed, fires the shutter at closest
+    # approach, then accelerates back to cruise on the other side. At
+    # turns sharper than sharp_turn_deg the dog brakes to a stop, rotates
+    # in place, and resumes — "no stop except to turn".
+    cruise_speed: float = 1.0
+    valley_speed: float = 0.25
+    valley_radius_m: float = 1.0
+    sharp_turn_deg: float = 30.0
 
 
 @dataclass

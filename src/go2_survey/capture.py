@@ -169,6 +169,33 @@ class WaypointForwardStrategy(CaptureStrategy):
         return 1
 
 
+class DriveByStrategy(CaptureStrategy):
+    """In-motion capture: single forward frame triggered as the dog passes
+    the waypoint, while continuing through the route without stopping.
+
+    Distinct from the other strategies, this one doesn't run *at* a
+    waypoint — the whole route runs as one continuous motion in the
+    navigator (`navigate_through`), with a callback firing the per-wp
+    shutter at closest approach. The per-wp work (frame + position +
+    sidecar) lives in `write_drive_by_capture()` below; this class's
+    `execute()` is intentionally never called — the strategy name is
+    just the dispatch marker mission_runner uses to take the drive-by
+    code path.
+
+    Velocity profile, valley radius, and sharp-turn handling are all
+    configured via [capture] fields read in `navigator.navigate_through`.
+    """
+
+    name = "drive_by"
+
+    async def execute(self, ctx: CaptureContext) -> int:
+        raise RuntimeError(
+            "DriveByStrategy.execute() should never be called per-waypoint; "
+            "the drive-by route runs end-to-end inside "
+            "navigator.navigate_through(). Check mission_runner dispatch."
+        )
+
+
 class RotatingQuadratStrategy(CaptureStrategy):
     """Rotate to each absolute bearing in the list, capturing at each.
 
@@ -359,11 +386,59 @@ def _mission_context(
     }
 
 
+async def write_drive_by_capture(
+    ctx: CaptureContext,
+    wp_name: str,
+    position: RTKPosition,
+    distance_at_trigger_m: float,
+    commanded_speed_m_s: float,
+) -> int:
+    """In-motion shutter + write. Called from navigator.navigate_through()
+    at the closest-pass moment of each waypoint.
+
+    The frame is whatever's freshest in the WebRTC cache at the trigger
+    instant; the geotag is the GPS sample passed in (already the
+    closest-pass position). No settle, no GPS averaging, no rotation —
+    the dog is moving the whole time. Drive-by-specific telemetry
+    (distance at trigger, commanded forward velocity) lands in the
+    sidecar `extra` block so post-hoc analysis can correlate frame
+    quality against motion state.
+    """
+    frame_result = await capture_frame(
+        ctx.robot,
+        max_age=ctx.settings.frame_max_age,
+        wait_timeout=ctx.settings.frame_wait_timeout,
+    )
+    if frame_result is None:
+        logger.error(f"No fresh frame at {wp_name} (drive_by); skipping")
+        return 0
+
+    achieved_heading, heading_source = _current_bearing(ctx)
+    out_path = _capture_output_path(ctx, wp_name, bearing=None)
+    write_geotagged_jpeg(
+        frame=frame_result,
+        position=position,
+        bearing=None,
+        achieved_heading=achieved_heading,
+        out_path=out_path,
+        heading_source=heading_source,
+        mission_context=_mission_context(ctx, wp_name, DriveByStrategy.name, None),
+        extra={
+            "drive_by": {
+                "distance_at_trigger_m": distance_at_trigger_m,
+                "commanded_speed_m_s": commanded_speed_m_s,
+            }
+        },
+    )
+    return 1
+
+
 STRATEGIES = {
     NoOpStrategy.name: NoOpStrategy,
     FrameOnlyStrategy.name: FrameOnlyStrategy,
     WaypointForwardStrategy.name: WaypointForwardStrategy,
     RotatingQuadratStrategy.name: RotatingQuadratStrategy,
+    DriveByStrategy.name: DriveByStrategy,
 }
 
 

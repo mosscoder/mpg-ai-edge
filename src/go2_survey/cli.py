@@ -6,6 +6,9 @@ Usage:
     go2-survey run path/to/mission    # ... or by path
     go2-survey run 00_parking_lot --dry-run
     go2-survey run 00_parking_lot -v  # debug logging
+    go2-survey get-waypoints PATH --side-len-m 30 --grid-m 5 --epsg 6514
+                                      # generate a serpentine grid from a
+                                      # Point or Polygon (GeoJSON or KML)
 """
 
 import argparse
@@ -27,6 +30,7 @@ from go2_survey.logging_utils import (
     WebRTCTeardownNoiseFilter,
 )
 from go2_survey.mission_runner import MissionRunner, run_mission
+from go2_survey.waypoint_gen import cmd_get_waypoints, cmd_plot_waypoints
 
 
 def _git_short_sha() -> str:
@@ -311,6 +315,68 @@ def build_parser() -> argparse.ArgumentParser:
         help="network CIDR to scan (default: auto-detect via `ip route`)",
     )
     discover_parser.set_defaults(func=cmd_discover_ip)
+
+    getwp_parser = subparsers.add_parser(
+        "get-waypoints",
+        help="generate a serpentine waypoint grid from a Point or Polygon "
+        "(GeoJSON or KML). Writes waypoints.geojson next to the input.",
+    )
+    getwp_parser.add_argument(
+        "input",
+        help="path to a GeoJSON or KML file containing a single Point or "
+        "Polygon (or multiple features — centroid is used)",
+    )
+    getwp_parser.add_argument(
+        "--side-len-m",
+        type=float,
+        default=None,
+        help="side length of the square sampling area in meters (REQUIRED "
+        "for point input; IGNORED for polygon input)",
+    )
+    getwp_parser.add_argument(
+        "--grid-m",
+        type=float,
+        required=True,
+        help="spacing between waypoints in meters",
+    )
+    getwp_parser.add_argument(
+        "--epsg",
+        type=int,
+        required=True,
+        help="EPSG code of a projected CRS (units must be METERS) used for "
+        "the grid math, e.g. 6514 for NAD83(2011) / Montana. Output is "
+        "always EPSG:4326 (lon/lat).",
+    )
+    getwp_parser.add_argument(
+        "--bearing-deg",
+        type=float,
+        default=0.0,
+        help="rotate the grid clockwise from the default E–W row "
+        "orientation. e.g. --bearing-deg=30 → rows tilt 30° clockwise.",
+    )
+    getwp_parser.add_argument(
+        "--no-plot",
+        action="store_true",
+        help="skip generating mission_layout.png alongside waypoints.geojson "
+        "(default: plot is generated automatically)",
+    )
+    getwp_parser.set_defaults(func=cmd_get_waypoints)
+
+    plotwp_parser = subparsers.add_parser(
+        "plot-waypoints",
+        help="render mission_layout.png from a waypoints.geojson — "
+        "bounding box, numbered waypoints, serpentine arrows.",
+    )
+    plotwp_parser.add_argument(
+        "input",
+        help="path to a waypoints.geojson",
+    )
+    plotwp_parser.add_argument(
+        "--output",
+        default=None,
+        help="output PNG path (default: mission_layout.png next to input)",
+    )
+    plotwp_parser.set_defaults(func=cmd_plot_waypoints)
 
     return parser
 

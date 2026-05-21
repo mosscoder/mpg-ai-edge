@@ -1,0 +1,33 @@
+name        = "09_farm_decel_img"
+description = "Drive-by route with capture-time decel: 1.0 m/s cruise → 0.25 m/s in a 1 m valley around each waypoint, fire shutter at closest pass, accel back to cruise. A/B partner to 08_farm_const_speed (same waypoints, no decel)."
+mode        = "nav"
+
+[gps]
+port = "/dev/ttyACM0"
+baud = 38400
+
+[ntrip]
+host        = "caster.emlid.com"
+port        = 2101
+mountpoints = ["MP22385", "MP22385a"]
+usernames   = ["u26787",  "u26787"]
+passwords   = ["492utz",  "492utz"]
+
+[robot]
+connection_mode = "LocalSTA"
+
+[navigation]
+arrival_tolerance = 0.25
+max_velocity      = 1.0
+rotation_rate     = 0.8
+min_fix_type      = 4
+max_hacc          = 0.10
+gps_fix_timeout   = 300
+
+[capture]
+strategy        = "drive_by"
+cruise_speed    = 1.0
+valley_speed    = 0.25
+valley_radius_m = 1.0
+sharp_turn_deg  = 30.0
+output_subdir   = "captures"

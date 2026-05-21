@@ -28,9 +28,12 @@ def load_waypoints(geojson_path: str | Path) -> list[Waypoint]:
 
     waypoints: list[Waypoint] = []
     for i, feature in enumerate(data.get("features", [])):
-        geom = feature.get("geometry", {})
-        props = feature.get("properties", {})
-        name = props.get("name", f"waypoint_{i}")
+        # QGIS-style exports sometimes carry features with `"geometry": null`
+        # (e.g. an attribute-only row). Coalesce so .get("type") doesn't
+        # crash on `None`.
+        geom = feature.get("geometry") or {}
+        props = feature.get("properties") or {}
+        name = props.get("name") or f"waypoint_{len(waypoints) + 1}"
 
         geom_type = geom.get("type")
         if geom_type == "Point":

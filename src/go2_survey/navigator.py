@@ -186,6 +186,269 @@ class WaypointNavigator:
             cause = "see receiver state above"
         return fix_info, cause
 
+    async def navigate_through(
+        self,
+        waypoints: list[Waypoint],
+        on_capture_cb,
+        cruise_speed: float,
+        valley_speed: float,
+        valley_radius_m: float,
+        sharp_turn_deg: float,
+        timeout_per_wp: float = 300.0,
+    ) -> bool:
+        """Continuous-motion drive-by route through all waypoints.
+
+        Velocity profile per leg:
+          * distance to current target > valley_radius_m: cruise_speed
+          * within valley_radius_m: linear ramp toward valley_speed (V-shape)
+          * at arrival: fire on_capture_cb(wp, position, dist, vx)
+
+        At each capture, the heading error to the *next* waypoint is
+        measured. If it exceeds sharp_turn_deg, the dog brakes to a
+        stop, calls `turn_to_bearing` to rotate in place, then resumes
+        cruise on the next leg. Otherwise it continues smoothly with
+        no pause.
+
+        Returns True on success after the final waypoint's capture.
+        Returns False on GPS-loss timeout, IMU-calibration timeout, or
+        per-waypoint navigation timeout.
+        """
+        if not waypoints:
+            return True
+
+        log_banner(
+            f"DRIVE-BY ROUTE | {len(waypoints)} wp(s) | "
+            f"cruise={cruise_speed:.2f}m/s valley={valley_speed:.2f}m/s "
+            f"radius={valley_radius_m:.1f}m sharp_turn>{sharp_turn_deg:.0f}°",
+            logger=logger,
+        )
+
+        self._running = True
+        await self.robot.balance_stand()
+        await asyncio.sleep(1.0)
+
+        # Initial IMU calibration walk if not yet calibrated.
+        if self._imu_north_offset is None:
+            log_banner("CALIBRATING IMU (drive-by)", char="-", logger=logger)
+            cal_start = time.time()
+            while self._running:
+                if time.time() - cal_start > timeout_per_wp:
+                    logger.error("Timeout during initial IMU calibration")
+                    await self.robot.stop()
+                    return False
+                pos = self.gps.get_position()
+                if not pos:
+                    await asyncio.sleep(0.2)
+                    continue
+                imu_yaw = self.robot.get_yaw_degrees()
+                if imu_yaw is not None:
+                    self._maybe_buffer_sample(pos, imu_yaw, vz=0.0)
+                    if self._calibrate_imu(pos, imu_yaw):
+                        # Don't stop — flow straight into the route. The
+                        # cal walk happens while heading toward wp1, so
+                        # the dog is already in roughly the right direction.
+                        break
+                await self.robot.send_velocity(x=cruise_speed)
+                await asyncio.sleep(0.2)
+
+        n_captured = 0
+        for i, wp in enumerate(waypoints):
+            is_last = i == len(waypoints) - 1
+            next_wp = None if is_last else waypoints[i + 1]
+            log_banner(
+                f"DRIVE-BY WP {i + 1}/{len(waypoints)}: {wp.name}",
+                char="-",
+                logger=logger,
+            )
+
+            self._traj_buf.clear()
+            leg_start = time.time()
+            prev_distance = float("inf")
+            captured = False
+            last_status = 0.0
+
+            while self._running:
+                if time.time() - leg_start > timeout_per_wp:
+                    logger.error(
+                        f"Drive-by timeout on leg to {wp.name} "
+                        f"after {timeout_per_wp:.0f}s"
+                    )
+                    await self.robot.stop()
+                    return False
+
+                pos = self.gps.get_position()
+                corrections_active = self.gps.has_active_corrections()
+                if not self._is_quality_acceptable(pos, corrections_active):
+                    # Drive-by has no graceful "pause and wait" — if GPS
+                    # degrades mid-route we stop and let the existing
+                    # nav-style fix-lost loop handle it.
+                    fix_info, cause = self._fix_lost_diagnostics(
+                        pos, corrections_active
+                    )
+                    logger.warning(
+                        f"GPS lost mid-drive-by ({fix_info}); pausing | {cause}"
+                    )
+                    await self.robot.stop()
+                    if not await self._wait_for_fix_resume():
+                        return False
+                    leg_start = time.time()  # reset leg timeout after fix
+                    continue
+
+                distance = haversine_distance(
+                    pos.latitude, pos.longitude,
+                    wp.latitude, wp.longitude,
+                )
+
+                # Capture trigger: inside arrival_tolerance OR distance
+                # just turned around (closest-pass detection). The
+                # closest-pass clause is gated on prev_distance being
+                # "near" the waypoint so we don't trigger on noise far
+                # from the target.
+                near_radius = max(2 * valley_radius_m, 0.5)
+                closest_pass = (
+                    distance > prev_distance and prev_distance < near_radius
+                )
+                if not captured and (
+                    distance < self.arrival_tolerance or closest_pass
+                ):
+                    trigger_speed = self._drive_by_speed(
+                        prev_distance, cruise_speed, valley_speed, valley_radius_m
+                    )
+                    log_banner(
+                        f"CAPTURE @ {wp.name} | drive_by | "
+                        f"d={prev_distance:.2f}m v_cmd={trigger_speed:.2f}m/s",
+                        char="-",
+                        logger=logger,
+                    )
+                    n_written = await on_capture_cb(
+                        wp, pos, prev_distance, trigger_speed
+                    )
+                    n_captured += n_written
+                    captured = True
+                    self._recalibrate_from_buffer()
+
+                    if is_last:
+                        await self.robot.stop()
+                        await self.robot.balance_stand()
+                        log_banner(
+                            f"DRIVE-BY ROUTE COMPLETE | {n_captured} frame(s)",
+                            logger=logger,
+                        )
+                        return True
+
+                    # Sharp-turn check toward next waypoint.
+                    next_bearing = calculate_bearing(
+                        pos.latitude, pos.longitude,
+                        next_wp.latitude, next_wp.longitude,
+                    )
+                    heading_now = self.get_calibrated_heading()
+                    if heading_now is not None:
+                        turn_error = abs(
+                            normalize_angle(next_bearing - heading_now)
+                        )
+                        if turn_error > sharp_turn_deg:
+                            log_banner(
+                                f"SHARP TURN | {turn_error:.0f}° to next wp | "
+                                f"pausing to rotate",
+                                char="-",
+                                logger=logger,
+                            )
+                            await self.robot.stop()
+                            await self.turn_to_bearing(
+                                next_bearing,
+                                tolerance_deg=10.0,
+                                timeout=15.0,
+                            )
+                    break  # advance to next waypoint
+
+                # Speed + heading control.
+                desired_speed = self._drive_by_speed(
+                    distance, cruise_speed, valley_speed, valley_radius_m
+                )
+                bearing = calculate_bearing(
+                    pos.latitude, pos.longitude,
+                    wp.latitude, wp.longitude,
+                )
+                heading = self.get_calibrated_heading()
+                heading_error = (
+                    normalize_angle(bearing - heading)
+                    if heading is not None else 0.0
+                )
+                vz = max(
+                    -self.rotation_rate,
+                    min(self.rotation_rate, heading_error * -0.015),
+                )
+
+                imu_yaw_now = self.robot.get_yaw_degrees()
+                if imu_yaw_now is not None:
+                    self._maybe_buffer_sample(pos, imu_yaw_now, vz=vz)
+
+                await self.robot.send_velocity(x=desired_speed, z=vz)
+
+                now = time.time()
+                if now - last_status >= 2.0:
+                    logger.info(
+                        f"NAV [drive_by] | d={distance:.2f}m v={desired_speed:.2f}m/s "
+                        f"hdg_err={heading_error:.1f}° fix={pos.fix_type}"
+                    )
+                    last_status = now
+
+                prev_distance = distance
+                await asyncio.sleep(0.1)
+
+        await self.robot.stop()
+        return True
+
+    @staticmethod
+    def _drive_by_speed(
+        distance: float,
+        cruise: float,
+        valley: float,
+        radius: float,
+    ) -> float:
+        """Linear V-shape: cruise outside the valley, ramp to valley speed
+        at the waypoint. Symmetric on both sides since `distance` is
+        always non-negative — the dog approaches the waypoint from one
+        side, fires, and the *next* waypoint's distance takes over.
+        """
+        if distance >= radius:
+            return cruise
+        # d ∈ [0, radius]: linear from valley (at d=0) to cruise (at d=radius)
+        return valley + (cruise - valley) * (distance / radius)
+
+    async def _wait_for_fix_resume(self) -> bool:
+        """Block until the receiver returns to acceptable quality, or the
+        mid-mission GPS timeout expires. Returns True on resume, False on
+        timeout — caller is responsible for aborting on False.
+        """
+        pause_start = time.time()
+        last_log = time.time()
+        while self._running:
+            if time.time() - pause_start > self.gps_timeout:
+                logger.error(
+                    f"GPS not restored in drive-by within {self.gps_timeout:.0f}s"
+                )
+                return False
+            pos = self.gps.get_position()
+            corrections_active = self.gps.has_active_corrections()
+            if self._is_quality_acceptable(pos, corrections_active):
+                logger.info(
+                    f"GPS restored after {time.time() - pause_start:.0f}s; "
+                    f"resuming drive-by"
+                )
+                await self.robot.balance_stand()
+                await asyncio.sleep(1.0)
+                return True
+            now = time.time()
+            if now - last_log >= 15.0:
+                logger.info(
+                    f"GPS still degraded… "
+                    f"({now - pause_start:.0f}s/{self.gps_timeout:.0f}s)"
+                )
+                last_log = now
+            await asyncio.sleep(0.5)
+        return False
+
     async def navigate_to(self, waypoint: Waypoint, timeout: float = 300.0) -> bool:
         """Drive the robot to a single waypoint. Returns True on success."""
         logger.info(
@@ -779,7 +1042,7 @@ class WaypointNavigator:
         tolerance_deg: float = 2.0,
         timeout: float = 15.0,
         kp: float = 0.04,
-        min_rate_rad_s: float = 0.15,
+        min_rate_rad_s: float = 0.45,
     ) -> bool:
         """Rotate in place to face `target_bearing_deg` (true-north).
 
