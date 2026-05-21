@@ -1,0 +1,32 @@
+{
+  "duration_sec": 30.0,
+  "frame_count_total": 233,
+  "frame_count_with_points": 233,
+  "mean_rate_hz": 7.77,
+  "frames_before_disableTrafficSaving": 14,
+  "disableTrafficSaving_call_ok": true,
+  "point_count_stats": {
+    "min": 12183,
+    "mean": 14308,
+    "max": 15258,
+    "stdev": 787.7
+  },
+  "first_frame_metadata": {
+    "stamp": 1779383000.0,
+    "frame_id": "odom",
+    "resolution": 0.05,
+    "src_size": 77824,
+    "origin": [
+      -0.925,
+      -1.275,
+      -0.625
+    ],
+    "width": [
+      128,
+      128,
+      38
+    ]
+  },
+  "error_count": 0,
+  "errors_sample": []
+}
