@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "captured_at_unix": 1779382490.5029964,
+  "captured_at_utc": "2026-05-21T16:54:50.502996+00:00",
+  "frame": {
+    "timestamp_unix": 1779382490.7552145,
+    "width": 1280,
+    "height": 720
+  },
+  "position": {
+    "latitude": 46.673891299999994,
+    "longitude": -114.0161381,
+    "altitude": 1090.3712222222225,
+    "accuracy_horizontal": 0.014,
+    "accuracy_vertical": 0.01,
+    "fix_type": 6,
+    "satellites_used": 27,
+    "course_over_ground": null,
+    "timestamp": 1779382490.5029964,
+    "head_vehicle": null,
+    "head_vehicle_accuracy": 180.00000000000003,
+    "altitude_msl": 1108.1041111111113,
+    "pdop": 1.1500000000000001,
+    "correction_age_bin": 0,
+    "speed_over_ground": null
+  },
+  "heading": {
+    "degrees_true": 270.0,
+    "target_degrees_true": 270.0,
+    "achieved_degrees_true": 263.7188320039064,
+    "residual_degrees": -6.281167996093586,
+    "source": "robot_imu_calibrated"
+  },
+  "mission": {
+    "mission_name": "06_tennis_quadrat_pair",
+    "mission_dir": "/home/mpg-robodog/dev/mpg-ai-edge/dev/missions/06_tennis_quadrat_pair",
+    "waypoint_name": "tennis_court_wp1",
+    "strategy": "rotating_quadrat",
+    "target_bearing_deg_true": 270.0
+  }
+}
