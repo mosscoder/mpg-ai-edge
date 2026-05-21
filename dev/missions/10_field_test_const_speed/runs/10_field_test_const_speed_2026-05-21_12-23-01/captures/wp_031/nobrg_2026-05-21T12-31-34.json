@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "captured_at_unix": 1779388294.028632,
+  "captured_at_utc": "2026-05-21T18:31:34.028632+00:00",
+  "frame": {
+    "timestamp_unix": 1779388293.9189618,
+    "width": 1280,
+    "height": 720
+  },
+  "position": {
+    "latitude": 46.6765288,
+    "longitude": -114.00641669999999,
+    "altitude": 1169.002,
+    "accuracy_horizontal": 0.014,
+    "accuracy_vertical": 0.01,
+    "fix_type": 6,
+    "satellites_used": 31,
+    "course_over_ground": 61.31859000000001,
+    "timestamp": 1779388294.028632,
+    "head_vehicle": null,
+    "head_vehicle_accuracy": 6.60411,
+    "altitude_msl": 1186.732,
+    "pdop": 1.1,
+    "correction_age_bin": 0,
+    "speed_over_ground": 0.577
+  },
+  "heading": {
+    "degrees_true": null,
+    "target_degrees_true": null,
+    "achieved_degrees_true": 68.34285631340788,
+    "residual_degrees": null,
+    "source": "robot_imu_calibrated"
+  },
+  "mission": {
+    "mission_name": "10_field_test_const_speed",
+    "mission_dir": "/home/mpg-robodog/dev/mpg-ai-edge/dev/missions/10_field_test_const_speed",
+    "waypoint_name": "wp_031",
+    "strategy": "drive_by",
+    "target_bearing_deg_true": null
+  },
+  "extra": {
+    "drive_by": {
+      "distance_at_trigger_m": 0.25907779836954553,
+      "commanded_speed_m_s": 0.5
+    }
+  }
+}
