@@ -1,0 +1,76 @@
+2026-05-21 10:37:23,330 [INFO] go2_survey.cli: go2-survey v0.17.0 | git b3ea1f7 | run dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/06_tennis_quadrat_pair/runs/06_tennis_quadrat_pair_2026-05-21_10-37-23
+2026-05-21 10:37:23,330 [INFO] go2_survey.cli: Logging to: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/06_tennis_quadrat_pair/runs/06_tennis_quadrat_pair_2026-05-21_10-37-23/main.log (+ imu.log, gps.log)
+2026-05-21 10:37:23,330 [INFO] go2_survey.cli: Mission dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/06_tennis_quadrat_pair
+2026-05-21 10:37:23,334 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-21 10:37:23,334 [INFO] go2_survey.mission_runner: ============= MISSION: 06_tennis_quadrat_pair ==============
+2026-05-21 10:37:23,334 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-21 10:37:23,334 [INFO] go2_survey.mission_runner: Two-waypoint tennis court survey with 4-bearing rotating quadrat at each. End-to-end botanical-style ground-truth run: 8 geotagged frames + sidecars.
+2026-05-21 10:37:23,335 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-21 10:37:23,335 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-05-21 10:37:23,335 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-21 10:37:23,335 [INFO] go2_survey.waypoints: Loaded 2 waypoints from /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/06_tennis_quadrat_pair/waypoints.geojson
+2026-05-21 10:37:23,336 [INFO] go2_survey.mission_runner: Loaded 2 waypoint(s):
+2026-05-21 10:37:23,336 [INFO] go2_survey.mission_runner:   1. tennis_court_wp1: (46.67389244, -114.01613655)
+2026-05-21 10:37:23,336 [INFO] go2_survey.mission_runner:   2. tennis_court_wp2: (46.67381342, -114.01619783)
+2026-05-21 10:37:23,336 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101 mountpoints=['MP22385', 'MP22385a'] | Robot: LocalSTA
+2026-05-21 10:37:23,336 [INFO] go2_survey.mission_runner: Nav: tol=0.25m vmax=0.5m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-05-21 10:37:23,336 [INFO] go2_survey.mission_runner: Bearing recompute method: endpoint
+2026-05-21 10:37:23,336 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-21 10:37:23,337 [INFO] go2_survey.mission_runner:  AUTO-DISCOVERING ROBOT IP (up to 4 attempts, 10s between) -
+2026-05-21 10:37:23,337 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-21 10:37:23,337 [INFO] go2_survey.mission_runner: robot.ip not set in mission.toml and ROBOT_IP env var not set; scanning local network for a Go2 (nmap ports 8081/9991)...
+2026-05-21 10:37:23,337 [INFO] go2_survey.mission_runner: Discovery attempt 1/4: scanning for Go2 on ports 8081/9991...
+2026-05-21 10:37:23,345 [INFO] go2_survey.discovery: Scanning 172.20.251.241/24 for Go2 ports 8081/9991...
+2026-05-21 10:37:25,754 [INFO] go2_survey.mission_runner: Discovery attempt 1: found Go2 at 172.20.251.5
+2026-05-21 10:37:25,756 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-21 10:37:25,756 [INFO] go2_survey.mission_runner: ------------ ROBOT IP DISCOVERED | 172.20.251.5 ------------
+2026-05-21 10:37:25,756 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-21 10:37:25,756 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-21 10:37:25,756 [INFO] go2_survey.mission_runner: ----------------------- PHASE 1: GPS -----------------------
+2026-05-21 10:37:25,756 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-21 10:37:25,758 [INFO] go2_survey.gps: Connected to GPS on /dev/ttyACM0 @ 38400 baud
+2026-05-21 10:37:25,759 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2, attempt 1/3)
+2026-05-21 10:37:25,759 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-21 10:37:26,461 [INFO] go2_survey.ntrip: Connected to NTRIP mountpoint: MP22385
+2026-05-21 10:37:26,462 [INFO] go2_survey.gps: NTRIP: connected via primary mountpoint MP22385 (took 1s, 1 attempt(s))
+2026-05-21 10:37:26,463 [INFO] go2_survey.ntrip: Started RTCM correction stream
+2026-05-21 10:37:26,464 [INFO] go2_survey.gps: Waiting for GPS fix (min type 4, NTRIP state=connected)...
+2026-05-21 10:37:26,465 [WARNING] go2_survey.gps: wait_for_fix: RTCM stalled (state=connected, rtcm_age=∞, alive=True) — firing reconnect_ntrip_async()
+2026-05-21 10:37:26,466 [INFO] go2_survey.ntrip: RTCM correction worker stopped
+2026-05-21 10:37:26,467 [INFO] go2_survey.ntrip: Disconnected from NTRIP. Forwarded 0 messages.
+2026-05-21 10:37:26,467 [INFO] go2_survey.gps: NTRIP reconnect: starting retry loop
+2026-05-21 10:37:26,468 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2, attempt 1/3)
+2026-05-21 10:37:26,468 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-21 10:37:26,943 [INFO] go2_survey.ntrip: Connected to NTRIP mountpoint: MP22385
+2026-05-21 10:37:26,944 [INFO] go2_survey.gps: NTRIP: connected via primary mountpoint MP22385 (took 0s, 1 attempt(s))
+2026-05-21 10:37:26,945 [INFO] go2_survey.ntrip: Started RTCM correction stream
+2026-05-21 10:37:26,945 [INFO] go2_survey.gps: NTRIP reconnect: stream restored
+2026-05-21 10:37:28,587 [INFO] go2_survey.gps: wait_for_fix: RTCM flow restored; re-arming stall-reconnect trigger
+2026-05-21 10:37:29,652 [INFO] go2_survey.gps: RTK Fixed achieved! Lat: 46.67378450, Lon: -114.01621910, h: 1090.46m, hMSL: 1108.19m hAcc: 0.014m pDOP: 1.20
+2026-05-21 10:37:29,652 [INFO] go2_survey.gps: ============================================================
+2026-05-21 10:37:29,652 [INFO] go2_survey.gps:  GPS RTK Fixed ACHIEVED | hAcc: 0.014m pDOP: 1.20 | rtcm_age=1.3s msgs=4 
+2026-05-21 10:37:29,652 [INFO] go2_survey.gps: ============================================================
+2026-05-21 10:37:29,700 [INFO] go2_survey.mission_runner: Start position: (46.67378450, -114.01621910) hAcc: 0.014m
+2026-05-21 10:37:29,701 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-21 10:37:29,701 [INFO] go2_survey.mission_runner: ------------- PHASE 2: GPS STABILIZATION (60s) -------------
+2026-05-21 10:37:29,701 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-21 10:37:29,701 [INFO] go2_survey.gps: ------------------------------------------------------------
+2026-05-21 10:37:29,701 [INFO] go2_survey.gps:  DWELL: 60s — robot stationary, RTK soaking (early-exit on 3s trusted Fixed) 
+2026-05-21 10:37:29,701 [INFO] go2_survey.gps: ------------------------------------------------------------
+2026-05-21 10:37:33,206 [INFO] go2_survey.gps: ============================================================
+2026-05-21 10:37:33,206 [INFO] go2_survey.gps:  DWELL EARLY EXIT | best=RTK Fixed min_hAcc=0.014m | mean hAcc=0.014m sats=27.0 | TTFloat=0s TTFixed=0s | early@4s/60s (held trusted Fixed 3s) 
+2026-05-21 10:37:33,206 [INFO] go2_survey.gps: ============================================================
+2026-05-21 10:37:33,206 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-21 10:37:33,206 [INFO] go2_survey.mission_runner: ---------------------- PHASE 3: ROBOT ----------------------
+2026-05-21 10:37:33,207 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-21 10:37:33,207 [INFO] go2_survey.robot: Connecting via LocalSTA (IP: 172.20.251.5)
+2026-05-21 10:37:33,284 [INFO] root: Creating offer...
+2026-05-21 10:37:33,566 [INFO] root: Track received: audio
+2026-05-21 10:37:33,566 [INFO] root: Track received: video
+2026-05-21 10:37:48,567 [ERROR] go2_survey.robot: Failed to connect to robot: Data channel setup timed out after 15s — the WebRTC peer never reached `connected` (peer=connecting, ice=checking). This usually means ICE/DTLS failed — another WebRTC client is probably holding the slot, the network is flaky, or a stale peer on the robot hasn't been released yet. Try again in 10–20 s, or kill any other connected client (mobile apk, second script).
+2026-05-21 10:37:48,569 [ERROR] go2_survey.mission_runner: Failed to connect to robot
+2026-05-21 10:37:48,569 [INFO] go2_survey.robot: Stopping robot
+2026-05-21 10:37:48,573 [INFO] go2_survey.ntrip: RTCM correction worker stopped
+2026-05-21 10:37:48,574 [INFO] go2_survey.ntrip: Disconnected from NTRIP. Forwarded 48 messages.
+2026-05-21 10:37:48,576 [INFO] go2_survey.gps: GPS connection closed
+2026-05-21 10:37:48,576 [INFO] go2_survey.mission_runner: Connections closed
