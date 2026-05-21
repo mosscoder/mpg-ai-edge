@@ -17,7 +17,7 @@ that is *not* corrupt, and geotags it by interpolating the RTK
 position to that frame's own timestamp — so choosing an older clean
 frame costs nothing geospatially and the lag is removed.
 
-### Change (`54fb086`)
+### Change (`d0d2127`)
 
 **Corruption signal**: PyAV's per-frame `frame.is_corrupt` (FFmpeg
 `decode_error_flags` / `AV_FRAME_FLAG_CORRUPT`) — the same decode-error
