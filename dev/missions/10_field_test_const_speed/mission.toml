@@ -1,5 +1,5 @@
 name        = "10_field_test_const_speed"
-description = "50 m × 50 m field-test grid (121 wp @ 5 m spacing, generated from a single seed point via get-waypoints + EPSG 6514). Drive-by at constant 1.0 m/s — no capture-time deceleration. A/B partner to 10_field_test_decel_img (same waypoints, with valley decel)."
+description = "50 m × 50 m field-test grid (121 wp @ 5 m spacing, generated from a single seed point via get-waypoints + EPSG 6514). Drive-by at constant 0.5 m/s — no capture-time deceleration. A/B partner to 11_field_test_decel_img (same waypoints, with valley decel)."
 mode        = "nav"
 
 [gps]
@@ -18,7 +18,7 @@ connection_mode = "LocalSTA"
 
 [navigation]
 arrival_tolerance = 0.25
-max_velocity      = 1.0
+max_velocity      = 0.5
 rotation_rate     = 0.8
 min_fix_type      = 4
 max_hacc          = 0.10
@@ -28,10 +28,10 @@ gps_fix_timeout   = 300
 # Constant-speed drive-by: valley_speed equals cruise_speed, so the
 # V-shape collapses to a flat line and the dog never slows for the
 # capture. Sharp turns still trigger a stop-rotate-walk (a quadruped
-# can't take a 90° corner at 1 m/s).
+# can't take a 90° corner at 0.5 m/s).
 strategy        = "drive_by"
-cruise_speed    = 1.0
-valley_speed    = 1.0
+cruise_speed    = 0.5
+valley_speed    = 0.5
 valley_radius_m = 1.0
 sharp_turn_deg  = 30.0
 output_subdir   = "captures"
