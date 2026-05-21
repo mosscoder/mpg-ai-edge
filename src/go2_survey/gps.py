@@ -7,7 +7,8 @@ import os
 import struct
 import threading
 import time
-from dataclasses import dataclass
+from collections import deque
+from dataclasses import dataclass, replace
 
 import serial
 
@@ -614,6 +615,9 @@ class GPSManager:
         self._reconnect_thread: threading.Thread | None = None
         self._reconnect_lock = threading.Lock()
         self._last_telemetry_at: float = 0.0
+        # Rolling history of recent fixes for frame-time interpolation
+        # (~12s at 5Hz). Populated on every get_position(); see position_at().
+        self._pos_history: deque = deque(maxlen=64)
 
     def connect(self, use_ntrip: bool = True) -> bool:
         """Connect to GPS and optionally start NTRIP corrections.
@@ -761,8 +765,47 @@ class GPSManager:
 
     def get_position(self) -> RTKPosition | None:
         pos = self.gps.get_position()
+        if pos is not None:
+            self._pos_history.append(pos)
         self._maybe_emit_telemetry(pos)
         return pos
+
+    def position_at(self, t: float) -> RTKPosition | None:
+        """Interpolate a fix to wall-clock time `t` from recent history.
+
+        Linearly interpolates latitude/longitude/altitude between the two
+        history samples bracketing `t`; discrete fields (fix_type, hAcc,
+        sats, ...) are copied from the nearer bracketing sample. Lets us
+        geotag a chosen video frame by the frame's own timestamp rather
+        than the capture-trigger time. Returns None when history is too
+        sparse or `t` is out of range — caller should fall back to the
+        trigger position. If `t` is just past the newest sample (<=0.2s;
+        frames can land between GPS polls), the newest fix is reused.
+        """
+        hist = list(self._pos_history)
+        if len(hist) < 2 or t <= hist[0].timestamp:
+            return None
+        if t >= hist[-1].timestamp:
+            if t - hist[-1].timestamp <= 0.2:
+                return replace(hist[-1], timestamp=t)
+            return None
+        for a, b in zip(hist, hist[1:]):
+            if a.timestamp <= t < b.timestamp:
+                break
+        else:
+            return None
+        span = b.timestamp - a.timestamp
+        if span <= 0:
+            return replace(a, timestamp=t)
+        frac = (t - a.timestamp) / span
+        nearer = a if frac < 0.5 else b
+        return replace(
+            nearer,
+            latitude=a.latitude + (b.latitude - a.latitude) * frac,
+            longitude=a.longitude + (b.longitude - a.longitude) * frac,
+            altitude=a.altitude + (b.altitude - a.altitude) * frac,
+            timestamp=t,
+        )
 
     def _maybe_emit_telemetry(self, pos: RTKPosition | None) -> None:
         """Emit one JSON line of GPS+NTRIP state to gps.log, throttled to 1 Hz.

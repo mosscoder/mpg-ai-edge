@@ -94,6 +94,7 @@ class FrameOnlyStrategy(CaptureStrategy):
             ctx.robot,
             max_age=s.frame_max_age,
             wait_timeout=s.frame_wait_timeout,
+            prefer_clean=s.prefer_clean_frame,
         )
         if frame_result is None:
             logger.error(f"No fresh frame at {wp_name}; skipping")
@@ -148,6 +149,7 @@ class WaypointForwardStrategy(CaptureStrategy):
             ctx.robot,
             max_age=s.frame_max_age,
             wait_timeout=s.frame_wait_timeout,
+            prefer_clean=s.prefer_clean_frame,
         )
         if frame_result is None:
             logger.error(f"No fresh frame at {wp_name}; skipping")
@@ -246,6 +248,7 @@ class RotatingQuadratStrategy(CaptureStrategy):
                 ctx.robot,
                 max_age=s.frame_max_age,
                 wait_timeout=s.frame_wait_timeout,
+                prefer_clean=s.prefer_clean_frame,
             )
             if frame_result is None:
                 logger.error(f"No frame at {wp_name}/{bearing:.0f}°; skipping")
@@ -408,25 +411,38 @@ async def write_drive_by_capture(
         ctx.robot,
         max_age=ctx.settings.frame_max_age,
         wait_timeout=ctx.settings.frame_wait_timeout,
+        target_time=position.timestamp,
+        prefer_clean=ctx.settings.prefer_clean_frame,
     )
     if frame_result is None:
         logger.error(f"No fresh frame at {wp_name} (drive_by); skipping")
         return 0
 
+    # Geotag by the chosen frame's own time: interpolate the RTK position
+    # to frame_result.timestamp rather than using the trigger position, so
+    # an older (cleaner) frame still gets the position it was actually
+    # taken at. Falls back to the trigger position if history is too sparse.
+    interp = ctx.gps.position_at(frame_result.timestamp) if ctx.gps else None
+    geo_pos = interp or position
+    position_interpolated = interp is not None
+
     achieved_heading, heading_source = _current_bearing(ctx)
     out_path = _capture_output_path(ctx, wp_name, bearing=None)
     write_geotagged_jpeg(
         frame=frame_result,
-        position=position,
+        position=geo_pos,
         bearing=None,
         achieved_heading=achieved_heading,
         out_path=out_path,
         heading_source=heading_source,
+        position_interpolated=position_interpolated,
         mission_context=_mission_context(ctx, wp_name, DriveByStrategy.name, None),
         extra={
             "drive_by": {
                 "distance_at_trigger_m": distance_at_trigger_m,
                 "commanded_speed_m_s": commanded_speed_m_s,
+                "frame_offset_from_trigger_s": frame_result.timestamp
+                - position.timestamp,
             }
         },
     )

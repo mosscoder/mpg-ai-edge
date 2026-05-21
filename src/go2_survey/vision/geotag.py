@@ -118,6 +118,7 @@ def _build_sidecar(
     heading_source: str,
     mission_context: dict[str, Any] | None,
     extra: dict[str, Any] | None,
+    position_interpolated: bool = False,
 ) -> dict[str, Any]:
     """Everything EXIF can't represent cleanly lives in the sidecar JSON.
 
@@ -128,7 +129,7 @@ def _build_sidecar(
     `target_degrees_true` alias for back-compat with old readers.
     """
     sidecar: dict[str, Any] = {
-        "schema_version": 1,
+        "schema_version": 2,
         "captured_at_unix": position.timestamp,
         "captured_at_utc": datetime.fromtimestamp(
             position.timestamp, tz=timezone.utc
@@ -137,8 +138,11 @@ def _build_sidecar(
             "timestamp_unix": frame.timestamp,
             "width": frame.width,
             "height": frame.height,
+            "corrupt": frame.corrupt,
         },
         "position": asdict(position),
+        "position_interpolated": position_interpolated,
+        "frame_position_time_delta_s": round(frame.timestamp - position.timestamp, 4),
         "heading": {
             "degrees_true": bearing,  # legacy key = target (kept for back-compat)
             "target_degrees_true": bearing,
@@ -161,6 +165,7 @@ def write_geotagged_jpeg(
     out_path: Path,
     achieved_heading: float | None = None,
     heading_source: str = "unknown",
+    position_interpolated: bool = False,
     mission_context: dict[str, Any] | None = None,
     extra: dict[str, Any] | None = None,
     jpeg_quality: int = 92,
@@ -225,6 +230,7 @@ def write_geotagged_jpeg(
         bearing=bearing,
         achieved_heading=achieved_heading,
         heading_source=heading_source,
+        position_interpolated=position_interpolated,
         mission_context=mission_context,
         extra=extra,
     )

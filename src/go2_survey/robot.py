@@ -5,6 +5,7 @@ import json
 import logging
 import math
 import time
+from collections import deque
 from typing import Any
 
 try:
@@ -53,6 +54,10 @@ class Go2Robot:
         self._video_enabled: bool = False
         self._video_task: asyncio.Task | None = None
         self._first_frame_logged: bool = False
+        # Ring buffer of recent decoded frames for corruption-aware
+        # selection: (wall_clock_ts, BGR ndarray, is_corrupt). ~1s at 15fps,
+        # which covers the ±frame_max_age (0.5s) selection window.
+        self._frame_buf: deque = deque(maxlen=16)
 
     async def connect(self) -> bool:
         """Establish WebRTC connection to the robot."""
@@ -168,6 +173,7 @@ class Go2Robot:
         self._latest_frame = None
         self._frame_timestamp = 0.0
         self._first_frame_logged = False
+        self._frame_buf.clear()
         log_banner("VIDEO CHANNEL OFF", char="-", logger=logger)
 
     async def close(self) -> None:
@@ -224,14 +230,25 @@ class Go2Robot:
         try:
             while True:
                 frame = await track.recv()
+                # Per-frame corruption from FFmpeg's decode_error_flags /
+                # AV_FRAME_FLAG_CORRUPT, read off the av.VideoFrame before
+                # to_ndarray() drops it. `is_corrupt` is a property (no
+                # parens). Same decode-error signal aiortc logs as
+                # "H264Decoder() failed to decode", but per output frame.
+                try:
+                    corrupt = bool(frame.is_corrupt)
+                except Exception:
+                    corrupt = False
                 try:
                     img = frame.to_ndarray(format="bgr24")
                 except Exception as e:
                     logger.debug(f"frame.to_ndarray failed: {e}")
                     continue
+                ts = time.time()
                 self._latest_frame = img
-                self._frame_timestamp = time.time()
+                self._frame_timestamp = ts
                 self._frame_height, self._frame_width = img.shape[:2]
+                self._frame_buf.append((ts, img, corrupt))
                 if not self._first_frame_logged:
                     logger.info(
                         f"First video frame decoded | "
@@ -255,6 +272,27 @@ class Go2Robot:
         if time.time() - self._frame_timestamp > max_age:
             return None
         return self._latest_frame
+
+    def get_best_frame_near(
+        self, target_time: float, max_age: float = 0.5, prefer_clean: bool = True
+    ) -> tuple[Any, float, bool] | None:
+        """Pick the buffered frame closest in time to `target_time`.
+
+        Considers only frames within `max_age` seconds of `target_time`.
+        When `prefer_clean` and at least one candidate is non-corrupt,
+        returns the nearest non-corrupt frame; otherwise returns the
+        nearest frame regardless and reports its corrupt flag. Returns
+        (image, timestamp, is_corrupt), or None if nothing is in window.
+        """
+        candidates = [
+            rec for rec in self._frame_buf if abs(rec[0] - target_time) <= max_age
+        ]
+        if not candidates:
+            return None
+        clean = [rec for rec in candidates if not rec[2]]
+        pool = clean if (prefer_clean and clean) else candidates
+        ts, img, corrupt = min(pool, key=lambda r: abs(r[0] - target_time))
+        return img, ts, corrupt
 
     def get_frame_timestamp(self) -> float:
         """Wall-clock time (seconds) when the cached frame was received."""

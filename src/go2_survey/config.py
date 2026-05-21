@@ -109,8 +109,9 @@ class CaptureSettings:
     gps_avg_sec: float = 3.0            # GPS averaging window (0 disables)
     bearings: list = field(default_factory=lambda: [0.0, 90.0, 180.0, 270.0])
     output_subdir: str = "captures"     # relative to mission dir
-    frame_max_age: float = 0.5          # max staleness for a captured frame (s)
+    frame_max_age: float = 0.5          # max staleness / selection window half-width (s)
     frame_wait_timeout: float = 5.0     # max wait for a fresh frame (s)
+    prefer_clean_frame: bool = True     # prefer a non-corrupt frame within the max_age window
     # P-controller bearing alignment for rotating_quadrat. The controller
     # decelerates as it approaches the target so the stop command lands
     # before overshoot, enabling sub-2° alignment without hunting.
