@@ -1,5 +1,91 @@
 # Navigation Changelog
 
+## 2026-05-21: v0.18.0 — Corruption-Aware Frame Selection + GPS-Time Interpolation
+
+### Scope
+
+The Go2 WebRTC H264 video stream drops ~1 packet/s (136 decode-fail
+warnings in a ~2.5 min run), leaving some captured frames partially
+corrupt — stale macroblocks / visible smear (e.g. wp10 in
+`08_farm_const_speed_2026-05-21_11-33-52`). The capture path kept only
+the single freshest frame and geotagged it with the trigger-time GPS,
+so a frame up to `frame_max_age` (0.5 s) stale was paired with a newer
+position — a ~16 cm image/position lag at 0.5 m/s.
+
+This commit picks, per waypoint, the frame nearest the closest pass
+that is *not* corrupt, and geotags it by interpolating the RTK
+position to that frame's own timestamp — so choosing an older clean
+frame costs nothing geospatially and the lag is removed.
+
+### Change (`54fb086`)
+
+**Corruption signal**: PyAV's per-frame `frame.is_corrupt` (FFmpeg
+`decode_error_flags` / `AV_FRAME_FLAG_CORRUPT`) — the same decode-error
+signal aiortc logs as `H264Decoder() failed to decode`, read directly
+per output frame (no log parsing). It is a property, not a method.
+
+**Frame ring buffer** (`robot.py`): the single latest-frame slot
+becomes a 16-deep deque of `(timestamp, image, is_corrupt)` (~1 s at
+15 fps). `is_corrupt` is read off the `av.VideoFrame` before
+`to_ndarray()` discards it. New `get_best_frame_near(target_time,
+max_age, prefer_clean)` returns the nearest non-corrupt frame in the
+window, or the nearest frame with its corrupt flag if all are corrupt.
+
+**Selection** (`frames.py`): `capture_frame` gains `target_time` and
+`prefer_clean`; `FrameResult` gains `corrupt`. Drive-by passes
+`target_time = position.timestamp` (the closest-pass instant); all
+stationary strategies pass `prefer_clean` (→ latest clean frame).
+
+**GPS-time interpolation** (`gps.py`): `GPSManager` keeps a 64-deep fix
+history (fed in `get_position`). `position_at(t)` linear-interpolates
+lat/lon/alt between the two fixes bracketing `t` (discrete fields from
+the nearer sample); <2 samples or out-of-range → None and the caller
+falls back to the trigger position. Sub-cm vs the RTK noise floor at
+0.5 m/s.
+
+**Wiring** (`capture.py`): drive-by selects the clean frame, then
+geotags with `position_at(frame.timestamp)`, falling back to the
+trigger position if history is too sparse.
+
+**Behavior** (user decisions): applies to all strategies; if no clean
+frame is in the window, use the nearest and flag it; search window =
+`frame_max_age` (~0.5 s / ~25 cm). Toggle `prefer_clean_frame`
+(`[capture]`, default true).
+
+**Sidecar** bumped to `schema_version: 2` with `frame.corrupt`,
+`position_interpolated`, and `frame_position_time_delta_s`. After
+interpolation `position.timestamp == frame.timestamp`, so EXIF
+`DateTime` and `GPSTimeStamp` agree.
+
+### Files changed
+
+- `src/go2_survey/robot.py` — frame ring buffer + `is_corrupt` read +
+  `get_best_frame_near`
+- `src/go2_survey/vision/frames.py` — `FrameResult.corrupt`;
+  `capture_frame` `target_time` + `prefer_clean`
+- `src/go2_survey/gps.py` — `GPSManager` fix history + `position_at`
+- `src/go2_survey/capture.py` — drive-by selection + interpolation;
+  stationary strategies route through `prefer_clean`
+- `src/go2_survey/vision/geotag.py` — sidecar schema 2 + new fields
+- `src/go2_survey/config.py` — `prefer_clean_frame` (default true)
+
+### Verification offline
+
+- AST parse on all changed files; version 0.18.0; missions
+  06/08/09/10/11/_template parse unchanged
+- Unit checks: `get_best_frame_near` (window filter, prefer-clean,
+  all-corrupt → nearest + flag) and `position_at` (bracketed interp,
+  out-of-range → None, just-past-newest reuse)
+- `is_corrupt` confirmed a getset property (not a method) in PyAV 16.1.0
+
+### Hardware validation pending
+
+- Run `08_farm_const_speed` (and a tennis quadrat for the
+  all-strategies path); confirm sidecars show `frame_corrupt: false`
+  on most, `position_interpolated: true` for drive-by, and EXIF
+  `DateTime == GPSTimeStamp`. Compare captures vs the `11-33-52`
+  baseline (wp10 smear) — corruption should be gone or flagged.
+
 ## 2026-05-18: v0.12.0 — `--cog-fusion` CLI Flag (Experimental Recompute Backend)
 
 ### Scope
