@@ -1,5 +1,36 @@
 # Navigation Changelog
 
+## 2026-05-22: v0.21.0 — Line-Survey: Capture at Leg Corners
+
+### Scope
+
+The v0.20.0 line survey anchored its 2 m capture grid 2 m in from each leg
+start and stopped short of the end corner, so the leg endpoints — the
+monumented waypoints — were never imaged. This adds a capture at both the
+start and end corner of every leg.
+
+### Change (`20bec87`)
+
+`navigate_legs` now fires a capture at the leg-start corner (right after the
+turn settles — outgoing heading) and at the leg-end corner (at arrival,
+before turning away — incoming heading), in addition to the 2 m along-track
+marks. The end capture is skipped if an interval mark already landed within
+0.5 m of the corner (de-dup). Each interior corner therefore gets two shots
+(previous leg's end + next leg's start, i.e. both headings); the route's
+first and last corners get one each. The start capture is GPS-quality gated.
+
+### Verification offline
+
+- AST parse; version 0.21.0. Per-leg capture sets: 49.89 m row → 26 (start +
+  24 marks + end), 5 m connector → 4, 1.9 m farm connector → 2, 15.36 m farm
+  leg → 9. Totals ~326 field-test / ~20 farm.
+
+### Hardware validation pending
+
+Still unrun on the robot (see v0.20.0). Also confirm the start capture isn't
+smeared by residual turn settle and that interior corners show the two
+expected headings.
+
 ## 2026-05-22: v0.20.0 — Line-Survey (Lawnmower) Strategy + Mission Restructure
 
 ### Scope
