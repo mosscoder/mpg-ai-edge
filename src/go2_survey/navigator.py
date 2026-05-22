@@ -528,6 +528,24 @@ class WaypointNavigator:
             mark_index = 0
             leg_start = time.time()
             last_status = 0.0
+            last_fired_along = -interval_m  # for end-of-leg de-dup
+
+            # Capture at the leg-start corner (heading just settled from the
+            # turn). Each interior corner thus gets two shots: the previous
+            # leg's end capture (incoming heading) and this start (outgoing).
+            start_pos = self.gps.get_position()
+            if start_pos is not None and self._is_quality_acceptable(
+                start_pos, self.gps.has_active_corrections()
+            ):
+                n_written = await on_capture_cb(
+                    leg_label, mark_index, time.time(), 0.0, start_pos, leg_bearing
+                )
+                n_captured += n_written
+                last_fired_along = 0.0
+                log_banner(
+                    f"CAPTURE {leg_label} start corner | n={n_written}",
+                    char="-", logger=logger,
+                )
 
             while self._running:
                 if time.time() - leg_start > timeout_per_leg:
@@ -573,6 +591,7 @@ class WaypointNavigator:
                         leg_label, mark_index, t_mark, next_mark, pos, leg_bearing
                     )
                     n_captured += n_written
+                    last_fired_along = next_mark
                     log_banner(
                         f"CAPTURE {leg_label} mark {mark_index} @ "
                         f"{next_mark:.1f}m | n={n_written}",
@@ -589,6 +608,20 @@ class WaypointNavigator:
                     along >= leg_len - self.arrival_tolerance
                     or dist_to_end < self.arrival_tolerance
                 ):
+                    # Capture at the leg-end corner before turning away —
+                    # unless an interval mark already landed within 0.5 m of it.
+                    if along - last_fired_along > 0.5:
+                        mark_index += 1
+                        n_written = await on_capture_cb(
+                            leg_label, mark_index, time.time(), along, pos,
+                            leg_bearing,
+                        )
+                        n_captured += n_written
+                        log_banner(
+                            f"CAPTURE {leg_label} end corner @ {along:.1f}m | "
+                            f"n={n_written}",
+                            char="-", logger=logger,
+                        )
                     break
 
                 # Proportional steering toward the end corner.
