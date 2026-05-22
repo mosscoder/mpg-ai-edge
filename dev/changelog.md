@@ -1,5 +1,44 @@
 # Navigation Changelog
 
+## 2026-05-22: v0.24.0 — Line-Survey: Pure-Pursuit Leg Steering
+
+### Scope
+
+`navigate_legs` steered toward the far end corner, so cross-track error was
+only weakly corrected early in a leg (correction strength ∝ 1/distance-
+remaining) and legs bowed — undermining the even-swath coverage the lawnmower
+pattern is meant to guarantee. The cross-track offset was already computed
+(`project_along_leg`) and logged, but never fed back into steering.
+
+### Change (`2d26d2d`)
+
+- Leg steering is now pure pursuit: aim at a carrot `lookahead_m` ahead on the
+  leg line (interpolated between the leg corners) rather than at the end
+  corner, so cross-track error converges with a constant gain. Yaw rate uses
+  the curvature form `vz = -speed · 2·sin(α) / lookahead_m` (α = heading error
+  to the carrot), which makes the path shape speed-independent; the sign
+  matches `navigate_to()`. The carrot parks on the end corner for the final
+  `lookahead_m`, so arrival and end-corner capture are unchanged.
+- New `[capture] lookahead_m` knob (default 4.0 m), threaded
+  config → `mission_runner` → `navigate_legs` and set explicitly to 4.0 in the
+  08/09 line-survey missions.
+
+### Verification offline
+
+- AST parse; version 0.24.0; both line-survey tomls parse with
+  `lookahead_m = 4.0`. Closed-loop kinematic sim of a 50 m leg starting 0.50 m
+  off-line converges to 0.000 m with no overshoot at both 4 m and 2 m
+  lookahead; the new `vz` keeps the same sign as the old controller across
+  ±error and is 0 when aligned.
+
+### Hardware validation pending
+
+First field run of pure-pursuit steering (and still the first of
+`navigate_legs` overall). Start at `lookahead_m = 4.0` and watch the `cross`
+readout (logged every 2 s): it should settle toward ~0 within the first
+~10-15 m of a 50 m leg. Tighten to 3 → 2 m if legs still bow; raise if the dog
+hunts on GPS noise.
+
 ## 2026-05-22: v0.22.0 — Line-Survey: Corner-Turn Tolerance Matches Quadrat
 
 ### Change (`3adb632`)
