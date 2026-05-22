@@ -16,6 +16,7 @@ via `[capture] strategy = "..."` in mission.toml.
 """
 
 import asyncio
+import json
 import logging
 import time
 from dataclasses import dataclass
@@ -487,8 +488,9 @@ async def write_interval_capture(
     crossed the mark), geotags it by interpolating the RTK position to that
     frame's own timestamp, and records the leg/mark + leg bearing. Falls
     back to `fallback_position` (the current tick fix) when the GPS history
-    is too sparse to interpolate. Captures land under
-    `<run>/<output_subdir>/<leg_label>/` (one dir per leg).
+    is too sparse to interpolate. Captures land flat in
+    `<run>/<output_subdir>/` as `<leg>_m<NNN>_b<BBB>_<ts>.jpg` (m000 = leg
+    start corner, highest m = end corner), with a sidecar JSON beside each.
     """
     frame_result = await capture_frame(
         ctx.robot,
@@ -508,7 +510,14 @@ async def write_interval_capture(
     position_interpolated = interp is not None
 
     achieved_heading, heading_source = _current_bearing(ctx)
-    out_path = _capture_output_path(ctx, leg_label, bearing=target_bearing)
+    # Flat layout: all of a run's captures in one folder, with the leg + mark
+    # + bearing + timestamp encoded in the filename (mark index keeps names
+    # unique even within a second).
+    ts = time.strftime("%Y-%m-%dT%H-%M-%S")
+    btag = f"b{int(target_bearing) % 360:03d}" if target_bearing is not None else "nobrg"
+    out_dir = ctx.run_dir / ctx.settings.output_subdir
+    out_dir.mkdir(parents=True, exist_ok=True)
+    out_path = out_dir / f"{leg_label}_m{mark_index:03d}_{btag}_{ts}.jpg"
     write_geotagged_jpeg(
         frame=frame_result,
         position=geo_pos,
@@ -534,6 +543,77 @@ async def write_interval_capture(
         },
     )
     return 1
+
+
+def write_captures_manifest(captures_dir: "Path") -> "Path | None":
+    """Scan a run's capture sidecars and (re)write `captures.geojson` — one
+    Point feature per geotagged photo, for one-file GIS import.
+
+    Derived from the per-image sidecars (the durable record), so it can be
+    rebuilt any time and an interrupted run loses nothing. Written
+    atomically (temp + rename) so the manifest on disk is always a complete,
+    valid file. Returns the manifest path, or None if no geotagged captures
+    are present.
+    """
+    captures_dir = Path(captures_dir)
+    if not captures_dir.is_dir():
+        return None
+
+    features: list[dict] = []
+    for sc_path in sorted(captures_dir.glob("*.json")):
+        try:
+            sc = json.loads(sc_path.read_text())
+        except (json.JSONDecodeError, OSError):
+            continue
+        pos = sc.get("position")
+        if not pos or pos.get("latitude") is None or pos.get("longitude") is None:
+            continue
+        heading = sc.get("heading") or {}
+        line_survey = (sc.get("extra") or {}).get("line_survey") or {}
+        frame = sc.get("frame") or {}
+        features.append(
+            {
+                "type": "Feature",
+                "properties": {
+                    "file": sc_path.with_suffix(".jpg").name,
+                    "leg": line_survey.get("leg"),
+                    "mark_index": line_survey.get("mark_index"),
+                    "along_track_m": line_survey.get("along_track_m"),
+                    "achieved_heading": heading.get("achieved_degrees_true"),
+                    "target_bearing": heading.get("target_degrees_true"),
+                    "fix_type": pos.get("fix_type"),
+                    "hacc_m": pos.get("accuracy_horizontal"),
+                    "corrupt": frame.get("corrupt"),
+                    "position_interpolated": sc.get("position_interpolated"),
+                    "captured_at_utc": sc.get("captured_at_utc"),
+                },
+                "geometry": {
+                    "type": "Point",
+                    "coordinates": [pos["longitude"], pos["latitude"]],
+                },
+            }
+        )
+
+    if not features:
+        return None
+
+    manifest = {
+        "type": "FeatureCollection",
+        "name": "captures",
+        "crs": {
+            "type": "name",
+            "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"},
+        },
+        "features": features,
+    }
+    out_path = captures_dir / "captures.geojson"
+    tmp_path = captures_dir / "captures.geojson.tmp"
+    tmp_path.write_text(json.dumps(manifest, indent=2, default=str))
+    tmp_path.replace(out_path)
+    logger.info(
+        f"Wrote capture manifest: {out_path.name} ({len(features)} photos)"
+    )
+    return out_path
 
 
 STRATEGIES = {

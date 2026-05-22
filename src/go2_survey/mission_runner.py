@@ -17,6 +17,7 @@ from go2_survey.capture import (
     DriveByStrategy,
     LineSurveyStrategy,
     build_strategy,
+    write_captures_manifest,
     write_drive_by_capture,
     write_interval_capture,
 )
@@ -345,13 +346,23 @@ async def run_mission(runner: MissionRunner) -> bool:
                     target_bearing=leg_bearing,
                 )
 
-            success = await navigator.navigate_legs(
-                waypoints=waypoints,
-                on_capture_cb=_interval_capture_cb,
-                interval_m=settings.capture.capture_interval_m,
-                speed=settings.navigation.max_velocity,
-                turn_tolerance_deg=settings.capture.turn_tolerance_deg,
-            )
+            try:
+                success = await navigator.navigate_legs(
+                    waypoints=waypoints,
+                    on_capture_cb=_interval_capture_cb,
+                    interval_m=settings.capture.capture_interval_m,
+                    speed=settings.navigation.max_velocity,
+                    turn_tolerance_deg=settings.capture.turn_tolerance_deg,
+                )
+            finally:
+                # Build the capture manifest from sidecars even if the route
+                # aborted mid-run, so an interrupted field run still has it.
+                try:
+                    write_captures_manifest(
+                        runner.run_dir / settings.capture.output_subdir
+                    )
+                except Exception as e:
+                    logger.warning(f"Capture manifest build failed: {e}")
             if not success:
                 logger.error("Line-survey route failed")
                 return False
