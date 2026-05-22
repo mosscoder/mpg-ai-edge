@@ -11,6 +11,37 @@ rotating-quadrat strategy uses), threaded from `mission_runner`. Corner
 shots are now aligned as tightly as quadrat captures, and the tolerance is
 tunable per mission via `[capture] turn_tolerance_deg`.
 
+## 2026-05-22: v0.23.0 — Line-Survey: Flat Capture Folder + GeoJSON Manifest
+
+### Scope
+
+Line-survey captures were nesting one subfolder per leg, which is awkward to
+feed to SfM/QGIS. Flatten the layout and add a single manifest.
+
+### Change (`7c40b6e`)
+
+- `write_interval_capture` now writes all of a run's photos flat in
+  `<run>/<output_subdir>/` as `<leg>_m<NNN>_b<BBB>_<ts>.jpg` (m000 = leg
+  start corner, highest m = end corner; the mark index also makes filenames
+  unique within a second, fixing a latent collision). Per-image JSON
+  sidecars + EXIF geotag are unchanged.
+- New `write_captures_manifest(captures_dir)` scans the run's sidecars and
+  writes `captures.geojson` — one Point feature per photo at its actual
+  (interpolated) lon/lat, properties `{file, leg, mark_index, along_track_m,
+  achieved_heading, target_bearing, fix_type, hacc_m, corrupt,
+  position_interpolated, captured_at_utc}`. Written atomically (temp +
+  rename); derived from the sidecars so it is rebuildable and an interrupted
+  run loses nothing.
+- `mission_runner` builds the manifest after the line-survey route in a
+  `finally`, so even an aborted field run gets one.
+
+### Verification offline
+
+- AST parse; version 0.23.0. `write_captures_manifest` on synthetic
+  sidecars → valid FeatureCollection, `[lon,lat]` geometry, all properties
+  carried, frame-only (position-null) sidecars skipped, idempotent re-run,
+  temp file cleaned.
+
 ## 2026-05-22: v0.21.0 — Line-Survey: Capture at Leg Corners
 
 ### Scope
