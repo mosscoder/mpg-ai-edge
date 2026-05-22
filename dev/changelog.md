@@ -1,5 +1,100 @@
 # Navigation Changelog
 
+## 2026-05-22: v0.20.0 — Line-Survey (Lawnmower) Strategy + Mission Restructure
+
+### Scope
+
+Mission-10 analysis showed the per-waypoint drive-by model often shot
+while the dog wasn't aimed at the next waypoint: the shutter fires at
+closest pass to the *current* waypoint, before the turn to the next, so
+~22% of frames were >45° off and the dog stop-rotated at ~a third of the
+waypoints. The fix is the drone "lawnmower" pattern, terrestrially: drive
+straight legs between sparse corner waypoints and capture at a fixed
+along-track interval while moving, so on-leg frames point along-track and
+coverage is even by real distance traveled.
+
+### Change (`2293399`)
+
+**New `line_survey` strategy.** Waypoints are demoted to leg corners; the
+route runs end-to-end in the navigator (like `drive_by`), not per-waypoint.
+
+- `navigator.navigate_legs(waypoints, on_capture_cb, interval_m, speed)`:
+  reach the first corner + calibrate IMU via `navigate_to` (no capture),
+  then per leg — turn in place to the leg bearing (no capture), drive
+  toward the end corner with proportional steering, and fire a capture each
+  time along-track distance crosses the next `interval_m` mark
+  (edge-triggered on absolute marks ⇒ no drift; the crossing time is
+  interpolated and handed to the frame selector). Per-leg IMU recal from
+  each leg's straight-line samples (long baseline ⇒ low noise).
+- `geometry.project_along_leg()`: along/cross-track meters via a local
+  equirectangular projection — monotonic with forward progress, immune to
+  cross-track wobble.
+- `capture.LineSurveyStrategy` (dispatch marker) + `write_interval_capture()`:
+  per mark, select the cleanest frame near the crossing time
+  (`get_best_frame_near`) and geotag by interpolating the RTK position to
+  that frame's own timestamp (`position_at`) — reuses the v0.18.0 path.
+  Sidecar `extra.line_survey` carries leg, mark_index, along_track_m,
+  interval_m, frame_corrupt, frame_offset_from_mark_s. Captures land under
+  `<run>/captures/<legNN>/`.
+- `config.CaptureSettings.capture_interval_m` (default 2.0); leg speed from
+  `[navigation] max_velocity`.
+- `mission_runner` dispatches `line_survey` to `navigate_legs` (mirrors the
+  `drive_by` branch).
+
+**Mission restructure.** Renamed `08_farm_const_speed` → `08_walk_farm_row`
+and `10_field_test_const_speed` → `09_field_test`; both tomls set
+`strategy = "line_survey"`, `capture_interval_m = 2.0` (drive-by keys
+dropped), `max_velocity = 0.5`. Deleted the two decel A/B missions
+(`09_farm_decel_img`, `11_field_test_decel_img`) and archived each kept
+mission's prior runs under `archive/`.
+
+### Verification offline
+
+- AST parse; version 0.20.0; both tomls parse with `strategy=line_survey`,
+  `capture_interval_m=2.0`, `max_velocity=0.5`.
+- `project_along_leg` recovers along/cross to mm; the mark-trigger logic
+  yields 24 marks on a 49.89 m leg, 2 on a 5 m connector, 0 on a 1.9 m
+  connector (~284 field-test / ~14 farm captures).
+- `build_strategy("line_survey")` returns the marker; `load_waypoints` →
+  4 (farm) / 22 (field test).
+
+### Hardware validation pending
+
+`navigate_legs` is a new drive loop and has NOT been run on the robot.
+Field shakeout required before trusting it: corner turns only at corners
+(no mid-leg stop-rotates), even ~2 m capture spacing, on-leg headings ≈
+leg bearing, sidecars showing `position_interpolated: true` and mostly
+`frame_corrupt: false`.
+
+## 2026-05-22: v0.19.0 — make-waypoints Emits Lawnmower Leg Endpoints
+
+### Scope
+
+The line-survey strategy needs the route as leg corners, not a dense grid —
+captures are a run-time interval behavior geotagged per-image, so they
+don't belong in the geojson. The waypoint generator is repurposed to emit
+corners.
+
+### Change (`0a8c880`)
+
+- Renamed CLI `get-waypoints` → `make-waypoints`; `--grid-m` →
+  `--leg-space-m` (now the spacing between parallel legs / swath).
+- `waypoint_gen` emits each serpentine row's two endpoints (the leg
+  corners) instead of every node — `_grid_around_center` / `_grid_in_polygon`
+  reduced to endpoints; `grid_m` renamed `leg_space_m` throughout (params,
+  `generation` metadata, plot subtitle). Input parsing, projection, geojson
+  writer, and the auto-plot are unchanged — the plot's arrows now trace the
+  legs.
+- Field test regenerated from its seed (`--side-len-m 50 --leg-space-m 5
+  --epsg 6514 --bearing-deg 0`) → 22 corners; farm reduced in place to its
+  4 measured leg-endpoint corners (no CLI — preserves real coords).
+
+### Verification offline
+
+- AST parse; `_grid_around_center(50, 5, 0)` → 22 points, 2 per leg,
+  serpentine, 49.89 m legs + 5 m connectors; field-test `wp_001` matches
+  the prior grid's start exactly.
+
 ## 2026-05-21: v0.18.0 — Corruption-Aware Frame Selection + GPS-Time Interpolation
 
 ### Scope
