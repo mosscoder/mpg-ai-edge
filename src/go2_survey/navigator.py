@@ -460,6 +460,7 @@ class WaypointNavigator:
         on_capture_cb,
         interval_m: float,
         speed: float,
+        lookahead_m: float = 4.0,
         turn_tolerance_deg: float = 2.0,
         timeout_per_leg: float = 300.0,
     ) -> bool:
@@ -469,11 +470,13 @@ class WaypointNavigator:
 
         The first waypoint is reached (and the IMU calibrated) via
         `navigate_to()` with no capture; then each consecutive pair is a leg.
-        Per leg: turn to the leg bearing, then drive toward the end corner
-        with proportional steering, firing a capture each time along-track
-        distance crosses the next interval mark. Captures fire only while
-        driving a leg, never during the corner turns — so on a straight leg
-        the camera points along-track and coverage is even by real distance.
+        Per leg: turn to the leg bearing, then drive the leg with pure-pursuit
+        steering (aim at a carrot `lookahead_m` ahead on the leg line, not the
+        far corner, so cross-track error converges with a constant gain),
+        firing a capture each time along-track distance crosses the next
+        interval mark. Captures fire only while driving a leg, never during the
+        corner turns — so on a straight leg the camera points along-track and
+        coverage is even by real distance.
 
         `on_capture_cb(leg_label, mark_index, t_mark, along_m, position,
         leg_bearing) -> int` (frames written). Returns True on success,
@@ -627,18 +630,31 @@ class WaypointNavigator:
                         )
                     break
 
-                # Proportional steering toward the end corner.
+                # Pure-pursuit steering: aim at a carrot lookahead_m ahead on
+                # the leg line (interpolated between corners), not the far
+                # corner, so cross-track error converges with a constant gain.
+                # The carrot parks on the end corner for the final lookahead_m.
+                f = min(along + lookahead_m, leg_len) / leg_len
+                carrot_lat = s.latitude + f * (e.latitude - s.latitude)
+                carrot_lon = s.longitude + f * (e.longitude - s.longitude)
                 bearing = calculate_bearing(
-                    pos.latitude, pos.longitude, e.latitude, e.longitude
+                    pos.latitude, pos.longitude, carrot_lat, carrot_lon
                 )
                 heading = self.get_calibrated_heading()
                 heading_error = (
                     normalize_angle(bearing - heading)
                     if heading is not None else 0.0
                 )
+                # Curvature form vz = speed · 2 sin(α) / L_d (α = heading error
+                # to the carrot) makes the path shape speed-independent. Sign
+                # matches navigate_to(): +error → CCW-negative z on the Go2 IMU.
+                alpha = math.radians(heading_error)
                 vz = max(
                     -self.rotation_rate,
-                    min(self.rotation_rate, heading_error * -0.015),
+                    min(
+                        self.rotation_rate,
+                        -speed * 2.0 * math.sin(alpha) / lookahead_m,
+                    ),
                 )
 
                 imu_yaw_now = self.robot.get_yaw_degrees()

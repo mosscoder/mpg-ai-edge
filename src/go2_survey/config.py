@@ -140,6 +140,12 @@ class CaptureSettings:
     # per-image, so capture points are not waypoints). Speed comes from
     # [navigation] max_velocity.
     capture_interval_m: float = 2.0
+    # line_survey pure-pursuit steering: aim at a carrot this many meters ahead
+    # on the leg line (rather than the far corner), so cross-track error
+    # converges with a constant gain. Larger = gentler/smoother but slower to
+    # converge; smaller = tighter but can hunt on GPS noise. Tune by watching
+    # the logged `cross`.
+    lookahead_m: float = 4.0
 
 
 @dataclass
