@@ -1,26 +1,29 @@
-"""Generate a serpentine waypoint grid from a point or polygon input.
+"""Generate lawnmower leg-endpoint waypoints from a point or polygon input.
 
-Used by the ``go2-survey get-waypoints`` CLI. Reads a single GeoJSON or
+Used by the ``go2-survey make-waypoints`` CLI. Reads a single GeoJSON or
 KML file describing either:
 
-  * a Point — requires ``--side-len-m``; produces a square grid centered
-    on the point, with rows/cols spaced ``--grid-m`` apart;
-  * a Polygon — ``--side-len-m`` ignored; fills the polygon bounding box
-    with a ``--grid-m`` grid and keeps points inside-or-within-``grid_m/2``
-    of the boundary;
+  * a Point — requires ``--side-len-m``; produces a square coverage area
+    centered on the point, swept by parallel legs spaced ``--leg-space-m``
+    apart;
+  * a Polygon — ``--side-len-m`` ignored; sweeps parallel legs spaced
+    ``--leg-space-m`` apart across the polygon, clipped to its extent;
   * multiple features — computes their centroid and treats the result as
     a Point (so ``--side-len-m`` must also be supplied).
 
-The grid axis defaults to E–W rows ("north-aligned" in survey terminology).
-``--bearing-deg`` rotates the grid clockwise from that default — e.g.
-``--bearing-deg 30`` rotates rows 30° clockwise.
+Only each leg's two **endpoints** are emitted — the line-survey walking
+strategy captures along the leg at a fixed distance interval at run time,
+so intermediate points don't belong in the route. Legs default to E–W;
+``--bearing-deg`` rotates them clockwise — e.g. ``--bearing-deg 30``
+tilts the legs 30° clockwise.
 
-Points are emitted in serpentine order so the drive-by navigator gets
-minimal between-row travel: row 1 L→R, row 2 R→L, etc.
+Endpoints are emitted in serpentine order so the walk snakes leg-to-leg:
+leg 1 L→R, leg 2 R→L, etc. Consecutive corners form the legs and the
+short cross-step connectors between them.
 
 Math is done in the user-specified projected CRS (``--epsg N``, expects
 units in meters). Output is always EPSG:4326 (lon/lat) for compatibility
-with the existing ``waypoints.geojson`` loader.
+with the ``waypoints.geojson`` loader.
 """
 
 from __future__ import annotations
@@ -173,16 +176,18 @@ def _polygon_centroid(coords: list[tuple[float, float]]) -> tuple[float, float]:
 
 def generate_grid(
     shape: InputShape,
-    grid_m: float,
+    leg_space_m: float,
     epsg: int,
     side_len_m: float | None,
     bearing_deg: float = 0.0,
 ) -> list[tuple[float, float]]:
-    """Return a serpentine-ordered list of (lat, lon) waypoints in WGS-84.
+    """Return a serpentine-ordered list of (lat, lon) leg endpoints in WGS-84.
 
-    The grid is generated in the projected CRS (``EPSG:<epsg>``, units
-    expected in meters) and rotated by ``bearing_deg`` clockwise from
-    the default E–W row orientation. Output is back-projected to WGS-84.
+    Parallel legs spaced ``leg_space_m`` apart are laid out in the
+    projected CRS (``EPSG:<epsg>``, units expected in meters), rotated by
+    ``bearing_deg`` clockwise from the default E–W orientation, and only
+    each leg's two endpoints are returned. Output is back-projected to
+    WGS-84.
     """
     to_proj = Transformer.from_crs("EPSG:4326", f"EPSG:{epsg}", always_xy=True)
     from_proj = Transformer.from_crs(f"EPSG:{epsg}", "EPSG:4326", always_xy=True)
@@ -193,11 +198,11 @@ def generate_grid(
         lat, lon = shape.coords[0]
         cx, cy = to_proj.transform(lon, lat)
         proj_pts = _grid_around_center(
-            cx, cy, side_len_m, grid_m, bearing_deg
+            cx, cy, side_len_m, leg_space_m, bearing_deg
         )
     elif shape.kind == "polygon":
         ring_proj = [to_proj.transform(lon, lat) for lat, lon in shape.coords]
-        proj_pts = _grid_in_polygon(ring_proj, grid_m, bearing_deg)
+        proj_pts = _grid_in_polygon(ring_proj, leg_space_m, bearing_deg)
     else:
         raise ValueError(f"Unknown shape kind: {shape.kind}")
 
@@ -212,27 +217,32 @@ def _grid_around_center(
     cx: float,
     cy: float,
     side_len_m: float,
-    grid_m: float,
+    leg_space_m: float,
     bearing_deg: float,
 ) -> list[tuple[float, float]]:
-    """N×N grid centered on (cx, cy), rotated by bearing_deg clockwise.
+    """Parallel legs covering a square of side ``side_len_m`` centered on
+    (cx, cy), spaced ``leg_space_m`` apart, rotated by ``bearing_deg``
+    clockwise. Only each leg's two endpoints are returned, in serpentine
+    order.
 
-    N = floor(side_len/grid) + 1 (covers the full extent, may include
-    points exactly on the boundary). Serpentine order.
+    n_legs = floor(side_len/leg_space) + 1 (covers the full extent); each
+    leg spans the full side length along-track.
     """
-    n = int(side_len_m / grid_m) + 1
-    half_extent = (n - 1) * grid_m / 2
-    offs = [-half_extent + i * grid_m for i in range(n)]
+    n = int(side_len_m / leg_space_m) + 1
+    half_extent = (n - 1) * leg_space_m / 2
+    offs = [-half_extent + i * leg_space_m for i in range(n)]
+    # Along-track leg endpoints (full extent); collapse to one if degenerate.
+    x_ends = [offs[0]] if offs[0] == offs[-1] else [offs[0], offs[-1]]
 
     theta = math.radians(bearing_deg)
     ct, st = math.cos(theta), math.sin(theta)
 
     pts: list[tuple[float, float]] = []
     for j, y in enumerate(offs):
-        row = [(x, y) for x in offs]
+        leg = [(x, y) for x in x_ends]
         if j % 2 == 1:
-            row.reverse()
-        for x, y2 in row:
+            leg.reverse()
+        for x, y2 in leg:
             # Clockwise rotation: x' = x cosθ + y sinθ, y' = -x sinθ + y cosθ
             xr = x * ct + y2 * st
             yr = -x * st + y2 * ct
@@ -242,16 +252,17 @@ def _grid_around_center(
 
 def _grid_in_polygon(
     ring_proj: list[tuple[float, float]],
-    grid_m: float,
+    leg_space_m: float,
     bearing_deg: float,
 ) -> list[tuple[float, float]]:
-    """Fill the polygon's bounding box with a grid, keep points that are
-    inside the polygon OR within grid_m/2 of its boundary, return in
-    serpentine order.
+    """Sweep parallel legs spaced ``leg_space_m`` apart across the polygon
+    and return each leg's two endpoints (first and last in-polygon point
+    along the leg), in serpentine order.
 
-    The grid is rotated about the polygon's bbox-center so the unrotated
-    bbox can be over-extended to cover all of the rotated polygon, then
-    filtered.
+    Legs are rotated about the polygon's bbox-center so the unrotated bbox
+    can be over-extended to cover all of the rotated polygon; each leg is
+    then clipped to the points inside the polygon OR within
+    ``leg_space_m/2`` of its boundary, and reduced to its endpoints.
     """
     xs = [p[0] for p in ring_proj]
     ys = [p[1] for p in ring_proj]
@@ -259,15 +270,15 @@ def _grid_in_polygon(
     cy = (min(ys) + max(ys)) / 2
     diag_half = math.hypot(max(xs) - min(xs), max(ys) - min(ys)) / 2
 
-    # Over-extend so the rotated grid covers the full polygon. Add a
-    # grid_m margin on top to catch tolerance-included edge points.
-    extent = diag_half + grid_m
-    n = int((2 * extent) / grid_m) + 1
-    offs = [-extent + i * grid_m for i in range(n)]
+    # Over-extend so the rotated legs cover the full polygon. Add a
+    # leg_space_m margin on top to catch tolerance-included edge points.
+    extent = diag_half + leg_space_m
+    n = int((2 * extent) / leg_space_m) + 1
+    offs = [-extent + i * leg_space_m for i in range(n)]
 
     theta = math.radians(bearing_deg)
     ct, st = math.cos(theta), math.sin(theta)
-    tol = grid_m / 2
+    tol = leg_space_m / 2
 
     pts: list[tuple[float, float]] = []
     for j, y in enumerate(offs):
@@ -278,9 +289,13 @@ def _grid_in_polygon(
             px, py = cx + xr, cy + yr
             if _point_in_polygon_with_tol(px, py, ring_proj, tol):
                 row_pts.append((px, py))
+        if not row_pts:
+            continue
+        # Keep only the leg endpoints (first & last in-polygon point).
+        leg = [row_pts[0]] if len(row_pts) == 1 else [row_pts[0], row_pts[-1]]
         if j % 2 == 1:
-            row_pts.reverse()
-        pts.extend(row_pts)
+            leg.reverse()
+        pts.extend(leg)
     return pts
 
 
@@ -336,7 +351,7 @@ def write_waypoints_geojson(
     source_path: Path | None = None,
     epsg: int | None = None,
     bearing_deg: float | None = None,
-    grid_m: float | None = None,
+    leg_space_m: float | None = None,
 ) -> None:
     """Write a FeatureCollection of Point features compatible with
     ``load_waypoints``. Generation metadata goes in the FeatureCollection
@@ -362,8 +377,8 @@ def write_waypoints_geojson(
         meta["projection_epsg"] = epsg
     if bearing_deg is not None:
         meta["bearing_deg"] = bearing_deg
-    if grid_m is not None:
-        meta["grid_m"] = grid_m
+    if leg_space_m is not None:
+        meta["leg_space_m"] = leg_space_m
 
     out = {
         "type": "FeatureCollection",
@@ -398,7 +413,7 @@ def plot_waypoints(geojson_path: Path, out_path: Path | None = None) -> Path:
     Returns the path to the written PNG.
     """
     # Defer the heavy import so other CLI subcommands (run, list,
-    # get-waypoints) don't pay matplotlib's import cost.
+    # make-waypoints) don't pay matplotlib's import cost.
     import matplotlib.pyplot as plt
     from matplotlib.patches import Rectangle
 
@@ -499,8 +514,8 @@ def plot_waypoints(geojson_path: Path, out_path: Path | None = None) -> Path:
     mission_name = data.get("name") or geojson_path.parent.name
     gen = data.get("generation") or {}
     subtitle_bits = [f"{len(xs)} waypoints"]
-    if "grid_m" in gen:
-        subtitle_bits.append(f"grid={gen['grid_m']} m")
+    if "leg_space_m" in gen:
+        subtitle_bits.append(f"leg spacing={gen['leg_space_m']} m")
     if "bearing_deg" in gen:
         subtitle_bits.append(f"bearing={gen['bearing_deg']}°")
     if "projection_epsg" in gen:
@@ -534,7 +549,7 @@ def cmd_plot_waypoints(args) -> int:
 # ---- CLI entrypoint -------------------------------------------------------
 
 
-def cmd_get_waypoints(args) -> int:
+def cmd_make_waypoints(args) -> int:
     in_path = Path(args.input)
     if not in_path.exists():
         print(f"error: input not found: {in_path}", file=sys.stderr)
@@ -569,13 +584,13 @@ def cmd_get_waypoints(args) -> int:
     try:
         latlons = generate_grid(
             shape,
-            grid_m=args.grid_m,
+            leg_space_m=args.leg_space_m,
             epsg=args.epsg,
             side_len_m=args.side_len_m,
             bearing_deg=args.bearing_deg,
         )
     except Exception as e:
-        print(f"error: grid generation failed: {e}", file=sys.stderr)
+        print(f"error: waypoint generation failed: {e}", file=sys.stderr)
         return 1
 
     if not latlons:
@@ -589,12 +604,12 @@ def cmd_get_waypoints(args) -> int:
         source_path=in_path,
         epsg=args.epsg,
         bearing_deg=args.bearing_deg,
-        grid_m=args.grid_m,
+        leg_space_m=args.leg_space_m,
     )
     print(
-        f"wrote {len(latlons)} waypoints to {out_path} "
+        f"wrote {len(latlons)} leg-endpoint waypoints to {out_path} "
         f"(shape={shape.kind}, epsg={args.epsg}, "
-        f"grid={args.grid_m}m, bearing={args.bearing_deg}°)"
+        f"leg_space={args.leg_space_m}m, bearing={args.bearing_deg}°)"
     )
 
     # Plot alongside the geojson unless the user opted out. Defer all

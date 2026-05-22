@@ -6,9 +6,9 @@ Usage:
     go2-survey run path/to/mission    # ... or by path
     go2-survey run 00_parking_lot --dry-run
     go2-survey run 00_parking_lot -v  # debug logging
-    go2-survey get-waypoints PATH --side-len-m 30 --grid-m 5 --epsg 6514
-                                      # generate a serpentine grid from a
-                                      # Point or Polygon (GeoJSON or KML)
+    go2-survey make-waypoints PATH --side-len-m 30 --leg-space-m 5 --epsg 6514
+                                      # generate lawnmower leg-endpoint
+                                      # waypoints from a Point or Polygon
 """
 
 import argparse
@@ -30,7 +30,7 @@ from go2_survey.logging_utils import (
     WebRTCTeardownNoiseFilter,
 )
 from go2_survey.mission_runner import MissionRunner, run_mission
-from go2_survey.waypoint_gen import cmd_get_waypoints, cmd_plot_waypoints
+from go2_survey.waypoint_gen import cmd_make_waypoints, cmd_plot_waypoints
 
 
 def _git_short_sha() -> str:
@@ -316,30 +316,30 @@ def build_parser() -> argparse.ArgumentParser:
     )
     discover_parser.set_defaults(func=cmd_discover_ip)
 
-    getwp_parser = subparsers.add_parser(
-        "get-waypoints",
-        help="generate a serpentine waypoint grid from a Point or Polygon "
-        "(GeoJSON or KML). Writes waypoints.geojson next to the input.",
+    mkwp_parser = subparsers.add_parser(
+        "make-waypoints",
+        help="generate lawnmower leg-endpoint waypoints from a Point or "
+        "Polygon (GeoJSON or KML). Writes waypoints.geojson next to the input.",
     )
-    getwp_parser.add_argument(
+    mkwp_parser.add_argument(
         "input",
         help="path to a GeoJSON or KML file containing a single Point or "
         "Polygon (or multiple features — centroid is used)",
     )
-    getwp_parser.add_argument(
+    mkwp_parser.add_argument(
         "--side-len-m",
         type=float,
         default=None,
-        help="side length of the square sampling area in meters (REQUIRED "
+        help="side length of the square coverage area in meters (REQUIRED "
         "for point input; IGNORED for polygon input)",
     )
-    getwp_parser.add_argument(
-        "--grid-m",
+    mkwp_parser.add_argument(
+        "--leg-space-m",
         type=float,
         required=True,
-        help="spacing between waypoints in meters",
+        help="spacing between parallel legs (swath width) in meters",
     )
-    getwp_parser.add_argument(
+    mkwp_parser.add_argument(
         "--epsg",
         type=int,
         required=True,
@@ -347,20 +347,20 @@ def build_parser() -> argparse.ArgumentParser:
         "the grid math, e.g. 6514 for NAD83(2011) / Montana. Output is "
         "always EPSG:4326 (lon/lat).",
     )
-    getwp_parser.add_argument(
+    mkwp_parser.add_argument(
         "--bearing-deg",
         type=float,
         default=0.0,
-        help="rotate the grid clockwise from the default E–W row "
-        "orientation. e.g. --bearing-deg=30 → rows tilt 30° clockwise.",
+        help="rotate the legs clockwise from the default E–W orientation. "
+        "e.g. --bearing-deg=30 → legs tilt 30° clockwise.",
     )
-    getwp_parser.add_argument(
+    mkwp_parser.add_argument(
         "--no-plot",
         action="store_true",
         help="skip generating mission_layout.png alongside waypoints.geojson "
         "(default: plot is generated automatically)",
     )
-    getwp_parser.set_defaults(func=cmd_get_waypoints)
+    mkwp_parser.set_defaults(func=cmd_make_waypoints)
 
     plotwp_parser = subparsers.add_parser(
         "plot-waypoints",
