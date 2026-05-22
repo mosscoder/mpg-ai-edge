@@ -1,5 +1,16 @@
 # Navigation Changelog
 
+## 2026-05-22: v0.22.0 — Line-Survey: Corner-Turn Tolerance Matches Quadrat
+
+### Change (`3adb632`)
+
+The corner turn in `navigate_legs` was using an 8° tolerance, so leg-start
+corner captures could be up to 8° off the leg bearing. It now uses
+`settings.capture.turn_tolerance_deg` (default 2°, the same source the
+rotating-quadrat strategy uses), threaded from `mission_runner`. Corner
+shots are now aligned as tightly as quadrat captures, and the tolerance is
+tunable per mission via `[capture] turn_tolerance_deg`.
+
 ## 2026-05-22: v0.21.0 — Line-Survey: Capture at Leg Corners
 
 ### Scope
