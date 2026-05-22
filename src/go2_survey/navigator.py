@@ -460,6 +460,7 @@ class WaypointNavigator:
         on_capture_cb,
         interval_m: float,
         speed: float,
+        turn_tolerance_deg: float = 2.0,
         timeout_per_leg: float = 300.0,
     ) -> bool:
         """Lawnmower line survey: drive straight legs between consecutive
@@ -514,10 +515,12 @@ class WaypointNavigator:
                 logger=logger,
             )
 
-            # Corner turn (no capture). Loose tolerance — the walk-phase
-            # steering finishes the alignment once moving.
+            # Corner turn (no capture). Tolerance matches the rotating-quadrat
+            # strategy so the leg-start corner capture is tightly aligned.
             await self.robot.stop()
-            await self.turn_to_bearing(leg_bearing, tolerance_deg=8.0, timeout=20.0)
+            await self.turn_to_bearing(
+                leg_bearing, tolerance_deg=turn_tolerance_deg, timeout=20.0
+            )
 
             # Recompute the IMU↔north offset from each leg's straight-line
             # GPS+IMU samples (a long baseline ⇒ low-noise recal).

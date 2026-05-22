@@ -350,6 +350,7 @@ async def run_mission(runner: MissionRunner) -> bool:
                 on_capture_cb=_interval_capture_cb,
                 interval_m=settings.capture.capture_interval_m,
                 speed=settings.navigation.max_velocity,
+                turn_tolerance_deg=settings.capture.turn_tolerance_deg,
             )
             if not success:
                 logger.error("Line-survey route failed")
