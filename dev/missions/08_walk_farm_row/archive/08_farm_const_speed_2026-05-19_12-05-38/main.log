@@ -1,0 +1,32 @@
+2026-05-19 12:05:38,639 [INFO] __main__: go2-survey v0.13.0 | git c8df72f | run dir: /Users/kdoherty/mpg-ai-edge/dev/missions/08_farm_const_speed/runs/08_farm_const_speed_2026-05-19_12-05-38
+2026-05-19 12:05:38,639 [INFO] __main__: Logging to: /Users/kdoherty/mpg-ai-edge/dev/missions/08_farm_const_speed/runs/08_farm_const_speed_2026-05-19_12-05-38/main.log (+ imu.log, gps.log)
+2026-05-19 12:05:38,639 [INFO] __main__: Mission dir: /Users/kdoherty/mpg-ai-edge/dev/missions/08_farm_const_speed
+2026-05-19 12:05:38,640 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-19 12:05:38,640 [INFO] go2_survey.mission_runner: =============== MISSION: 08_farm_const_speed ===============
+2026-05-19 12:05:38,640 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-19 12:05:38,640 [INFO] go2_survey.mission_runner: Drive-by route at constant 1.0 m/s — no capture-time deceleration. Shutter fires in motion as the dog passes each waypoint. A/B partner to 09_farm_decel_img (same waypoints, with valley decel).
+2026-05-19 12:05:38,640 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-19 12:05:38,640 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-05-19 12:05:38,640 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-19 12:05:38,641 [INFO] go2_survey.waypoints: Loaded 14 waypoints from /Users/kdoherty/mpg-ai-edge/dev/missions/08_farm_const_speed/waypoints.geojson
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner: Loaded 14 waypoint(s):
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   1. waypoint_1: (46.67401645, -114.01701465)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   2. waypoint_2: (46.67399100, -114.01703853)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   3. waypoint_3: (46.67397038, -114.01705715)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   4. waypoint_4: (46.67395335, -114.01707446)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   5. waypoint_5: (46.67393563, -114.01709070)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   6. waypoint_6: (46.67391638, -114.01711035)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   7. waypoint_7: (46.67390019, -114.01712346)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   8. waypoint_8: (46.67389198, -114.01710157)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   9. waypoint_9: (46.67390938, -114.01708743)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   10. waypoint_10: (46.67392841, -114.01707029)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   11. waypoint_11: (46.67394802, -114.01705297)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   12. waypoint_12: (46.67396375, -114.01703740)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   13. waypoint_13: (46.67398306, -114.01701955)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner:   14. waypoint_14: (46.67400971, -114.01699407)
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101 mountpoints=['MP22385', 'MP22385a'] | Robot: LocalSTA
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner: Nav: tol=0.25m vmax=1.0m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner: Bearing recompute method: endpoint
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner: =========== DRY RUN — not connecting to hardware ===========
+2026-05-19 12:05:38,641 [INFO] go2_survey.mission_runner: ============================================================

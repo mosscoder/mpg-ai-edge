@@ -198,6 +198,28 @@ class DriveByStrategy(CaptureStrategy):
         )
 
 
+class LineSurveyStrategy(CaptureStrategy):
+    """Lawnmower line survey: drive straight legs between corner waypoints,
+    turning in place at each corner, and capture a clean frame every
+    `capture_interval_m` of along-track travel while moving.
+
+    Like DriveByStrategy this runs end-to-end in the navigator
+    (`navigate_legs`), not per-waypoint — `execute()` is the dispatch
+    marker only and is never called. Per-mark frame selection + geotag
+    lives in `write_interval_capture()` below. Capture points are not
+    waypoints; each image carries its own interpolated RTK position.
+    """
+
+    name = "line_survey"
+
+    async def execute(self, ctx: CaptureContext) -> int:
+        raise RuntimeError(
+            "LineSurveyStrategy.execute() should never be called per-waypoint; "
+            "the line survey runs end-to-end inside "
+            "navigator.navigate_legs(). Check mission_runner dispatch."
+        )
+
+
 class RotatingQuadratStrategy(CaptureStrategy):
     """Rotate to each absolute bearing in the list, capturing at each.
 
@@ -449,12 +471,78 @@ async def write_drive_by_capture(
     return 1
 
 
+async def write_interval_capture(
+    ctx: CaptureContext,
+    leg_label: str,
+    mark_index: int,
+    target_time: float,
+    along_track_m: float,
+    fallback_position: RTKPosition,
+    target_bearing: float,
+) -> int:
+    """In-motion shutter + write for the line-survey strategy, fired at each
+    along-track distance mark by navigator.navigate_legs().
+
+    Selects the cleanest frame near `target_time` (the instant the dog
+    crossed the mark), geotags it by interpolating the RTK position to that
+    frame's own timestamp, and records the leg/mark + leg bearing. Falls
+    back to `fallback_position` (the current tick fix) when the GPS history
+    is too sparse to interpolate. Captures land under
+    `<run>/<output_subdir>/<leg_label>/` (one dir per leg).
+    """
+    frame_result = await capture_frame(
+        ctx.robot,
+        max_age=ctx.settings.frame_max_age,
+        wait_timeout=ctx.settings.frame_wait_timeout,
+        target_time=target_time,
+        prefer_clean=ctx.settings.prefer_clean_frame,
+    )
+    if frame_result is None:
+        logger.error(
+            f"No frame near {leg_label} mark {mark_index} (line_survey); skipping"
+        )
+        return 0
+
+    interp = ctx.gps.position_at(frame_result.timestamp) if ctx.gps else None
+    geo_pos = interp or fallback_position
+    position_interpolated = interp is not None
+
+    achieved_heading, heading_source = _current_bearing(ctx)
+    out_path = _capture_output_path(ctx, leg_label, bearing=target_bearing)
+    write_geotagged_jpeg(
+        frame=frame_result,
+        position=geo_pos,
+        bearing=target_bearing,
+        achieved_heading=achieved_heading,
+        out_path=out_path,
+        heading_source=heading_source,
+        position_interpolated=position_interpolated,
+        mission_context=_mission_context(
+            ctx, leg_label, LineSurveyStrategy.name, target_bearing
+        ),
+        extra={
+            "line_survey": {
+                "leg": leg_label,
+                "mark_index": mark_index,
+                "along_track_m": round(along_track_m, 3),
+                "interval_m": ctx.settings.capture_interval_m,
+                "frame_corrupt": frame_result.corrupt,
+                "frame_offset_from_mark_s": round(
+                    frame_result.timestamp - target_time, 4
+                ),
+            }
+        },
+    )
+    return 1
+
+
 STRATEGIES = {
     NoOpStrategy.name: NoOpStrategy,
     FrameOnlyStrategy.name: FrameOnlyStrategy,
     WaypointForwardStrategy.name: WaypointForwardStrategy,
     RotatingQuadratStrategy.name: RotatingQuadratStrategy,
     DriveByStrategy.name: DriveByStrategy,
+    LineSurveyStrategy.name: LineSurveyStrategy,
 }
 
 

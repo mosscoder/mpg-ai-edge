@@ -104,7 +104,7 @@ class ProbeSettings:
 class CaptureSettings:
     """Per-waypoint capture behavior. See `capture.py::STRATEGIES`."""
 
-    strategy: str = "none"              # "none" | "frame_only" | "waypoint_forward" | "rotating_quadrat" | "drive_by"
+    strategy: str = "none"              # "none" | "frame_only" | "waypoint_forward" | "rotating_quadrat" | "drive_by" | "line_survey"
     settle_time: float = 2.0            # seconds after stop before sampling
     gps_avg_sec: float = 3.0            # GPS averaging window (0 disables)
     bearings: list = field(default_factory=lambda: [0.0, 90.0, 180.0, 270.0])
@@ -134,6 +134,12 @@ class CaptureSettings:
     valley_speed: float = 0.25
     valley_radius_m: float = 1.0
     sharp_turn_deg: float = 30.0
+    # line_survey strategy: drive straight legs between corner waypoints at
+    # navigation.max_velocity, turning in place at each corner, and capture a
+    # clean frame every capture_interval_m of along-track travel (geotagged
+    # per-image, so capture points are not waypoints). Speed comes from
+    # [navigation] max_velocity.
+    capture_interval_m: float = 2.0
 
 
 @dataclass

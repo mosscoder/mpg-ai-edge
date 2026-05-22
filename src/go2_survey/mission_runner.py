@@ -15,8 +15,10 @@ from typing import Awaitable, Callable
 from go2_survey.capture import (
     CaptureContext,
     DriveByStrategy,
+    LineSurveyStrategy,
     build_strategy,
     write_drive_by_capture,
+    write_interval_capture,
 )
 from go2_survey.config import MissionSettings, load_mission_config
 from go2_survey.discovery import find_robot_ips
@@ -314,6 +316,43 @@ async def run_mission(runner: MissionRunner) -> bool:
             )
             if not success:
                 logger.error("Drive-by route failed")
+                return False
+        elif settings.capture.strategy == LineSurveyStrategy.name:
+            # Line survey runs the route end-to-end inside the navigator:
+            # drive straight legs between corner waypoints, capture every
+            # capture_interval_m of along-track travel via the callback.
+            async def _interval_capture_cb(
+                leg_label, mark_index, t_mark, along_m, position, leg_bearing
+            ):
+                ctx = CaptureContext(
+                    mission_name=settings.name or mission_dir.name,
+                    mission_dir=mission_dir,
+                    run_dir=runner.run_dir,
+                    robot=robot,
+                    gps=gps,
+                    navigator=navigator,
+                    settings=settings.capture,
+                    waypoint=None,
+                    arrival_position=position,
+                )
+                return await write_interval_capture(
+                    ctx,
+                    leg_label=leg_label,
+                    mark_index=mark_index,
+                    target_time=t_mark,
+                    along_track_m=along_m,
+                    fallback_position=position,
+                    target_bearing=leg_bearing,
+                )
+
+            success = await navigator.navigate_legs(
+                waypoints=waypoints,
+                on_capture_cb=_interval_capture_cb,
+                interval_m=settings.capture.capture_interval_m,
+                speed=settings.navigation.max_velocity,
+            )
+            if not success:
+                logger.error("Line-survey route failed")
                 return False
         else:
             for i, wp in enumerate(waypoints, start=1):
