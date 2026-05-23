@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "waypoints",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "name": "wp_001" }, "geometry": { "type": "Point", "coordinates": [ -114.017014654720043, 46.674016451409969 ] } },
+{ "type": "Feature", "properties": { "name": "wp_002" }, "geometry": { "type": "Point", "coordinates": [ -114.017124658637655, 46.673900845607228 ] } },
+{ "type": "Feature", "properties": { "name": "wp_003" }, "geometry": { "type": "Point", "coordinates": [ -114.017101568445952, 46.673891983342038 ] } },
+{ "type": "Feature", "properties": { "name": "wp_004" }, "geometry": { "type": "Point", "coordinates": [ -114.016994074841918, 46.674009706551935 ] } }
+]
+}

@@ -1,0 +1,37 @@
+name        = "09b_field_test"
+description = "Fast (1 m/s) variant of 09_field_test: lawnmower line survey of a 50 m × 50 m grid, 11 parallel legs (~50 m) spaced 5 m, walked corner-to-corner at 1 m/s, capturing a clean frame every 2 m of along-track travel. 22 corner waypoints generated from a seed point via make-waypoints (EPSG 6514)."
+mode        = "nav"
+
+[gps]
+port = "/dev/ttyACM0"
+baud = 38400
+
+[ntrip]
+host        = "caster.emlid.com"
+port        = 2101
+mountpoints = ["MP22385", "MP22385a"]
+usernames   = ["u26787",  "u26787"]
+passwords   = ["492utz",  "492utz"]
+
+[robot]
+connection_mode = "LocalSTA"
+
+[navigation]
+arrival_tolerance = 0.25
+max_velocity      = 1.0
+rotation_rate     = 0.8
+min_fix_type      = 4
+max_hacc          = 0.10
+gps_fix_timeout   = 300
+
+[capture]
+# Line survey: drive straight legs between the corner waypoints at
+# [navigation] max_velocity, turning in place at each corner, and capture a
+# clean frame every capture_interval_m of along-track travel. Capture points
+# are not waypoints — each image is geotagged with its own interpolated RTK
+# position. Leg steering is pure pursuit: aim at a carrot lookahead_m ahead on
+# the leg line so cross-track error converges with a constant gain.
+strategy           = "line_survey"
+capture_interval_m = 2.0
+lookahead_m        = 4.0   # pure-pursuit carrot; lower (3->2) if legs bow, raise if it hunts
+output_subdir      = "captures"
