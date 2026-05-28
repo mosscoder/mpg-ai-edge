@@ -1,0 +1,173 @@
+{
+  "type": "FeatureCollection",
+  "name": "captures",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "file": "leg01_m001_b213_2026-05-28T11-12-03.jpg",
+        "leg": "leg01",
+        "mark_index": 1,
+        "along_track_m": 2.0,
+        "achieved_heading": 204.77274998633231,
+        "target_bearing": 213.14057917180105,
+        "fix_type": 6,
+        "hacc_m": 0.014,
+        "corrupt": false,
+        "position_interpolated": true,
+        "captured_at_utc": "2026-05-28T17:12:03.246646+00:00"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.01702673420473,
+          46.67400027211337
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "file": "leg01_m002_b213_2026-05-28T11-12-08.jpg",
+        "leg": "leg01",
+        "mark_index": 2,
+        "along_track_m": 4.0,
+        "achieved_heading": 211.36548885600513,
+        "target_bearing": 213.14057917180105,
+        "fix_type": 6,
+        "hacc_m": 0.014,
+        "corrupt": false,
+        "position_interpolated": true,
+        "captured_at_utc": "2026-05-28T17:12:08.217363+00:00"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.0170441171684,
+          46.67398649495531
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "file": "leg01_m003_b213_2026-05-28T11-12-12.jpg",
+        "leg": "leg01",
+        "mark_index": 3,
+        "along_track_m": 6.0,
+        "achieved_heading": 204.76106164731164,
+        "target_bearing": 213.14057917180105,
+        "fix_type": 6,
+        "hacc_m": 0.014,
+        "corrupt": false,
+        "position_interpolated": true,
+        "captured_at_utc": "2026-05-28T17:12:12.406132+00:00"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.01705546107371,
+          46.673970385235044
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "file": "leg01_m004_b213_2026-05-28T11-12-16.jpg",
+        "leg": "leg01",
+        "mark_index": 4,
+        "along_track_m": 8.0,
+        "achieved_heading": 205.9302966198351,
+        "target_bearing": 213.14057917180105,
+        "fix_type": 6,
+        "hacc_m": 0.014,
+        "corrupt": false,
+        "position_interpolated": true,
+        "captured_at_utc": "2026-05-28T17:12:16.367156+00:00"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.01707142862284,
+          46.67395594275429
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "file": "leg01_m005_b213_2026-05-28T11-12-20.jpg",
+        "leg": "leg01",
+        "mark_index": 5,
+        "along_track_m": 10.0,
+        "achieved_heading": 204.52334145811184,
+        "target_bearing": 213.14057917180105,
+        "fix_type": 6,
+        "hacc_m": 0.014,
+        "corrupt": false,
+        "position_interpolated": true,
+        "captured_at_utc": "2026-05-28T17:12:20.813353+00:00"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.01708439646656,
+          46.673940997027536
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "file": "leg01_m006_b213_2026-05-28T11-12-24.jpg",
+        "leg": "leg01",
+        "mark_index": 6,
+        "along_track_m": 12.0,
+        "achieved_heading": 204.39356651751473,
+        "target_bearing": 213.14057917180105,
+        "fix_type": 6,
+        "hacc_m": 0.014,
+        "corrupt": false,
+        "position_interpolated": true,
+        "captured_at_utc": "2026-05-28T17:12:24.763394+00:00"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.01710425108763,
+          46.67392776594158
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "file": "leg01_m007_b213_2026-05-28T11-12-28.jpg",
+        "leg": "leg01",
+        "mark_index": 7,
+        "along_track_m": 14.0,
+        "achieved_heading": 201.0290437529475,
+        "target_bearing": 213.14057917180105,
+        "fix_type": 6,
+        "hacc_m": 0.014,
+        "corrupt": false,
+        "position_interpolated": true,
+        "captured_at_utc": "2026-05-28T17:12:28.624120+00:00"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.0171186941792,
+          46.67391304109437
+        ]
+      }
+    }
+  ]
+}
