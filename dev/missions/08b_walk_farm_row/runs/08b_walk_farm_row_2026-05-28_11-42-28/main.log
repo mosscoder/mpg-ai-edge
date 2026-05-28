@@ -1,0 +1,640 @@
+2026-05-28 11:42:28,810 [INFO] go2_survey.cli: go2-survey v0.24.0 | git 7452631 | run dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/08b_walk_farm_row/runs/08b_walk_farm_row_2026-05-28_11-42-28
+2026-05-28 11:42:28,810 [INFO] go2_survey.cli: Logging to: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/08b_walk_farm_row/runs/08b_walk_farm_row_2026-05-28_11-42-28/main.log (+ imu.log, gps.log)
+2026-05-28 11:42:28,810 [INFO] go2_survey.cli: Mission dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/08b_walk_farm_row
+2026-05-28 11:42:28,815 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-28 11:42:28,816 [INFO] go2_survey.mission_runner: ================ MISSION: 08b_walk_farm_row ================
+2026-05-28 11:42:28,816 [INFO] go2_survey.mission_runner: ============================================================
+2026-05-28 11:42:28,816 [INFO] go2_survey.mission_runner: Fast (1 m/s) variant of 08_walk_farm_row: lawnmower line survey of the farm, 2 parallel rows (~15 m legs) walked corner-to-corner at 1 m/s, capturing a clean frame every 2 m of along-track travel. Waypoints are the real field-measured row corners (4 leg endpoints).
+2026-05-28 11:42:28,816 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:28,816 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-05-28 11:42:28,816 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:28,817 [INFO] go2_survey.waypoints: Loaded 4 waypoints from /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/08b_walk_farm_row/waypoints.geojson
+2026-05-28 11:42:28,818 [INFO] go2_survey.mission_runner: Loaded 4 waypoint(s):
+2026-05-28 11:42:28,818 [INFO] go2_survey.mission_runner:   1. wp_001: (46.67401645, -114.01701465)
+2026-05-28 11:42:28,818 [INFO] go2_survey.mission_runner:   2. wp_002: (46.67390085, -114.01712466)
+2026-05-28 11:42:28,818 [INFO] go2_survey.mission_runner:   3. wp_003: (46.67389198, -114.01710157)
+2026-05-28 11:42:28,818 [INFO] go2_survey.mission_runner:   4. wp_004: (46.67400971, -114.01699407)
+2026-05-28 11:42:28,819 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101 mountpoints=['MP22385', 'MP22385a'] | Robot: LocalSTA
+2026-05-28 11:42:28,819 [INFO] go2_survey.mission_runner: Nav: tol=0.25m vmax=1.0m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-05-28 11:42:28,819 [INFO] go2_survey.mission_runner: Bearing recompute method: endpoint
+2026-05-28 11:42:28,819 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:28,820 [INFO] go2_survey.mission_runner:  AUTO-DISCOVERING ROBOT IP (up to 4 attempts, 10s between) -
+2026-05-28 11:42:28,820 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:28,820 [INFO] go2_survey.mission_runner: robot.ip not set in mission.toml and ROBOT_IP env var not set; scanning local network for a Go2 (nmap ports 8081/9991)...
+2026-05-28 11:42:28,820 [INFO] go2_survey.mission_runner: Discovery attempt 1/4: scanning for Go2 on ports 8081/9991...
+2026-05-28 11:42:28,832 [INFO] go2_survey.discovery: Scanning 10.109.236.241/24 for Go2 ports 8081/9991...
+2026-05-28 11:42:31,333 [INFO] go2_survey.mission_runner: Discovery attempt 1: found Go2 at 10.109.236.5
+2026-05-28 11:42:31,335 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:31,335 [INFO] go2_survey.mission_runner: ------------ ROBOT IP DISCOVERED | 10.109.236.5 ------------
+2026-05-28 11:42:31,335 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:31,336 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:31,337 [INFO] go2_survey.mission_runner: ----------------------- PHASE 1: GPS -----------------------
+2026-05-28 11:42:31,337 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:31,339 [INFO] go2_survey.gps: Connected to GPS on /dev/ttyACM0 @ 38400 baud
+2026-05-28 11:42:31,339 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2, attempt 1/3)
+2026-05-28 11:42:31,340 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-28 11:42:31,903 [INFO] go2_survey.ntrip: Connected to NTRIP mountpoint: MP22385
+2026-05-28 11:42:31,904 [INFO] go2_survey.gps: NTRIP: connected via primary mountpoint MP22385 (took 1s, 1 attempt(s))
+2026-05-28 11:42:31,905 [INFO] go2_survey.ntrip: Started RTCM correction stream
+2026-05-28 11:42:31,905 [INFO] go2_survey.gps: Waiting for GPS fix (min type 4, NTRIP state=connected)...
+2026-05-28 11:42:31,907 [WARNING] go2_survey.gps: wait_for_fix: RTCM stalled (state=connected, rtcm_age=∞, alive=True) — firing reconnect_ntrip_async()
+2026-05-28 11:42:31,909 [INFO] go2_survey.ntrip: RTCM correction worker stopped
+2026-05-28 11:42:31,909 [INFO] go2_survey.ntrip: Disconnected from NTRIP. Forwarded 0 messages.
+2026-05-28 11:42:31,910 [INFO] go2_survey.gps: NTRIP reconnect: starting retry loop
+2026-05-28 11:42:31,910 [INFO] go2_survey.gps: NTRIP: trying primary mountpoint MP22385 (1/2, attempt 1/3)
+2026-05-28 11:42:31,910 [INFO] go2_survey.ntrip: Connecting to NTRIP caster at caster.emlid.com:2101
+2026-05-28 11:42:32,341 [INFO] go2_survey.ntrip: Connected to NTRIP mountpoint: MP22385
+2026-05-28 11:42:32,341 [INFO] go2_survey.gps: NTRIP: connected via primary mountpoint MP22385 (took 0s, 1 attempt(s))
+2026-05-28 11:42:32,342 [INFO] go2_survey.ntrip: Started RTCM correction stream
+2026-05-28 11:42:32,342 [INFO] go2_survey.gps: NTRIP reconnect: stream restored
+2026-05-28 11:42:34,019 [INFO] go2_survey.gps: wait_for_fix: RTCM flow restored; re-arming stall-reconnect trigger
+2026-05-28 11:42:36,132 [INFO] go2_survey.gps: RTK Fixed achieved! Lat: 46.67400940, Lon: -114.01705570, h: 1089.55m, hMSL: 1107.28m hAcc: 0.014m pDOP: 0.97
+2026-05-28 11:42:36,132 [INFO] go2_survey.gps: ============================================================
+2026-05-28 11:42:36,132 [INFO] go2_survey.gps:  GPS RTK Fixed ACHIEVED | hAcc: 0.014m pDOP: 0.97 | rtcm_age=1.7s msgs=6 
+2026-05-28 11:42:36,133 [INFO] go2_survey.gps: ============================================================
+2026-05-28 11:42:36,182 [INFO] go2_survey.mission_runner: Start position: (46.67400930, -114.01705570) hAcc: 0.014m
+2026-05-28 11:42:36,182 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:36,182 [INFO] go2_survey.mission_runner: ------------- PHASE 2: GPS STABILIZATION (60s) -------------
+2026-05-28 11:42:36,182 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:36,182 [INFO] go2_survey.gps: ------------------------------------------------------------
+2026-05-28 11:42:36,182 [INFO] go2_survey.gps:  DWELL: 60s — robot stationary, RTK soaking (early-exit on 3s trusted Fixed) 
+2026-05-28 11:42:36,183 [INFO] go2_survey.gps: ------------------------------------------------------------
+2026-05-28 11:42:39,887 [INFO] go2_survey.gps: ============================================================
+2026-05-28 11:42:39,887 [INFO] go2_survey.gps:  DWELL EARLY EXIT | best=RTK Fixed min_hAcc=0.014m | mean hAcc=0.014m sats=31.0 | TTFloat=0s TTFixed=0s | early@4s/60s (held trusted Fixed 3s) 
+2026-05-28 11:42:39,887 [INFO] go2_survey.gps: ============================================================
+2026-05-28 11:42:39,887 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:39,888 [INFO] go2_survey.mission_runner: ---------------------- PHASE 3: ROBOT ----------------------
+2026-05-28 11:42:39,888 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:39,888 [INFO] go2_survey.robot: Connecting via LocalSTA (IP: 10.109.236.5)
+2026-05-28 11:42:39,980 [INFO] root: Creating offer...
+2026-05-28 11:42:40,695 [INFO] root: Track received: audio
+2026-05-28 11:42:40,695 [INFO] root: Track received: video
+2026-05-28 11:42:40,908 [INFO] root: Received message on data channel: {"type":"validation","data":"SVFlGC6mQ8NBD837rbv"}
+2026-05-28 11:42:40,910 [INFO] root: Data channel opened
+2026-05-28 11:42:40,910 [INFO] root: > message sent: {"type": "validation", "topic": "", "data": "sUKMDL+RE1LU0WUPM6ipRA=="}
+2026-05-28 11:42:40,916 [INFO] root: Received message on data channel: {"type":"validation", "data":"Validation Ok."}
+2026-05-28 11:42:40,916 [INFO] root: Validation succeed
+2026-05-28 11:42:40,917 [INFO] root: Received message on data channel: {"type":"errors","data":[]}
+2026-05-28 11:42:40,998 [INFO] go2_survey.robot: WebRTC connected
+2026-05-28 11:42:40,998 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 1873700560, "api_id": 1001}}, "parameter": ""}}
+2026-05-28 11:42:41,016 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1001,"id":1873700560},"status":{"code":0}},"data":"{\"form\":\"0\",\"name\":\"mcf\"}"}}
+2026-05-28 11:42:41,016 [INFO] go2_survey.robot: Robot API ready
+2026-05-28 11:42:41,017 [INFO] go2_survey.robot: Subscribed to sport mode state (IMU)
+2026-05-28 11:42:41,017 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 1873701455, "api_id": 1001}}, "parameter": ""}}
+2026-05-28 11:42:41,037 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1001,"id":1873701455},"status":{"code":0}},"data":"{\"form\":\"0\",\"name\":\"mcf\"}"}}
+2026-05-28 11:42:41,037 [INFO] go2_survey.robot: Current motion mode: mcf
+2026-05-28 11:42:41,037 [INFO] go2_survey.robot: Switching to normal mode...
+2026-05-28 11:42:41,038 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/motion_switcher/request", "data": {"header": {"identity": {"id": 1873701003, "api_id": 1002}}, "parameter": "{\"name\": \"normal\"}"}}
+2026-05-28 11:42:41,046 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/motion_switcher/response","data":{"header":{"identity":{"api_id":1002,"id":1873701003},"status":{"code":7004}},"data":""}}
+2026-05-28 11:42:41,918 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "public_network_status", "uuid": "c6c4c02d-192b-4b16-9ea3-f25097a4e2dc"}}
+2026-05-28 11:42:41,929 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"public_network_status","status":"NetworkStatus.ON_WIFI_CONNECTED","uuid":"c6c4c02d-192b-4b16-9ea3-f25097a4e2dc"}}
+2026-05-28 11:42:41,930 [INFO] root: Network status message received.
+2026-05-28 11:42:42,918 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:42:42", "timeInNum": 1779990162}}
+2026-05-28 11:42:42,927 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:42:42,927 [INFO] root: Heartbeat response received.
+2026-05-28 11:42:44,919 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:42:44", "timeInNum": 1779990164}}
+2026-05-28 11:42:44,927 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:42:44,927 [INFO] root: Heartbeat response received.
+2026-05-28 11:42:46,048 [INFO] go2_survey.robot: BalanceStand...
+2026-05-28 11:42:46,049 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873706417, "api_id": 1002}}, "parameter": ""}}
+2026-05-28 11:42:46,059 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":1873706417},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:46,921 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:42:46", "timeInNum": 1779990166}}
+2026-05-28 11:42:46,929 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:42:46,929 [INFO] root: Heartbeat response received.
+2026-05-28 11:42:47,060 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:47,061 [INFO] go2_survey.mission_runner: -------------- CAPTURE STRATEGY: line_survey ---------------
+2026-05-28 11:42:47,061 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:47,061 [INFO] go2_survey.robot: ------------------------------------------------------------
+2026-05-28 11:42:47,061 [INFO] go2_survey.robot: ------------------ ENABLING VIDEO CHANNEL ------------------
+2026-05-28 11:42:47,062 [INFO] go2_survey.robot: ------------------------------------------------------------
+2026-05-28 11:42:47,062 [INFO] root: > message sent: {"type": "vid", "topic": "", "data": "on"}
+2026-05-28 11:42:47,062 [INFO] go2_survey.robot: Video channel turned on; waiting for first frame
+2026-05-28 11:42:47,062 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:47,063 [INFO] go2_survey.mission_runner: ------------- PHASE 4: NAVIGATE 4 WAYPOINT(S) --------------
+2026-05-28 11:42:47,063 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-05-28 11:42:47,063 [INFO] go2_survey.navigator: ============================================================
+2026-05-28 11:42:47,063 [INFO] go2_survey.navigator:  LINE SURVEY | 4 corners / 3 legs | 1.00m/s | capture every 2.0m 
+2026-05-28 11:42:47,064 [INFO] go2_survey.navigator: ============================================================
+2026-05-28 11:42:47,064 [INFO] go2_survey.navigator: Navigating to wp_001: (46.67401645, -114.01701465)
+2026-05-28 11:42:47,064 [INFO] go2_survey.navigator: ============================================================
+2026-05-28 11:42:47,064 [INFO] go2_survey.navigator: =================== NAVIGATING TO wp_001 ===================
+2026-05-28 11:42:47,064 [INFO] go2_survey.navigator: ============================================================
+2026-05-28 11:42:47,064 [INFO] go2_survey.robot: BalanceStand...
+2026-05-28 11:42:47,065 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873706703, "api_id": 1002}}, "parameter": ""}}
+2026-05-28 11:42:47,074 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":1873706703},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:47,189 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:47,251 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:47,323 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:47,392 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:47,466 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:47,532 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:47,605 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:47,669 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:47,744 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:47,827 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:47,882 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:47,951 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:48,022 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:48,076 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:42:48,077 [INFO] go2_survey.navigator: --------------------- CALIBRATING IMU ----------------------
+2026-05-28 11:42:48,077 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:42:48,695 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:48,706 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:48,714 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:48,721 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:48,729 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:42:48,786 [INFO] root: Receiving video frame
+2026-05-28 11:42:48,787 [INFO] go2_survey.robot: Video track attached; starting frame consumer
+2026-05-28 11:42:48,818 [INFO] go2_survey.robot: First video frame decoded | 1280x720 BGR
+2026-05-28 11:42:49,099 [INFO] go2_survey.navigator: IMU calibration started (hAcc: 0.014m) - walking forward to calibrate...
+2026-05-28 11:42:49,100 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:42:49,101 [INFO] go2_survey.navigator: ----------------- IMU CALIBRATION STARTED ------------------
+2026-05-28 11:42:49,101 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:42:49,102 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873708597, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0}"}}
+2026-05-28 11:42:49,104 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:42:49", "timeInNum": 1779990169}}
+2026-05-28 11:42:49,136 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:42:49,137 [INFO] root: Heartbeat response received.
+2026-05-28 11:42:49,147 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873708597},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:49,487 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873709942, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0}"}}
+2026-05-28 11:42:49,539 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873709942},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:49,888 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873710113, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0}"}}
+2026-05-28 11:42:49,921 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873710113},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:50,288 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873710605, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0}"}}
+2026-05-28 11:42:50,343 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873710605},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:50,688 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873710999, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0}"}}
+2026-05-28 11:42:50,743 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873710999},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:51,093 [INFO] go2_survey.navigator: IMU calibrated! Offset: 35.8° (GPS bearing: 32.8°, IMU yaw: 2.9°, hAcc: 0.014m, disp: 1.55m)
+2026-05-28 11:42:51,094 [INFO] go2_survey.navigator: ============================================================
+2026-05-28 11:42:51,094 [INFO] go2_survey.navigator: ============ IMU CALIBRATED | Offset: 35.8 deg =============
+2026-05-28 11:42:51,094 [INFO] go2_survey.navigator: ============================================================
+2026-05-28 11:42:51,094 [INFO] go2_survey.robot: Stopping robot
+2026-05-28 11:42:51,095 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873711010, "api_id": 1003}}, "parameter": ""}}
+2026-05-28 11:42:51,105 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:42:51", "timeInNum": 1779990171}}
+2026-05-28 11:42:51,154 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":1873711010},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:51,156 [INFO] go2_survey.robot: BalanceStand...
+2026-05-28 11:42:51,156 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873711459, "api_id": 1002}}, "parameter": ""}}
+2026-05-28 11:42:51,157 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:42:51,157 [INFO] root: Heartbeat response received.
+2026-05-28 11:42:51,174 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":1873711459},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:52,292 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:42:52,292 [INFO] go2_survey.navigator: ------------------- TURNING TO WAYPOINT --------------------
+2026-05-28 11:42:52,293 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:42:52,293 [INFO] go2_survey.navigator: Turn direction: CW (heading=28.1° bearing=109.4° error=81.3°)
+2026-05-28 11:42:52,293 [INFO] go2_survey.robot: BalanceStand...
+2026-05-28 11:42:52,293 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873712053, "api_id": 1002}}, "parameter": ""}}
+2026-05-28 11:42:52,316 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":1873712053},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:53,107 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:42:53", "timeInNum": 1779990173}}
+2026-05-28 11:42:53,114 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:42:53,115 [INFO] root: Heartbeat response received.
+2026-05-28 11:42:53,489 [INFO] go2_survey.navigator: [turn] hdg=27.6° brg=109.1° err=81.5°
+2026-05-28 11:42:53,490 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873712977, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:42:53,522 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873712977},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:53,688 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873713460, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:42:53,724 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873713460},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:53,753 [INFO] root: Received message on data channel: {"type":"rtc_inner_req","info":{"req_type":"rtt_probe_send_from_mechine","send_time_stamp":1779990173,"uuid":"db906501-03e4-4d89-9931-e65cb0cafbac"}}
+2026-05-28 11:42:53,755 [INFO] root: > message sent: {"type": "rtc_inner_req", "topic": "", "data": {"req_type": "rtt_probe_send_from_mechine", "send_time_stamp": 1779990173, "uuid": "db906501-03e4-4d89-9931-e65cb0cafbac"}}
+2026-05-28 11:42:53,881 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873713339, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:42:53,895 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873713339},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:54,101 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873713834, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:42:54,137 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873713834},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:54,286 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873713877, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:42:54,302 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873713877},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:54,491 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873714565, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:42:54,519 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873714565},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:54,699 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873714612, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:42:54,752 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873714612},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:54,888 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873714486, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:42:54,901 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873714486},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:55,093 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873715435, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:42:55,109 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:42:55", "timeInNum": 1779990175}}
+2026-05-28 11:42:55,122 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873715435},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:55,123 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:42:55,123 [INFO] root: Heartbeat response received.
+2026-05-28 11:42:55,290 [INFO] go2_survey.robot: Stopping robot
+2026-05-28 11:42:55,291 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873715667, "api_id": 1003}}, "parameter": ""}}
+2026-05-28 11:42:55,319 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":1873715667},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:55,320 [INFO] go2_survey.navigator: Aligned to waypoint — heading: 87.9° (error: 21.1°)
+2026-05-28 11:42:55,321 [INFO] go2_survey.robot: BalanceStand...
+2026-05-28 11:42:55,321 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873714821, "api_id": 1002}}, "parameter": ""}}
+2026-05-28 11:42:55,333 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":1873714821},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:56,335 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:42:56,335 [INFO] go2_survey.navigator: ------------------- WALKING TO WAYPOINT --------------------
+2026-05-28 11:42:56,335 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:42:56,497 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873716531, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.2897633098805755}"}}
+2026-05-28 11:42:56,531 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873716531},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:56,532 [INFO] go2_survey.navigator: NAV | (46.67402340, -114.01704380) | fix=6 hAcc=0.014m | dist=2.35m | hdg=89.8° | IMU cal: yes
+2026-05-28 11:42:56,888 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873716445, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.2655758802284808}"}}
+2026-05-28 11:42:56,942 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873716445},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:57,111 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:42:57", "timeInNum": 1779990177}}
+2026-05-28 11:42:57,120 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:42:57,120 [INFO] root: Heartbeat response received.
+2026-05-28 11:42:57,287 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873716761, "api_id": 1008}}, "parameter": "{\"x\": 0.9762680462310509, \"y\": 0, \"z\": -0.20459270981859062}"}}
+2026-05-28 11:42:57,332 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873716761},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:57,689 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873718020, "api_id": 1008}}, "parameter": "{\"x\": 0.7890294474557789, \"y\": 0, \"z\": -0.1692163398294253}"}}
+2026-05-28 11:42:57,762 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873718020},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:58,100 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873718550, "api_id": 1008}}, "parameter": "{\"x\": 0.6057070355068896, \"y\": 0, \"z\": -0.17016686716097437}"}}
+2026-05-28 11:42:58,276 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873718550},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:58,507 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873718679, "api_id": 1008}}, "parameter": "{\"x\": 0.4730998393009502, \"y\": 0, \"z\": -0.16962110817426135}"}}
+2026-05-28 11:42:58,522 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873718679},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:58,887 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873718694, "api_id": 1008}}, "parameter": "{\"x\": 0.3712962696120735, \"y\": 0, \"z\": -0.1745824469411764}"}}
+2026-05-28 11:42:59,065 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873718694},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:59,112 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:42:59", "timeInNum": 1779990179}}
+2026-05-28 11:42:59,126 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:42:59,126 [INFO] root: Heartbeat response received.
+2026-05-28 11:42:59,303 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873719403, "api_id": 1008}}, "parameter": "{\"x\": 0.29551484026904723, \"y\": 0, \"z\": -0.1451710186249482}"}}
+2026-05-28 11:42:59,330 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873719403},"status":{"code":0}},"data":""}}
+2026-05-28 11:42:59,688 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873719357, "api_id": 1008}}, "parameter": "{\"x\": 0.24537908046219062, \"y\": 0, \"z\": -0.16975997546892485}"}}
+2026-05-28 11:42:59,827 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873719357},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:00,095 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873720496, "api_id": 1008}}, "parameter": "{\"x\": 0.2, \"y\": 0, \"z\": -0.14704530751701406}"}}
+2026-05-28 11:43:00,132 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873720496},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:00,484 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873719956, "api_id": 1008}}, "parameter": "{\"x\": 0.2, \"y\": 0, \"z\": -0.10797722805785369}"}}
+2026-05-28 11:43:00,647 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873719956},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:00,883 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873720356, "api_id": 1008}}, "parameter": "{\"x\": 0.2, \"y\": 0, \"z\": -0.07783977804016054}"}}
+2026-05-28 11:43:00,921 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873720356},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:01,054 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:01,114 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:01", "timeInNum": 1779990181}}
+2026-05-28 11:43:01,287 [INFO] go2_survey.navigator: ARRIVED at wp_001! Distance: 0.220m
+2026-05-28 11:43:01,287 [INFO] go2_survey.navigator: ============================================================
+2026-05-28 11:43:01,287 [INFO] go2_survey.navigator: ============= ARRIVED at wp_001 | 0.220m | 14s =============
+2026-05-28 11:43:01,287 [INFO] go2_survey.navigator: ============================================================
+2026-05-28 11:43:01,288 [INFO] go2_survey.robot: Stopping robot
+2026-05-28 11:43:01,288 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873721096, "api_id": 1003}}, "parameter": ""}}
+2026-05-28 11:43:01,291 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:01,326 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:43:01,326 [INFO] root: Heartbeat response received.
+2026-05-28 11:43:01,390 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:01,463 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":1873721096},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:01,464 [WARNING] go2_survey.navigator: IMU recal [endpoint]: only 6/10 samples in buffer; keeping offset 35.8°
+2026-05-28 11:43:01,464 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:43:01,464 [INFO] go2_survey.navigator: -- LINE SURVEY leg01 (1/3) -> wp_002 | brg=213° len=15.4m --
+2026-05-28 11:43:01,464 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:43:01,465 [INFO] go2_survey.robot: Stopping robot
+2026-05-28 11:43:01,465 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873721546, "api_id": 1003}}, "parameter": ""}}
+2026-05-28 11:43:01,491 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":1873721546},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:01,492 [INFO] go2_survey.robot: BalanceStand...
+2026-05-28 11:43:01,493 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873721689, "api_id": 1002}}, "parameter": ""}}
+2026-05-28 11:43:01,500 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":1873721689},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:02,003 [INFO] go2_survey.navigator: [turn→213°] hdg=124.3° err=88.8° rate=0.80rad/s
+2026-05-28 11:43:02,004 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873721483, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:02,017 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873721483},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:02,119 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873721648, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:02,138 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873721648},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:02,240 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873722058, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:02,241 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:02,287 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873722058},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:02,311 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:02,389 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873721985, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:02,390 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:02,431 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873721985},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:02,459 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:02,527 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:02,533 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873722492, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:02,568 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873722492},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:02,592 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:02,665 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:02,670 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873722602, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:02,708 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873722602},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:02,736 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:02,810 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:02,811 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873722392, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:02,854 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873722392},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:02,874 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:02,947 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:02,956 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873723065, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:02,988 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873723065},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:03,015 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:03,087 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:03,089 [INFO] go2_survey.navigator: [turn→213°] hdg=158.9° err=54.2° rate=0.80rad/s
+2026-05-28 11:43:03,090 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873723170, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:03,115 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:03", "timeInNum": 1779990183}}
+2026-05-28 11:43:03,131 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873723170},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:03,133 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:43:03,133 [INFO] root: Heartbeat response received.
+2026-05-28 11:43:03,160 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:03,224 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:03,233 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873723464, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:03,263 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873723464},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:03,294 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:03,363 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:03,365 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873723075, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:03,399 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873723075},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:03,502 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873723072, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:03,541 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873723072},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:03,642 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873723517, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:03,676 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873723517},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:03,778 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873723289, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:03,809 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873723289},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:03,912 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873723435, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:03,945 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873723435},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:04,046 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873724427, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.8}"}}
+2026-05-28 11:43:04,083 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873724427},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:04,184 [INFO] go2_survey.navigator: [turn→213°] hdg=198.2° err=14.9° rate=0.60rad/s
+2026-05-28 11:43:04,185 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873724034, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.5958907507863728}"}}
+2026-05-28 11:43:04,219 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873724034},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:04,321 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873724543, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.45}"}}
+2026-05-28 11:43:04,356 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873724543},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:04,459 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873724460, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.45}"}}
+2026-05-28 11:43:04,493 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873724460},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:04,595 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873724087, "api_id": 1008}}, "parameter": "{\"x\": 0, \"y\": 0, \"z\": -0.45}"}}
+2026-05-28 11:43:04,609 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873724087},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:04,710 [INFO] go2_survey.robot: Stopping robot
+2026-05-28 11:43:04,711 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873724816, "api_id": 1003}}, "parameter": ""}}
+2026-05-28 11:43:04,722 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1003,"id":1873724816},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:04,722 [INFO] go2_survey.navigator: Aligned to 213.1° (heading=212.7°, err=0.4°)
+2026-05-28 11:43:04,723 [INFO] go2_survey.robot: BalanceStand...
+2026-05-28 11:43:04,723 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873724709, "api_id": 1002}}, "parameter": ""}}
+2026-05-28 11:43:04,733 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1002,"id":1873724709},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:05,116 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:05", "timeInNum": 1779990185}}
+2026-05-28 11:43:05,128 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:43:05,128 [INFO] root: Heartbeat response received.
+2026-05-28 11:43:06,100 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873726299, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.00686526342321027}"}}
+2026-05-28 11:43:06,257 [WARNING] aiortc.codecs.h264: H264Decoder() failed to decode, skipping package: [Errno 1094995529] Invalid data found when processing input: 'avcodec_send_packet()'
+2026-05-28 11:43:06,272 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873726299},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:06,273 [INFO] go2_survey.navigator: NAV [line_survey] leg01 | along=0.0/15.4m cross=0.12m hdg_err=0.8° fix=6
+2026-05-28 11:43:06,488 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873726152, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.027067430923165024}"}}
+2026-05-28 11:43:06,531 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873726152},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:06,703 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873726370, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.0421035128509614}"}}
+2026-05-28 11:43:06,760 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873726370},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:06,887 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873726470, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.03884469341295029}"}}
+2026-05-28 11:43:06,915 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873726470},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:07,096 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873726791, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.046334369526721604}"}}
+2026-05-28 11:43:07,117 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:07", "timeInNum": 1779990187}}
+2026-05-28 11:43:07,134 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873726791},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:07,136 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:43:07,136 [INFO] root: Heartbeat response received.
+2026-05-28 11:43:07,283 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873727014, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.039304990261164956}"}}
+2026-05-28 11:43:07,323 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873727014},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:07,485 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873727158, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.04294489174316685}"}}
+2026-05-28 11:43:07,535 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873727158},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:07,686 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873728052, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.052096629056763544}"}}
+2026-05-28 11:43:07,736 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873728052},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:07,886 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873727959, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.04631760054191556}"}}
+2026-05-28 11:43:07,920 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873727959},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:08,099 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873728139, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.057357131141630685}"}}
+2026-05-28 11:43:08,133 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873728139},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:08,282 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873728356, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.05494007433081801}"}}
+2026-05-28 11:43:08,313 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873728356},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:08,314 [INFO] go2_survey.navigator: NAV [line_survey] leg01 | along=1.9/15.4m cross=0.08m hdg_err=6.3° fix=6
+2026-05-28 11:43:08,484 [INFO] go2_survey.vision.frames: Captured frame | 1280x720 | age=0.097s | corrupt=False Δtarget=-0.018s
+2026-05-28 11:43:08,580 [INFO] go2_survey.vision.geotag: Wrote geotagged capture: leg01_m001_b213_2026-05-28T11-43-08.jpg + leg01_m001_b213_2026-05-28T11-43-08.json
+2026-05-28 11:43:08,581 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:43:08,581 [INFO] go2_survey.navigator: ------------ CAPTURE leg01 mark 1 @ 2.0m | n=1 -------------
+2026-05-28 11:43:08,581 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:43:08,582 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873728127, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.04741493629880838}"}}
+2026-05-28 11:43:08,665 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873728127},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:08,894 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873728847, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.056339470396644484}"}}
+2026-05-28 11:43:09,016 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873728847},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:09,288 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873729093, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": -0.038790345036542426}"}}
+2026-05-28 11:43:09,291 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:09", "timeInNum": 1779990189}}
+2026-05-28 11:43:09,376 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:43:09,378 [INFO] root: Heartbeat response received.
+2026-05-28 11:43:09,379 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873729093},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:09,496 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873729675, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0.04766684407417485}"}}
+2026-05-28 11:43:09,510 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873729675},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:09,687 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873729681, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0.10058143901297373}"}}
+2026-05-28 11:43:09,710 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873729681},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:09,884 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873729359, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0.12194896134583663}"}}
+2026-05-28 11:43:09,906 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873729359},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:10,094 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873729834, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0.13989066653339705}"}}
+2026-05-28 11:43:10,114 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873729834},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:10,286 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873730239, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0.13500680435267473}"}}
+2026-05-28 11:43:10,311 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873730239},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:10,312 [INFO] go2_survey.navigator: NAV [line_survey] leg01 | along=3.9/15.4m cross=0.76m hdg_err=-15.7° fix=6
+2026-05-28 11:43:10,498 [INFO] go2_survey.vision.frames: Captured frame | 1280x720 | age=0.116s | corrupt=False Δtarget=+0.010s
+2026-05-28 11:43:10,573 [INFO] go2_survey.vision.geotag: Wrote geotagged capture: leg01_m002_b213_2026-05-28T11-43-10.jpg + leg01_m002_b213_2026-05-28T11-43-10.json
+2026-05-28 11:43:10,574 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:43:10,574 [INFO] go2_survey.navigator: ------------ CAPTURE leg01 mark 2 @ 4.0m | n=1 -------------
+2026-05-28 11:43:10,574 [INFO] go2_survey.navigator: ------------------------------------------------------------
+2026-05-28 11:43:10,575 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873730459, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0.12218365910893106}"}}
+2026-05-28 11:43:10,603 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873730459},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:10,880 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873730800, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0.11215661188001806}"}}
+2026-05-28 11:43:10,921 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873730800},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:11,091 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873731508, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0.09133943287906482}"}}
+2026-05-28 11:43:11,104 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873731508},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:11,286 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873731287, "api_id": 1008}}, "parameter": "{\"x\": 1.0, \"y\": 0, \"z\": 0.07933474241458924}"}}
+2026-05-28 11:43:11,301 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:11", "timeInNum": 1779990191}}
+2026-05-28 11:43:11,310 [INFO] root: Received message on data channel: {"type":"res","topic":"rt/api/sport/response","data":{"header":{"identity":{"api_id":1008,"id":1873731287},"status":{"code":0}},"data":""}}
+2026-05-28 11:43:11,312 [INFO] root: Received message on data channel: {"type":"heartbeat"}
+2026-05-28 11:43:11,312 [INFO] root: Heartbeat response received.
+2026-05-28 11:43:11,347 [INFO] go2_survey.capture: Wrote capture manifest: captures.geojson (2 photos)
+2026-05-28 11:43:11,348 [INFO] root: > message sent: {"type": "vid", "topic": "", "data": "off"}
+2026-05-28 11:43:11,349 [INFO] go2_survey.robot: ------------------------------------------------------------
+2026-05-28 11:43:11,349 [INFO] go2_survey.robot: -------------------- VIDEO CHANNEL OFF ---------------------
+2026-05-28 11:43:11,349 [INFO] go2_survey.robot: ------------------------------------------------------------
+2026-05-28 11:43:11,349 [INFO] go2_survey.robot: Stopping robot
+2026-05-28 11:43:11,350 [INFO] root: > message sent: {"type": "req", "topic": "rt/api/sport/request", "data": {"header": {"identity": {"id": 1873730877, "api_id": 1003}}, "parameter": ""}}
+2026-05-28 11:43:11,351 [ERROR] asyncio: Task exception was never retrieved
+future: <Task finished name='Task-1135' coro=<RTCSctpTransport._data_channel_flush() done, defined at /home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py:1654> exception=ConnectionError('Cannot send encrypted data, not connected')>
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 636, in run_until_complete
+    self.run_forever()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 603, in run_forever
+    self._run_once()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 1909, in _run_once
+    handle._run()
+  File "/usr/lib/python3.10/asyncio/events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 570, in __run
+    await self._recv_next()
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 670, in _recv_next
+    await self._handle_rtp_data(data, arrival_time_ms=arrival_time_ms)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 622, in _handle_rtp_data
+    await receiver._handle_rtp_packet(packet, arrival_time_ms=arrival_time_ms)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcrtpreceiver.py", line 523, in _handle_rtp_packet
+    packet._data = depayload(codec, packet.payload)  # type: ignore
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/__init__.py", line 111, in depayload
+    return h264_depayload(payload)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/h264.py", line 318, in h264_depayload
+    descriptor, data = H264PayloadDescriptor.parse(payload)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/h264.py", line 79, in parse
+    obj = cls(first_fragment=first_fragment)
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1685, in _data_channel_flush
+    await self._send(
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1340, in _send
+    await self._transmit()
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1566, in _transmit
+    await self._send_chunk(chunk)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1347, in _send_chunk
+    await self.__transport._send_data(
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 701, in _send_data
+    raise ConnectionError("Cannot send encrypted data, not connected")
+ConnectionError: Cannot send encrypted data, not connected
+2026-05-28 11:43:11,364 [ERROR] asyncio: Task exception was never retrieved
+future: <Task finished name='Task-1136' coro=<RTCSctpTransport._data_channel_flush() done, defined at /home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py:1654> exception=ConnectionError('Cannot send encrypted data, not connected')>
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 636, in run_until_complete
+    self.run_forever()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 603, in run_forever
+    self._run_once()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 1909, in _run_once
+    handle._run()
+  File "/usr/lib/python3.10/asyncio/events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 570, in __run
+    await self._recv_next()
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 670, in _recv_next
+    await self._handle_rtp_data(data, arrival_time_ms=arrival_time_ms)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 622, in _handle_rtp_data
+    await receiver._handle_rtp_packet(packet, arrival_time_ms=arrival_time_ms)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcrtpreceiver.py", line 523, in _handle_rtp_packet
+    packet._data = depayload(codec, packet.payload)  # type: ignore
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/__init__.py", line 111, in depayload
+    return h264_depayload(payload)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/h264.py", line 318, in h264_depayload
+    descriptor, data = H264PayloadDescriptor.parse(payload)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/h264.py", line 79, in parse
+    obj = cls(first_fragment=first_fragment)
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1685, in _data_channel_flush
+    await self._send(
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1340, in _send
+    await self._transmit()
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1566, in _transmit
+    await self._send_chunk(chunk)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1347, in _send_chunk
+    await self.__transport._send_data(
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 701, in _send_data
+    raise ConnectionError("Cannot send encrypted data, not connected")
+ConnectionError: Cannot send encrypted data, not connected
+2026-05-28 11:43:12,310 [ERROR] asyncio: Task exception was never retrieved
+future: <Task finished name='Task-1138' coro=<RTCSctpTransport._transmit() done, defined at /home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py:1517> exception=ConnectionError('Cannot send encrypted data, not connected')>
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 636, in run_until_complete
+    self.run_forever()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 603, in run_forever
+    self._run_once()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 1909, in _run_once
+    handle._run()
+  File "/usr/lib/python3.10/asyncio/events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 570, in __run
+    await self._recv_next()
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 670, in _recv_next
+    await self._handle_rtp_data(data, arrival_time_ms=arrival_time_ms)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 622, in _handle_rtp_data
+    await receiver._handle_rtp_packet(packet, arrival_time_ms=arrival_time_ms)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcrtpreceiver.py", line 523, in _handle_rtp_packet
+    packet._data = depayload(codec, packet.payload)  # type: ignore
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/__init__.py", line 111, in depayload
+    return h264_depayload(payload)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/h264.py", line 318, in h264_depayload
+    descriptor, data = H264PayloadDescriptor.parse(payload)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/h264.py", line 79, in parse
+    obj = cls(first_fragment=first_fragment)
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1550, in _transmit
+    await self._send_chunk(chunk)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1347, in _send_chunk
+    await self.__transport._send_data(
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 701, in _send_data
+    raise ConnectionError("Cannot send encrypted data, not connected")
+ConnectionError: Cannot send encrypted data, not connected
+2026-05-28 11:43:13,303 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:13", "timeInNum": 1779990193}}
+2026-05-28 11:43:13,304 [ERROR] asyncio: Task exception was never retrieved
+future: <Task finished name='Task-1139' coro=<RTCSctpTransport._data_channel_flush() done, defined at /home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py:1654> exception=ConnectionError('Cannot send encrypted data, not connected')>
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 636, in run_until_complete
+    self.run_forever()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 603, in run_forever
+    self._run_once()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 1909, in _run_once
+    handle._run()
+  File "/usr/lib/python3.10/asyncio/events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 570, in __run
+    await self._recv_next()
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 670, in _recv_next
+    await self._handle_rtp_data(data, arrival_time_ms=arrival_time_ms)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 622, in _handle_rtp_data
+    await receiver._handle_rtp_packet(packet, arrival_time_ms=arrival_time_ms)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcrtpreceiver.py", line 523, in _handle_rtp_packet
+    packet._data = depayload(codec, packet.payload)  # type: ignore
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/__init__.py", line 111, in depayload
+    return h264_depayload(payload)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/h264.py", line 318, in h264_depayload
+    descriptor, data = H264PayloadDescriptor.parse(payload)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/h264.py", line 79, in parse
+    obj = cls(first_fragment=first_fragment)
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1685, in _data_channel_flush
+    await self._send(
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1340, in _send
+    await self._transmit()
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1550, in _transmit
+    await self._send_chunk(chunk)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcsctptransport.py", line 1347, in _send_chunk
+    await self.__transport._send_data(
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 701, in _send_data
+    raise ConnectionError("Cannot send encrypted data, not connected")
+ConnectionError: Cannot send encrypted data, not connected
+2026-05-28 11:43:15,304 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:15", "timeInNum": 1779990195}}
+2026-05-28 11:43:17,306 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:17", "timeInNum": 1779990197}}
+2026-05-28 11:43:19,309 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:19", "timeInNum": 1779990199}}
+2026-05-28 11:43:21,313 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:21", "timeInNum": 1779990201}}
+2026-05-28 11:43:23,316 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:23", "timeInNum": 1779990203}}
+2026-05-28 11:43:25,320 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:25", "timeInNum": 1779990205}}
+2026-05-28 11:43:27,323 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:27", "timeInNum": 1779990207}}
+2026-05-28 11:43:29,325 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:29", "timeInNum": 1779990209}}
+2026-05-28 11:43:31,329 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:31", "timeInNum": 1779990211}}
+2026-05-28 11:43:33,332 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:33", "timeInNum": 1779990213}}
+2026-05-28 11:43:35,335 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:35", "timeInNum": 1779990215}}
+2026-05-28 11:43:37,338 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:37", "timeInNum": 1779990217}}
+2026-05-28 11:43:39,341 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:39", "timeInNum": 1779990219}}
+2026-05-28 11:43:41,344 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:41", "timeInNum": 1779990221}}
+2026-05-28 11:43:43,347 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:43", "timeInNum": 1779990223}}
+2026-05-28 11:43:45,350 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:45", "timeInNum": 1779990225}}
+2026-05-28 11:43:47,352 [INFO] root: > message sent: {"type": "heartbeat", "topic": "", "data": {"timeInStr": "2026-05-28 11:43:47", "timeInNum": 1779990227}}
+2026-05-28 11:43:48,650 [WARNING] go2_survey.cli: Interrupted
+2026-05-28 11:43:59,439 [ERROR] asyncio: Task exception was never retrieved
+future: <Task finished name='Task-35' coro=<RTCDtlsTransport.__run() done, defined at /home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py:567> exception=KeyboardInterrupt()>
+Traceback (most recent call last):
+  File "/usr/lib/python3.10/asyncio/runners.py", line 44, in run
+    return loop.run_until_complete(main)
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 636, in run_until_complete
+    self.run_forever()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 603, in run_forever
+    self._run_once()
+  File "/usr/lib/python3.10/asyncio/base_events.py", line 1909, in _run_once
+    handle._run()
+  File "/usr/lib/python3.10/asyncio/events.py", line 80, in _run
+    self._context.run(self._callback, *self._args)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 570, in __run
+    await self._recv_next()
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 670, in _recv_next
+    await self._handle_rtp_data(data, arrival_time_ms=arrival_time_ms)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcdtlstransport.py", line 622, in _handle_rtp_data
+    await receiver._handle_rtp_packet(packet, arrival_time_ms=arrival_time_ms)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/rtcrtpreceiver.py", line 523, in _handle_rtp_packet
+    packet._data = depayload(codec, packet.payload)  # type: ignore
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/__init__.py", line 111, in depayload
+    return h264_depayload(payload)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/h264.py", line 318, in h264_depayload
+    descriptor, data = H264PayloadDescriptor.parse(payload)
+  File "/home/mpg-robodog/venvs/mpg-edge/lib/python3.10/site-packages/aiortc/codecs/h264.py", line 79, in parse
+    obj = cls(first_fragment=first_fragment)
+KeyboardInterrupt

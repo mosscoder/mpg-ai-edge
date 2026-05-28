@@ -1,0 +1,58 @@
+{
+  "type": "FeatureCollection",
+  "name": "captures",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:OGC:1.3:CRS84"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "file": "leg01_m001_b213_2026-05-28T11-43-08.jpg",
+        "leg": "leg01",
+        "mark_index": 1,
+        "along_track_m": 2.0,
+        "achieved_heading": 209.36275962802512,
+        "target_bearing": 213.14057917180105,
+        "fix_type": 6,
+        "hacc_m": 0.014,
+        "corrupt": false,
+        "position_interpolated": true,
+        "captured_at_utc": "2026-05-28T17:43:08.387846+00:00"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.01702777788577,
+          46.67400105436873
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "file": "leg01_m002_b213_2026-05-28T11-43-10.jpg",
+        "leg": "leg01",
+        "mark_index": 2,
+        "along_track_m": 4.0,
+        "achieved_heading": 215.9026893890807,
+        "target_bearing": 213.14057917180105,
+        "fix_type": 6,
+        "hacc_m": 0.014,
+        "corrupt": false,
+        "position_interpolated": true,
+        "captured_at_utc": "2026-05-28T17:43:10.382714+00:00"
+      },
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -114.01705197337617,
+          46.67399010242682
+        ]
+      }
+    }
+  ]
+}
