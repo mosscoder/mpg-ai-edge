@@ -62,11 +62,19 @@ class WaypointNavigator:
     # Per-waypoint recalibration tunables. Constants rather than init
     # params: only the on/off switch is exposed via config.
     RECAL_MIN_SAMPLES = 10
-    RECAL_MIN_BASELINE_M = 1.5
+    RECAL_MIN_BASELINE_M = 5.0
     RECAL_MAX_DELTA_DEG = 30.0
     RECAL_DROP_RECENT_SEC = 1.0      # ignore samples from arrival deceleration
     RECAL_STRAIGHT_VZ_THRESHOLD = 0.05  # rad/s — only buffer when going straight
-    RECAL_BUFFER_MAXLEN = 60         # ~12s at 5Hz
+    RECAL_BUFFER_MAXLEN = 400        # ~40s at 10Hz — holds a long survey leg's straight body
+    # Only recal at the end of a real survey leg, never a short crossover /
+    # connector: a short baseline yields a noisier offset than the slow
+    # (~0.4°/min) drift it would correct.
+    RECAL_MIN_LEG_M = 10.0
+    # Initial IMU cal-walk baseline. 5 m (was 1.5 m) so the seed heading offset
+    # is ~1-2°, not the ~6-18° a 1.5 m chord gave (gait wobble ~0.15 m / baseline
+    # sets the floor — see the 2026-05-21 track replay).
+    CALIBRATION_BASELINE_M = 5.0
 
     def __init__(
         self,
@@ -460,7 +468,6 @@ class WaypointNavigator:
         on_capture_cb,
         interval_m: float,
         speed: float,
-        lookahead_m: float = 4.0,
         turn_tolerance_deg: float = 2.0,
         timeout_per_leg: float = 300.0,
     ) -> bool:
@@ -470,13 +477,13 @@ class WaypointNavigator:
 
         The first waypoint is reached (and the IMU calibrated) via
         `navigate_to()` with no capture; then each consecutive pair is a leg.
-        Per leg: turn to the leg bearing, then drive the leg with pure-pursuit
-        steering (aim at a carrot `lookahead_m` ahead on the leg line, not the
-        far corner, so cross-track error converges with a constant gain),
-        firing a capture each time along-track distance crosses the next
-        interval mark. Captures fire only while driving a leg, never during the
-        corner turns — so on a straight leg the camera points along-track and
-        coverage is even by real distance.
+        Per leg: turn to the leg bearing, then point-seek the end corner
+        (re-aim at it every tick via GPS bearing, proportional steering — the
+        same law `navigate_to`/`navigate_through` use), firing a capture each
+        time along-track distance crosses the next interval mark. Captures fire
+        only while driving a leg, never during the corner turns — so on a
+        straight leg the camera points along-track and coverage is even by real
+        distance.
 
         `on_capture_cb(leg_label, mark_index, t_mark, along_m, position,
         leg_bearing) -> int` (frames written). Returns True on success,
@@ -630,31 +637,23 @@ class WaypointNavigator:
                         )
                     break
 
-                # Pure-pursuit steering: aim at a carrot lookahead_m ahead on
-                # the leg line (interpolated between corners), not the far
-                # corner, so cross-track error converges with a constant gain.
-                # The carrot parks on the end corner for the final lookahead_m.
-                f = min(along + lookahead_m, leg_len) / leg_len
-                carrot_lat = s.latitude + f * (e.latitude - s.latitude)
-                carrot_lon = s.longitude + f * (e.longitude - s.longitude)
+                # Point-seek the end corner: re-aim at it every tick from the
+                # current RTK position (proportional steering, the same law as
+                # navigate_to / navigate_through). A residual heading offset
+                # curves the path toward the corner rather than holding a fixed
+                # off-line bow, and it always converges. Sign matches
+                # navigate_to(): +error → CCW-negative z on the Go2 IMU.
                 bearing = calculate_bearing(
-                    pos.latitude, pos.longitude, carrot_lat, carrot_lon
+                    pos.latitude, pos.longitude, e.latitude, e.longitude
                 )
                 heading = self.get_calibrated_heading()
                 heading_error = (
                     normalize_angle(bearing - heading)
                     if heading is not None else 0.0
                 )
-                # Curvature form vz = speed · 2 sin(α) / L_d (α = heading error
-                # to the carrot) makes the path shape speed-independent. Sign
-                # matches navigate_to(): +error → CCW-negative z on the Go2 IMU.
-                alpha = math.radians(heading_error)
                 vz = max(
                     -self.rotation_rate,
-                    min(
-                        self.rotation_rate,
-                        -speed * 2.0 * math.sin(alpha) / lookahead_m,
-                    ),
+                    min(self.rotation_rate, heading_error * -0.015),
                 )
 
                 imu_yaw_now = self.robot.get_yaw_degrees()
@@ -675,7 +674,11 @@ class WaypointNavigator:
                 await asyncio.sleep(0.1)
 
             await self.robot.stop()
-            self._recalibrate_from_buffer()
+            # Recal only at the end of a real survey leg (long straight
+            # baseline). Short crossovers/connectors are skipped — they'd only
+            # inject a noisy offset (see RECAL_MIN_LEG_M).
+            if leg_len >= self.RECAL_MIN_LEG_M:
+                self._recalibrate_from_buffer()
 
         await self.robot.stop()
         await self.robot.balance_stand()
@@ -1013,7 +1016,8 @@ class WaypointNavigator:
         if elapsed > self.calibration_timeout:
             logger.error(
                 f"IMU calibration timeout after {self.calibration_timeout:.0f}s "
-                f"(displacement: {displacement:.2f}m / 1.50m needed). "
+                f"(displacement: {displacement:.2f}m / "
+                f"{self.CALIBRATION_BASELINE_M:.2f}m needed). "
                 f"Resetting to allow retry."
             )
             log_banner(
@@ -1033,13 +1037,14 @@ class WaypointNavigator:
             and now - self._calibration_last_progress >= 5.0
         ):
             logger.info(
-                f"IMU calibrating... displacement: {displacement:.2f}m / 1.50m needed "
+                f"IMU calibrating... displacement: {displacement:.2f}m / "
+                f"{self.CALIBRATION_BASELINE_M:.2f}m needed "
                 f"hAcc: {pos.accuracy_horizontal:.3f}m ({elapsed:.0f}s)"
             )
             self._calibration_last_progress = now
 
         if (
-            displacement >= 1.5
+            displacement >= self.CALIBRATION_BASELINE_M
             and pos.accuracy_horizontal <= self.calibration_hacc
         ):
             gps_bearing = calculate_bearing(
