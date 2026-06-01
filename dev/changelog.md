@@ -1,5 +1,59 @@
 # Navigation Changelog
 
+## 2026-06-01: v0.25.0 — Line-Survey: Point-Seek the Corner + 5 m Cal Walk + Per-Survey-Leg Recal
+
+### Scope
+
+The v0.24.0 pure-pursuit line survey veered into the plant rows on the
+2026-05-28 farm runs (cross-track bow ~0.9 m mid-leg). Forensics on those logs
+plus replays of the good 2026-05-21 field test traced it to a wrong IMU heading
+offset (ε ≈ 18°), not the capture path: the legs bowed while `hdg_err` read ~0,
+i.e. the dog steered confidently on a bad heading reference. ε came from (a) a
+1.5 m initial cal walk (seed error ~6–18°) and (b) sparse, noisy per-leg recal
+that swung ε ±20° — short-baseline recal noise exceeds the ~0.37°/min drift it
+corrects (the v0.12.0 finding, re-confirmed). The replays showed
+heading-from-GPS-track error ≈ `atan(0.15 m / baseline)` — gait wobble (~15 cm),
+not GPS (~1.4 cm), is the floor — so a clean offset needs a long baseline.
+
+### Change (`e3077cd`)
+
+- **Steering: pure pursuit → point-seek the end corner.** `navigate_legs`
+  re-aims at the leg's end corner every tick from the current RTK position
+  (proportional `vz = heading_error * -0.015`, the same law
+  `navigate_to`/`navigate_through` use) instead of chasing a `lookahead_m`
+  carrot. A residual ε now curves the path toward the corner and converges,
+  rather than holding a fixed off-line bow. Forward speed stays constant for
+  even 2 m capture spacing. `lookahead_m` removed (param, `CaptureSettings`,
+  `mission_runner`, the four line-survey tomls).
+- **Initial cal walk 1.5 m → 5 m** (`CALIBRATION_BASELINE_M`), shrinking the
+  seed ε from ~6–18° to ~1–2°. Shared by every nav mission via
+  `navigate_to`/`navigate_through`.
+- **Recal once per *survey* leg, gated** (`RECAL_MIN_LEG_M = 10`): the 2 m/5 m
+  crossovers no longer recal (a short baseline only adds noise). Plus
+  `RECAL_MIN_BASELINE_M` 1.5 → 5.0 (secondary quality guard) and
+  `RECAL_BUFFER_MAXLEN` 60 → 400 so a long row recals off its long straight
+  body (~20 m → ~0.4°) rather than the last ~6 m near the decel.
+- The 2 m interval capture + `captures.geojson` manifest path is unchanged.
+
+### Verification offline
+
+- AST parse; version 0.25.0; all four line-survey tomls parse with
+  `lookahead_m` gone, `strategy=line_survey`, `capture_interval_m=2.0`.
+  `navigate_legs` steering aims at the end corner with
+  `vz = heading_error * -0.015`, no carrot/lookahead references; recal guarded
+  by `leg_len >= RECAL_MIN_LEG_M`; constants set. The empirical basis
+  (heading-from-track `atan(0.15/baseline)`, drift 0.37°/min) came from the
+  2026-05-21 RTK-track replay.
+
+### Hardware validation pending
+
+First field run of point-seek line steering. Confirm: legs don't veer into the
+rows (`cross` stays small through each leg, no parallel bow); corner turns only
+at corners (no mid-leg stop-rotates); `IMU RECAL` fires only on the 15 m/50 m
+survey legs (skipped on the 2 m/5 m crossovers) with small Δ; the 5 m cal walk
+completes on the approach to the first corner; captures land ~every 2 m with
+sidecars `position_interpolated: true`, mostly `frame_corrupt: false`.
+
 ## 2026-05-22: v0.24.0 — Line-Survey: Pure-Pursuit Leg Steering
 
 ### Scope
