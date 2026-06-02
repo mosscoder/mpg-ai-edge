@@ -140,6 +140,18 @@ class CaptureSettings:
     # per-image, so capture points are not waypoints). Speed comes from
     # [navigation] max_velocity.
     capture_interval_m: float = 2.0
+    # line_survey leg steering law:
+    #   "point_seek"  — re-aim at the end corner each tick on the calibrated
+    #     IMU heading. Tolerant of a small residual offset but bows off-line
+    #     (and never recovers at speed) when the offset has drifted. Default.
+    #   "cross_track" — pure-pursuit a near carrot on the leg line, steering on
+    #     GPS-derived course (offset-free) instead of the IMU heading. Immune
+    #     to IMU-offset drift; tracks the line, not just the corner. lookahead_m
+    #     is the carrot distance ahead on the line; course_lookback_m is the
+    #     GPS-course baseline (≈1 m gives <1° noise at survey speed).
+    leg_steering: str = "point_seek"   # "point_seek" | "cross_track"
+    lookahead_m: float = 4.0           # cross_track carrot distance (m)
+    course_lookback_m: float = 1.0     # cross_track GPS-course baseline (m)
 
 
 @dataclass

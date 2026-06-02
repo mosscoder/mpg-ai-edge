@@ -1,5 +1,73 @@
 # Navigation Changelog
 
+## 2026-06-02: v0.26.0 — Line-Survey: Cross-Track Leg Steering (GPS-Course Pure Pursuit), opt-in via `09c`
+
+### Scope
+
+The first 1 m/s field run (`09b_field_test`, 2026-06-02) followed the right
+lawnmower order but failed to *track* the legs: it bowed 12–14 m off each 50 m
+survey leg while `hdg_err` read ~0–4° (the "steering confidently on a bad
+heading" signature), the cross-track displacement compounded leg-over-leg, and
+by leg 13 the dog was 55 m off-grid and the run ended. Forensics: every corner
+was at RTK Fixed (~1.4 cm), so the dog always knew its position — this is a
+heading/steering failure, not GPS. The per-leg IMU recal that should keep
+heading honest was rejected on **every** survey leg (proposed 30–85° shifts vs
+the 30° guardrail) in both the 1 m/s and the good 0.5 m/s run, so the offset
+stayed frozen at the cal-walk value while the IMU yaw drifted (~30° by leg 9 —
+turn-induced, far past the ~0.37°/min static rate). The 0.5 m/s run survived
+only because point-seek has ~2× the cross-track authority at half speed (turn
+radius ∝ speed) and recovered each leg; at 1 m/s that margin is gone.
+
+Root cause of both: point-seek steers on the **IMU heading**, which had drifted,
+and re-aims at the **far corner**, so cross-track correction is weak early in a
+leg. This commit adds a leg-steering law that depends on neither.
+
+### Change
+
+- **New `cross_track` leg-steering law in `navigate_legs`** (opt-in;
+  `point_seek` stays the default, so `09`/`09b` are unchanged). It pure-pursues
+  a carrot `lookahead_m` ahead on the leg **line** (not the corner) and steers
+  on **GPS-derived course** — the bearing of the RTK track over the last
+  `course_lookback_m` — instead of the calibrated IMU heading. GPS course is
+  offset-free, so the steering is immune to the IMU-yaw drift that sank `09b`;
+  the near carrot tracks the line rather than cutting to the corner. Same
+  proportional law and sign as point-seek (`vz = heading_error * -0.015`), so
+  the only changes are the *target* (carrot vs corner) and the *heading source*
+  (GPS course vs IMU). This is v0.24 pure-pursuit minus the IMU heading that
+  made it veer. The first ~1 m of each leg has no course baseline yet and drives
+  straight — which doubles as a per-leg cal-stretch.
+- `navigator._gps_course(hist, lookback_m)` — bearing from the most recent fix
+  ≥ `lookback_m` behind to the newest; `None` until that baseline exists.
+- `[capture]` gains `leg_steering` (`"point_seek"`|`"cross_track"`),
+  `lookahead_m` (4.0), `course_lookback_m` (1.0), threaded
+  config → `mission_runner` → `navigate_legs`. The per-leg NAV log line now
+  shows the active law and `cog=` so a field run is self-diagnosing.
+- **New mission `09c_field_test`** — copy of `09b` (fast, 1 m/s, identical
+  waypoints) with `leg_steering = "cross_track"`. The A/B against `09b`.
+
+### Verification offline
+
+- AST parse; version 0.26.0; `09c` parses with `leg_steering=cross_track`,
+  `point_seek` still default for `09`/`09b`.
+- Closed-loop kinematic sim of a 50 m leg (proven `*-0.015` law, modeled with
+  the Go2's CCW-positive yaw convention, RTK noise 1.4 cm, 0.7 command factor):
+  `point_seek` with a fixed IMU offset ε reproduces the field bow (ε=15° →
+  4.9 m, ε=30° → 10.3 m, recovering partway — matches `09b` leg 9's ~14→9 m).
+  `cross_track` is identical for ε=0 and ε=30 (offset-immune) and converges from
+  a 5 m / 30°-misheaded worst case to ~0 m end-cross with no overshoot, stable
+  across lookahead 3–5 m and lookback 0.5–1.5 m.
+
+### Hardware validation pending
+
+First field run of `cross_track`. Run `09c` and confirm: `cross` stays small
+through each 50 m leg (no 12–14 m bow), `cog` tracks the leg bearing, the
+per-corner positions stay locked to the waypoints leg-over-leg (no compounding
+drift like `09b`), and it completes all 21 legs. If it holds, this is the
+1 m/s fix and `cross_track` should become the default; if it bows or hunts,
+tighten `lookahead_m` (3 m) or `course_lookback_m`. The endpoint recal is still
+non-functional and unused for steering here — fixing it (or replacing it with a
+cross-track offset trim) is the separate follow-up.
+
 ## 2026-06-01: v0.25.0 — Line-Survey: Point-Seek the Corner + 5 m Cal Walk + Per-Survey-Leg Recal
 
 ### Scope

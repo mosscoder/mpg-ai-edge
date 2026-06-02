@@ -470,6 +470,9 @@ class WaypointNavigator:
         speed: float,
         turn_tolerance_deg: float = 2.0,
         timeout_per_leg: float = 300.0,
+        leg_steering: str = "point_seek",
+        lookahead_m: float = 4.0,
+        course_lookback_m: float = 1.0,
     ) -> bool:
         """Lawnmower line survey: drive straight legs between consecutive
         waypoints (the leg corners), turning in place at each corner, and
@@ -535,6 +538,7 @@ class WaypointNavigator:
             # Recompute the IMU↔north offset from each leg's straight-line
             # GPS+IMU samples (a long baseline ⇒ low-noise recal).
             self._traj_buf.clear()
+            pos_hist: deque = deque(maxlen=64)  # recent (lat, lon) for GPS course
             next_mark = interval_m
             prev_along = 0.0
             prev_t = time.time()
@@ -637,20 +641,42 @@ class WaypointNavigator:
                         )
                     break
 
-                # Point-seek the end corner: re-aim at it every tick from the
-                # current RTK position (proportional steering, the same law as
-                # navigate_to / navigate_through). A residual heading offset
-                # curves the path toward the corner rather than holding a fixed
-                # off-line bow, and it always converges. Sign matches
-                # navigate_to(): +error → CCW-negative z on the Go2 IMU.
-                bearing = calculate_bearing(
-                    pos.latitude, pos.longitude, e.latitude, e.longitude
-                )
-                heading = self.get_calibrated_heading()
-                heading_error = (
-                    normalize_angle(bearing - heading)
-                    if heading is not None else 0.0
-                )
+                # Leg steering — two laws (config [capture] leg_steering):
+                #   point_seek (default): re-aim at the end corner each tick on
+                #     the calibrated IMU heading. A small residual offset curves
+                #     the path toward the corner and converges; a drifted offset
+                #     makes the dog bow off-line confidently (hdg_err≈0 while
+                #     cross grows) and, at speed, never recover (see v0.26.0).
+                #   cross_track: pure-pursuit a near carrot on the leg line,
+                #     steering on GPS-derived course (offset-free) instead of the
+                #     IMU. Immune to IMU-offset drift; tracks the line. Same
+                #     proportional law/sign: +error → CCW-negative z on the Go2.
+                if leg_steering == "cross_track":
+                    pos_hist.append((pos.latitude, pos.longitude))
+                    cog = self._gps_course(pos_hist, course_lookback_m)
+                    if cog is None:
+                        # Too little travel for a clean course baseline yet —
+                        # drive straight (doubles as a per-leg cal-stretch).
+                        heading_error = 0.0
+                    else:
+                        carrot_along = min(along + lookahead_m, leg_len)
+                        frac = carrot_along / leg_len if leg_len > 0 else 1.0
+                        carrot_lat = s.latitude + (e.latitude - s.latitude) * frac
+                        carrot_lon = s.longitude + (e.longitude - s.longitude) * frac
+                        carrot_brg = calculate_bearing(
+                            pos.latitude, pos.longitude, carrot_lat, carrot_lon
+                        )
+                        heading_error = normalize_angle(carrot_brg - cog)
+                else:
+                    cog = None
+                    bearing = calculate_bearing(
+                        pos.latitude, pos.longitude, e.latitude, e.longitude
+                    )
+                    heading = self.get_calibrated_heading()
+                    heading_error = (
+                        normalize_angle(bearing - heading)
+                        if heading is not None else 0.0
+                    )
                 vz = max(
                     -self.rotation_rate,
                     min(self.rotation_rate, heading_error * -0.015),
@@ -663,10 +689,12 @@ class WaypointNavigator:
                 await self.robot.send_velocity(x=speed, z=vz)
 
                 if now - last_status >= 2.0:
+                    cog_str = f"{cog:.0f}°" if cog is not None else "—"
                     logger.info(
-                        f"NAV [line_survey] {leg_label} | along={along:.1f}/"
+                        f"NAV [{leg_steering}] {leg_label} | along={along:.1f}/"
                         f"{leg_len:.1f}m cross={cross:.2f}m "
-                        f"hdg_err={heading_error:.1f}° fix={pos.fix_type}"
+                        f"hdg_err={heading_error:.1f}° cog={cog_str} "
+                        f"fix={pos.fix_type}"
                     )
                     last_status = now
 
@@ -1066,6 +1094,26 @@ class WaypointNavigator:
             return True
 
         return False
+
+    def _gps_course(self, hist: deque, lookback_m: float) -> float | None:
+        """GPS course-over-ground (compass deg) from the position history:
+        bearing from the most recent fix that is >= `lookback_m` behind, to the
+        newest fix. Returns None until that baseline exists (start of a leg).
+
+        This is the offset-free heading reference for cross_track steering — it
+        measures where the dog is actually *moving*, immune to IMU-yaw drift.
+        Reliable at survey speed: the ~1.4 cm per-fix RTK noise over a ~1 m
+        baseline is <1° of course noise (the low-speed COG problem that drove
+        the IMU approach is a sub-0.3 m/s effect; legs run at 0.5-1.0 m/s).
+        """
+        if len(hist) < 2:
+            return None
+        lat_now, lon_now = hist[-1]
+        for j in range(len(hist) - 2, -1, -1):
+            lat_b, lon_b = hist[j]
+            if haversine_distance(lat_b, lon_b, lat_now, lon_now) >= lookback_m:
+                return calculate_bearing(lat_b, lon_b, lat_now, lon_now)
+        return None
 
     def _maybe_buffer_sample(
         self, pos: RTKPosition, imu_yaw: float, vz: float

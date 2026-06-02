@@ -1,0 +1,42 @@
+name        = "09c_field_test"
+description = "Cross-track-steering variant of 09b (fast, 1 m/s): same 50 m × 50 m / 11-leg lawnmower and waypoints, but legs are steered by pure-pursuit of a near carrot on the leg line using GPS-derived course (offset-free) instead of point-seeking the corner on the IMU heading. Tests whether cross_track holds the line at 1 m/s where 09b's point_seek bowed off-grid (the IMU offset had drifted ~30°; cross_track is immune to it). 22 corner waypoints (EPSG 6514), identical to 09/09b."
+mode        = "nav"
+
+[gps]
+port = "/dev/ttyACM0"
+baud = 38400
+
+[ntrip]
+host        = "caster.emlid.com"
+port        = 2101
+mountpoints = ["MP22385", "MP22385a"]
+usernames   = ["u26787",  "u26787"]
+passwords   = ["492utz",  "492utz"]
+
+[robot]
+connection_mode = "LocalSTA"
+
+[navigation]
+arrival_tolerance = 0.25
+max_velocity      = 1.0
+rotation_rate     = 0.8
+min_fix_type      = 4
+max_hacc          = 0.10
+gps_fix_timeout   = 300
+
+[capture]
+# Line survey, fast (1 m/s), with cross_track leg steering. Instead of
+# point-seeking the end corner on the calibrated IMU heading (09b), each leg
+# is steered by pure-pursuit of a carrot lookahead_m ahead on the leg LINE,
+# using GPS course-over-ground (computed from the RTK track over the last
+# course_lookback_m) as the heading reference. That course is offset-free, so
+# the steering is immune to the IMU-yaw drift that made 09b bow ~14 m off-line
+# and run off the grid by leg 13. The first ~1 m of each leg drives straight
+# (no course baseline yet), which doubles as a per-leg cal-stretch.
+# Captures, marks, corner shots, and recal are unchanged from 09b.
+strategy           = "line_survey"
+capture_interval_m = 2.0
+output_subdir      = "captures"
+leg_steering       = "cross_track"
+lookahead_m        = 4.0
+course_lookback_m  = 1.0

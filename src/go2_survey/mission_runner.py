@@ -353,6 +353,9 @@ async def run_mission(runner: MissionRunner) -> bool:
                     interval_m=settings.capture.capture_interval_m,
                     speed=settings.navigation.max_velocity,
                     turn_tolerance_deg=settings.capture.turn_tolerance_deg,
+                    leg_steering=settings.capture.leg_steering,
+                    lookahead_m=settings.capture.lookahead_m,
+                    course_lookback_m=settings.capture.course_lookback_m,
                 )
             finally:
                 # Build the capture manifest from sidecars even if the route
