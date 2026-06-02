@@ -1,0 +1,48 @@
+2026-06-02 10:17:36,026 [INFO] go2_survey.cli: go2-survey v0.25.0 | git 0f4c81c | run dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/09_field_test/runs/09_field_test_2026-06-02_10-17-36
+2026-06-02 10:17:36,027 [INFO] go2_survey.cli: Logging to: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/09_field_test/runs/09_field_test_2026-06-02_10-17-36/main.log (+ imu.log, gps.log)
+2026-06-02 10:17:36,027 [INFO] go2_survey.cli: Mission dir: /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/09_field_test
+2026-06-02 10:17:36,030 [INFO] go2_survey.mission_runner: ============================================================
+2026-06-02 10:17:36,030 [INFO] go2_survey.mission_runner: ================== MISSION: 09_field_test ==================
+2026-06-02 10:17:36,030 [INFO] go2_survey.mission_runner: ============================================================
+2026-06-02 10:17:36,031 [INFO] go2_survey.mission_runner: Lawnmower line survey of a 50 m × 50 m grid: 11 parallel legs (~50 m) spaced 5 m, walked corner-to-corner at 0.5 m/s, capturing a clean frame every 2 m of along-track travel. 22 corner waypoints generated from a seed point via make-waypoints (EPSG 6514).
+2026-06-02 10:17:36,031 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-06-02 10:17:36,031 [INFO] go2_survey.mission_runner: ------------------------ MODE: nav -------------------------
+2026-06-02 10:17:36,031 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-06-02 10:17:36,035 [INFO] go2_survey.waypoints: Loaded 22 waypoints from /home/mpg-robodog/dev/mpg-ai-edge/dev/missions/09_field_test/waypoints.geojson
+2026-06-02 10:17:36,035 [INFO] go2_survey.mission_runner: Loaded 22 waypoint(s):
+2026-06-02 10:17:36,035 [INFO] go2_survey.mission_runner:   1. wp_001: (46.67641801, -114.00693560)
+2026-06-02 10:17:36,035 [INFO] go2_survey.mission_runner:   2. wp_002: (46.67644389, -114.00628282)
+2026-06-02 10:17:36,036 [INFO] go2_survey.mission_runner:   3. wp_003: (46.67648882, -114.00628658)
+2026-06-02 10:17:36,036 [INFO] go2_survey.mission_runner:   4. wp_004: (46.67646294, -114.00693936)
+2026-06-02 10:17:36,036 [INFO] go2_survey.mission_runner:   5. wp_005: (46.67650787, -114.00694312)
+2026-06-02 10:17:36,036 [INFO] go2_survey.mission_runner:   6. wp_006: (46.67653375, -114.00629034)
+2026-06-02 10:17:36,036 [INFO] go2_survey.mission_runner:   7. wp_007: (46.67657868, -114.00629410)
+2026-06-02 10:17:36,036 [INFO] go2_survey.mission_runner:   8. wp_008: (46.67655280, -114.00694688)
+2026-06-02 10:17:36,037 [INFO] go2_survey.mission_runner:   9. wp_009: (46.67659773, -114.00695064)
+2026-06-02 10:17:36,037 [INFO] go2_survey.mission_runner:   10. wp_010: (46.67662361, -114.00629786)
+2026-06-02 10:17:36,037 [INFO] go2_survey.mission_runner:   11. wp_011: (46.67666854, -114.00630162)
+2026-06-02 10:17:36,037 [INFO] go2_survey.mission_runner:   12. wp_012: (46.67664266, -114.00695440)
+2026-06-02 10:17:36,037 [INFO] go2_survey.mission_runner:   13. wp_013: (46.67668759, -114.00695816)
+2026-06-02 10:17:36,037 [INFO] go2_survey.mission_runner:   14. wp_014: (46.67671347, -114.00630538)
+2026-06-02 10:17:36,038 [INFO] go2_survey.mission_runner:   15. wp_015: (46.67675840, -114.00630914)
+2026-06-02 10:17:36,038 [INFO] go2_survey.mission_runner:   16. wp_016: (46.67673252, -114.00696192)
+2026-06-02 10:17:36,038 [INFO] go2_survey.mission_runner:   17. wp_017: (46.67677745, -114.00696568)
+2026-06-02 10:17:36,038 [INFO] go2_survey.mission_runner:   18. wp_018: (46.67680333, -114.00631290)
+2026-06-02 10:17:36,038 [INFO] go2_survey.mission_runner:   19. wp_019: (46.67684826, -114.00631666)
+2026-06-02 10:17:36,038 [INFO] go2_survey.mission_runner:   20. wp_020: (46.67682238, -114.00696944)
+2026-06-02 10:17:36,039 [INFO] go2_survey.mission_runner:   21. wp_021: (46.67686731, -114.00697320)
+2026-06-02 10:17:36,039 [INFO] go2_survey.mission_runner:   22. wp_022: (46.67689319, -114.00632042)
+2026-06-02 10:17:36,039 [INFO] go2_survey.mission_runner: GPS: /dev/ttyACM0 @ 38400 | NTRIP: caster.emlid.com:2101 mountpoints=['MP22385', 'MP22385a'] | Robot: LocalSTA
+2026-06-02 10:17:36,039 [INFO] go2_survey.mission_runner: Nav: tol=0.25m vmax=0.5m/s rot=0.8rad/s minFix=4 maxHacc=0.1m
+2026-06-02 10:17:36,039 [INFO] go2_survey.mission_runner: Bearing recompute method: endpoint
+2026-06-02 10:17:36,040 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-06-02 10:17:36,040 [INFO] go2_survey.mission_runner:  AUTO-DISCOVERING ROBOT IP (up to 4 attempts, 10s between) -
+2026-06-02 10:17:36,040 [INFO] go2_survey.mission_runner: ------------------------------------------------------------
+2026-06-02 10:17:36,040 [INFO] go2_survey.mission_runner: robot.ip not set in mission.toml and ROBOT_IP env var not set; scanning local network for a Go2 (nmap ports 8081/9991)...
+2026-06-02 10:17:36,040 [INFO] go2_survey.mission_runner: Discovery attempt 1/4: scanning for Go2 on ports 8081/9991...
+2026-06-02 10:17:36,052 [INFO] go2_survey.discovery: Scanning 10.100.51.241/24 for Go2 ports 8081/9991...
+2026-06-02 10:17:39,406 [WARNING] go2_survey.mission_runner: Discovery attempt 1 found no Go2; waiting 10s before retry (robot may still be booting / associating with hotspot)...
+2026-06-02 10:17:49,419 [INFO] go2_survey.mission_runner: Discovery attempt 2/4: scanning for Go2 on ports 8081/9991...
+2026-06-02 10:17:49,433 [INFO] go2_survey.discovery: Scanning 10.100.51.241/24 for Go2 ports 8081/9991...
+2026-06-02 10:18:14,574 [WARNING] go2_survey.mission_runner: Discovery attempt 2 found no Go2; waiting 10s before retry (robot may still be booting / associating with hotspot)...
+2026-06-02 10:18:22,982 [WARNING] go2_survey.cli: Interrupted
