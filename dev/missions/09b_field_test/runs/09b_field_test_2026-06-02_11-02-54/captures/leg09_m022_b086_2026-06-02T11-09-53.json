@@ -1,0 +1,54 @@
+{
+  "schema_version": 2,
+  "captured_at_unix": 1780420193.1871734,
+  "captured_at_utc": "2026-06-02T17:09:53.187173+00:00",
+  "frame": {
+    "timestamp_unix": 1780420193.1871734,
+    "width": 1280,
+    "height": 720,
+    "corrupt": false
+  },
+  "position": {
+    "latitude": 46.67672908207526,
+    "longitude": -114.00638455660213,
+    "altitude": 1167.858584946568,
+    "accuracy_horizontal": 0.014,
+    "accuracy_vertical": 0.01,
+    "fix_type": 6,
+    "satellites_used": 31,
+    "course_over_ground": null,
+    "timestamp": 1780420193.1871734,
+    "head_vehicle": null,
+    "head_vehicle_accuracy": 95.14984000000001,
+    "altitude_msl": 1185.586,
+    "pdop": 1.04,
+    "correction_age_bin": 0,
+    "speed_over_ground": 0.03
+  },
+  "position_interpolated": true,
+  "frame_position_time_delta_s": 0.0,
+  "heading": {
+    "degrees_true": 86.69271215133415,
+    "target_degrees_true": 86.69271215133415,
+    "achieved_degrees_true": 148.39556481277904,
+    "residual_degrees": 61.702852661444894,
+    "source": "robot_imu_calibrated"
+  },
+  "mission": {
+    "mission_name": "09b_field_test",
+    "mission_dir": "/home/mpg-robodog/dev/mpg-ai-edge/dev/missions/09b_field_test",
+    "waypoint_name": "leg09",
+    "strategy": "line_survey",
+    "target_bearing_deg_true": 86.69271215133415
+  },
+  "extra": {
+    "line_survey": {
+      "leg": "leg09",
+      "mark_index": 22,
+      "along_track_m": 44.0,
+      "interval_m": 2.0,
+      "frame_corrupt": false,
+      "frame_offset_from_mark_s": -0.1358
+    }
+  }
+}
