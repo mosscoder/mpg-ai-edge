@@ -21,6 +21,7 @@ from go2_survey.capture import (
     write_drive_by_capture,
     write_interval_capture,
 )
+from go2_survey.bearings import finalize_bearings
 from go2_survey.config import MissionSettings, load_mission_config
 from go2_survey.discovery import find_robot_ips
 from go2_survey.gps import GPSManager, RTKPosition
@@ -358,12 +359,18 @@ async def run_mission(runner: MissionRunner) -> bool:
                     course_lookback_m=settings.capture.course_lookback_m,
                 )
             finally:
-                # Build the capture manifest from sidecars even if the route
-                # aborted mid-run, so an interrupted field run still has it.
+                # Finalize EXIF bearings from each leg's full RTK track
+                # (centered look-back+forward), then (re)build the manifest
+                # from sidecars — both run even if the route aborted mid-run.
+                captures_dir = runner.run_dir / settings.capture.output_subdir
                 try:
-                    write_captures_manifest(
-                        runner.run_dir / settings.capture.output_subdir
+                    finalize_bearings(
+                        captures_dir, settings.capture.course_lookback_m
                     )
+                except Exception as e:
+                    logger.warning(f"Bearing finalization failed: {e}")
+                try:
+                    write_captures_manifest(captures_dir)
                 except Exception as e:
                     logger.warning(f"Capture manifest build failed: {e}")
             if not success:

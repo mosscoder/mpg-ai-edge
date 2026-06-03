@@ -1,5 +1,146 @@
 # Navigation Changelog
 
+## 2026-06-03: Design Notes (speculative) — GPS-Course Bearing, Calibration Retirement, Transect Buffering
+
+**Status: speculative / forward-looking.** Captured from discussion after the
+09c `cross_track` run (v0.26.0) for later distillation into an exact plan. No
+code change, no version bump — directions, not decisions.
+
+### Bearing: the IMU/GPS-course decoupling
+
+09c made explicit that three bearing signals have come apart, and which one we
+trust has flipped:
+
+- **IMU calibrated heading** — where the body points (drifts; ~30° off by leg 9
+  on 09b; still what EXIF `GPSImgDirection` records).
+- **GPS course-over-ground** — where the robot moves (offset-free; what
+  `cross_track` already steers on; what the post-hoc bearing fix recovers).
+- **Leg / transect bearing** — the prescribed line.
+
+Under `cross_track`'s 0.10 m on-leg MAD these converge (body ≈ course ≈ leg), so
+**GPS course is an offset-free proxy for camera facing.** Two caveats:
+
+- *Crab.* Course is the travel direction; the camera looks along the body. The
+  sideslip is tiny on the straight legs (where imagery matters), larger on the
+  5 m connectors / through corners.
+- *Noise floor.* Heading-from-track error ≈ `atan(0.15 m / baseline)` — gait
+  wobble (~15 cm), not RTK (1.4 cm), is the floor. 1 m baseline ≈ 8°, 2 m ≈ 4°,
+  4 m ≈ 2°; per-leg averaging beats it to ~1°. A per-*image* bearing therefore
+  wants a few-metre baseline.
+
+### Post-hoc → on-the-fly bearing
+
+The post-hoc recovery (centered neighbour-to-neighbour RTK bearing, ±2 m, ~1°)
+is the gold standard because it looks both ways; live, only the past is
+available. Two routes:
+
+- *Cheapest:* `cross_track` computes `_gps_course(pos_hist, lookback)` every
+  tick — thread that `cog` into the capture sidecar/EXIF (cross_track-only,
+  1 m lookback).
+- *General:* add `gps.course_at(frame.timestamp, lookback)` mirroring the v0.18
+  `position_at(frame.timestamp)`; compute from the same fix history,
+  mode-independent.
+
+Design notes: use a **~3–4 m lookback** (the steering loop filters 1 m noise; a
+single geotag does not), accept the small lag (harmless on a straight leg), and
+**fall back to the known leg bearing on the connectors/turns.** Record course
+live as the trusted heading, keep the IMU `achieved_heading` as a provenance
+field, and keep the RTK position in the sidecar so the geotag stays
+post-hoc-refinable to the centered ~1° version.
+
+### Calibration: largely obsolete for the moving survey
+
+With steering and geotag both on GPS course, the precise IMU offset — the whole
+point of the 5 m cal walk + per-leg recal — is load-bearing for almost nothing
+on the line survey:
+
+- Steering → course. Geotag → course.
+- The only consumer left is the in-place corner turn (`turn_to_bearing`), and it
+  is *coarse* — it just has to start the leg roughly aimed; `cross_track` pulls
+  onto the line in the first few metres via course feedback.
+
+Direction:
+
+- **Collapse calibration to one coarse offset** (±10–15° suffices for the turns)
+  and **retire the per-leg recal** — it has been rejected every leg, it is a
+  recurring rabbit hole, and nothing depends on it anymore.
+- *Enabling fact:* the Jan-2026 IMU-over-COG choice was made because COG is
+  unreliable at 0.3 m/s; the survey now runs 0.5–1.0 m/s where course is
+  reliable (~1° on 09c). Faster survey speed retroactively obsoletes the reason
+  the calibration machinery exists here.
+- *Endpoint:* replace the in-place turn with **drive-through reorientation**
+  (start toward the carrot, let `cross_track` yaw the body onto the line) →
+  removes the last offset consumer → the line survey needs **no IMU calibration
+  at all**; the GPS track self-provides heading whenever moving. Cost: the first
+  few metres of each leg curve in (off-bearing); sharp 180° serpentine reversals
+  may still want a pivot.
+- *Caveat that keeps calibration alive:* the stationary strategies
+  (`rotating_quadrat`, `waypoint_forward`) shoot while stopped — no course — so
+  they still need the calibrated IMU. Calibration becomes **optional for the
+  moving line survey, required only for the stationary missions.**
+
+### Transects, not waypoints — buffer the ends, discard the turns
+
+The legs *are* botanical survey transects; the corner turns are repositioning,
+not data. So target a transect operationally by **over-walking it**: for a 50 m
+transect, define the leg as 60 m (50 m + a 5 m buffer at each end), walk the
+full length, and **use only the captures from the central 50 m.** The buffers
+absorb the leg-start `cross_track` convergence transient, the end decel/turn,
+and any first-corner approach weirdness — it is exactly the ±5 m turn buffer used
+to measure the 0.10 m steady-state MAD, made operational.
+
+This **moots most of the remaining precision concerns** and reinforces the
+calibration direction above: the first-corner stall, corner-turn bearing
+accuracy, and connector noise stop mattering because their captures are cropped
+out. Steering only has to be clean in the middle of each transect — which 09c
+showed it is.
+
+### To distill later (exact plan TBD)
+
+- Coarse one-time cal vs. full drive-through reorientation (does the 180°
+  serpentine reversal still need an in-place pivot?).
+- Transect buffer length (5 m each end?) and how buffer captures get tagged /
+  cropped (by along-track distance, already in the sidecar `extra.line_survey`).
+- Retire the per-leg recal + guardrail; decide what, if anything, replaces the
+  cal walk.
+
+*(Realized since: the post-hoc bearing corrector is now in-pipeline — see v0.27.0
+below; the live-course route was dropped in its favour.)*
+
+## 2026-06-03: v0.27.0 — Line-Survey: cross_track first-corner approach + post-hoc centered EXIF bearing
+
+### First-corner approach on cross_track (no more stall)
+
+09c completed all 21 legs on `cross_track` but **froze at the first corner**: the
+survey legs steer with `cross_track`, but the first corner was reached via
+`navigate_to()`'s phase-3 walk — `point_seek` on the (drifted) IMU heading plus
+`_compute_velocity()` whose `vx = max(0.2, …)` floor drops below the Go2
+gait-translation threshold near the target, so the dog stalled and had to be
+nudged. Refactor: extract `_run_cal_walk` (the phase-1 IMU cal walk, now shared
+with `navigate_to`) and `_drive_leg` (turn-to-bearing + `cross_track`/`point_seek`
+drive + interval/corner captures + arrival recal) out of `navigate_legs`. The
+cal-endpoint → first-corner approach now drives through the **same `_drive_leg`**
+as a survey leg, with captures suppressed — reaching the first corner on
+offset-free `cross_track` at constant speed, no point_seek/`_compute_velocity`
+stall. `navigate_to` keeps its turn + point_seek walk for the per-waypoint
+(quadrat) path. The 5 m cal walk is unchanged this release.
+
+### Post-hoc centered EXIF bearing
+
+New `bearings.finalize_bearings()` runs at mission end (in the mission_runner
+`finally`, before the manifest, so a partial run still gets it): for each
+line-survey capture it computes a **centered** (look-back + look-forward,
+leg-clamped) RTK-track course from the sidecar positions — the in-pipeline port
+of the offline corrector that produced the aerial movie's `cor_true` — and writes
+it to the sidecar (`heading.course_degrees_true` + `exif_direction_source`,
+schema 3; the IMU `achieved_degrees_true` is kept as provenance) and to the JPEG
+EXIF `GPSImgDirection`. The EXIF rewrite is **lossless** via `piexif` (no pixel
+re-encode; a float→rational sanitize works around Pillow writing
+`GPSHPositioningError` as a float, which otherwise breaks `piexif.dump`).
+Validated on the 09c run: matches `cor_true` to mean 0.026°, 0 pixels changed.
+Also exposed as `go2-survey finalize-bearings <run>` to re-apply to existing runs.
+New dependency: `piexif`.
+
 ## 2026-06-02: v0.26.0 — Line-Survey: Cross-Track Leg Steering (GPS-Course Pure Pursuit), opt-in via `09c`
 
 ### Scope

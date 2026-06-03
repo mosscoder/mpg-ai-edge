@@ -265,6 +265,20 @@ def cmd_discover_ip(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_finalize_bearings(args: argparse.Namespace) -> int:
+    from go2_survey.bearings import finalize_bearings
+
+    logging.basicConfig(level=logging.INFO, format="%(message)s")
+    path = Path(args.run_dir)
+    captures = path / "captures" if (path / "captures").is_dir() else path
+    if not captures.is_dir():
+        print(f"error: no captures directory at {captures}", file=sys.stderr)
+        return 1
+    n = finalize_bearings(captures, args.window_m)
+    print(f"finalized {n} capture bearings in {captures}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="go2-survey",
@@ -377,6 +391,23 @@ def build_parser() -> argparse.ArgumentParser:
         help="output PNG path (default: mission_layout.png next to input)",
     )
     plotwp_parser.set_defaults(func=cmd_plot_waypoints)
+
+    fb_parser = subparsers.add_parser(
+        "finalize-bearings",
+        help="(re)compute post-hoc centered RTK-course bearings for a "
+        "line-survey run and write them to each capture's sidecar + JPEG EXIF.",
+    )
+    fb_parser.add_argument(
+        "run_dir",
+        help="a run directory (.../runs/<run>) or a captures directory",
+    )
+    fb_parser.add_argument(
+        "--window-m",
+        type=float,
+        default=1.0,
+        help="look-back/forward chord half-length in meters (default 1.0)",
+    )
+    fb_parser.set_defaults(func=cmd_finalize_bearings)
 
     return parser
 

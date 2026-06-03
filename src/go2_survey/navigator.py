@@ -462,6 +462,265 @@ class WaypointNavigator:
             await asyncio.sleep(0.5)
         return False
 
+    async def _run_cal_walk(self, timeout: float) -> bool:
+        """Walk straight forward (vz=0) until the IMU<->north offset is set.
+
+        Extracted phase-1 cal walk, shared by navigate_to and the line
+        survey. Idempotent: a no-op returning True when _imu_north_offset is
+        already set (a navigator calibrates once). Buffers each clean (vz=0)
+        sample, calls _calibrate_imu() each tick until it returns True
+        (displacement >= CALIBRATION_BASELINE_M at hAcc <= calibration_hacc),
+        then stops + balance-stands. Returns False on timeout or if stopped.
+        The caller reads the cal-endpoint fix via self.gps.get_position().
+        """
+        if self._imu_north_offset is not None:
+            return True
+        log_banner("CALIBRATING IMU", char="-", logger=logger)
+        cal_start = time.time()
+        while self._running:
+            if time.time() - cal_start > timeout:
+                logger.error("Timeout during IMU calibration")
+                log_banner(
+                    "CALIBRATION TIMEOUT", level="error", char="!", logger=logger
+                )
+                await self.robot.stop()
+                return False
+
+            pos = self.gps.get_position()
+            if not pos:
+                await asyncio.sleep(0.2)
+                continue
+
+            imu_yaw = self.robot.get_yaw_degrees()
+            if imu_yaw is not None:
+                # Cal walk is pure forward motion (vz=0) — the cleanest
+                # samples for the buffer recal at arrival.
+                self._maybe_buffer_sample(pos, imu_yaw, vz=0.0)
+                if self._calibrate_imu(pos, imu_yaw):
+                    await self.robot.stop()
+                    await self.robot.balance_stand()
+                    await asyncio.sleep(1.0)
+                    return True
+
+            await self.robot.send_velocity(x=self.max_velocity)
+            await asyncio.sleep(0.2)
+        return False
+
+    async def _drive_leg(
+        self,
+        start: Waypoint,
+        end: Waypoint,
+        *,
+        leg_label: str,
+        interval_m: float,
+        speed: float,
+        turn_tolerance_deg: float,
+        leg_steering: str,
+        lookahead_m: float,
+        course_lookback_m: float,
+        do_capture: bool,
+        timeout: float,
+        on_capture_cb=None,
+        n_captured_in: int = 0,
+    ) -> tuple[bool, int]:
+        """Turn to the leg bearing, then drive start->end on the configured
+        steering law (cross_track | point_seek), optionally firing interval +
+        corner captures, and recal the IMU offset from the leg buffer on
+        arrival. Shared by the survey legs (do_capture=True) and the
+        cal-endpoint -> first-corner approach (do_capture=False,
+        on_capture_cb=None). Returns (ok, n_captured_total).
+        """
+        leg_bearing = calculate_bearing(
+            start.latitude, start.longitude, end.latitude, end.longitude
+        )
+        leg_len = haversine_distance(
+            start.latitude, start.longitude, end.latitude, end.longitude
+        )
+        n_captured = n_captured_in
+
+        # Corner turn (no capture). Tolerance matches the rotating-quadrat
+        # strategy so the leg-start corner capture is tightly aligned.
+        await self.robot.stop()
+        await self.turn_to_bearing(
+            leg_bearing, tolerance_deg=turn_tolerance_deg, timeout=20.0
+        )
+
+        # Recompute the IMU<->north offset from each leg's straight-line
+        # GPS+IMU samples (a long baseline => low-noise recal).
+        self._traj_buf.clear()
+        pos_hist: deque = deque(maxlen=64)  # recent (lat, lon) for GPS course
+        next_mark = interval_m
+        prev_along = 0.0
+        prev_t = time.time()
+        mark_index = 0
+        leg_start = time.time()
+        last_status = 0.0
+        last_fired_along = -interval_m  # for end-of-leg de-dup
+
+        # Capture at the leg-start corner (heading just settled from the
+        # turn). Each interior corner thus gets two shots: the previous
+        # leg's end capture (incoming heading) and this start (outgoing).
+        if do_capture:
+            start_pos = self.gps.get_position()
+            if start_pos is not None and self._is_quality_acceptable(
+                start_pos, self.gps.has_active_corrections()
+            ):
+                n_written = await on_capture_cb(
+                    leg_label, mark_index, time.time(), 0.0, start_pos, leg_bearing
+                )
+                n_captured += n_written
+                last_fired_along = 0.0
+                log_banner(
+                    f"CAPTURE {leg_label} start corner | n={n_written}",
+                    char="-", logger=logger,
+                )
+
+        while self._running:
+            if time.time() - leg_start > timeout:
+                logger.error(
+                    f"Line-survey timeout on {leg_label} after {timeout:.0f}s"
+                )
+                await self.robot.stop()
+                return False, n_captured
+
+            pos = self.gps.get_position()
+            corrections_active = self.gps.has_active_corrections()
+            if not self._is_quality_acceptable(pos, corrections_active):
+                fix_info, cause = self._fix_lost_diagnostics(
+                    pos, corrections_active
+                )
+                logger.warning(
+                    f"GPS lost mid-line-survey ({fix_info}); pausing | {cause}"
+                )
+                await self.robot.stop()
+                if not await self._wait_for_fix_resume():
+                    return False, n_captured
+                leg_start = time.time()
+                prev_t = time.time()
+                continue
+
+            now = time.time()
+            along, cross = project_along_leg(
+                start.latitude, start.longitude,
+                end.latitude, end.longitude,
+                pos.latitude, pos.longitude,
+            )
+
+            # Fire a capture at each interval mark crossed this tick.
+            if do_capture:
+                while next_mark <= min(along, leg_len):
+                    frac = (
+                        (next_mark - prev_along) / (along - prev_along)
+                        if along > prev_along else 1.0
+                    )
+                    t_mark = prev_t + frac * (now - prev_t)
+                    mark_index += 1
+                    n_written = await on_capture_cb(
+                        leg_label, mark_index, t_mark, next_mark, pos, leg_bearing
+                    )
+                    n_captured += n_written
+                    last_fired_along = next_mark
+                    log_banner(
+                        f"CAPTURE {leg_label} mark {mark_index} @ "
+                        f"{next_mark:.1f}m | n={n_written}",
+                        char="-",
+                        logger=logger,
+                    )
+                    next_mark += interval_m
+
+            # Arrival at the end corner.
+            dist_to_end = haversine_distance(
+                pos.latitude, pos.longitude, end.latitude, end.longitude
+            )
+            if (
+                along >= leg_len - self.arrival_tolerance
+                or dist_to_end < self.arrival_tolerance
+            ):
+                # Capture at the leg-end corner before turning away —
+                # unless an interval mark already landed within 0.5 m of it.
+                if do_capture and along - last_fired_along > 0.5:
+                    mark_index += 1
+                    n_written = await on_capture_cb(
+                        leg_label, mark_index, time.time(), along, pos,
+                        leg_bearing,
+                    )
+                    n_captured += n_written
+                    log_banner(
+                        f"CAPTURE {leg_label} end corner @ {along:.1f}m | "
+                        f"n={n_written}",
+                        char="-", logger=logger,
+                    )
+                break
+
+            # Leg steering — two laws (config [capture] leg_steering):
+            #   point_seek (default): re-aim at the end corner each tick on
+            #     the calibrated IMU heading. A small residual offset curves
+            #     the path toward the corner and converges; a drifted offset
+            #     makes the dog bow off-line confidently (hdg_err~0 while
+            #     cross grows) and, at speed, never recover (see v0.26.0).
+            #   cross_track: pure-pursuit a near carrot on the leg line,
+            #     steering on GPS-derived course (offset-free) instead of the
+            #     IMU. Immune to IMU-offset drift; tracks the line. Same
+            #     proportional law/sign: +error -> CCW-negative z on the Go2.
+            if leg_steering == "cross_track":
+                pos_hist.append((pos.latitude, pos.longitude))
+                cog = self._gps_course(pos_hist, course_lookback_m)
+                if cog is None:
+                    # Too little travel for a clean course baseline yet —
+                    # drive straight (doubles as a per-leg cal-stretch).
+                    heading_error = 0.0
+                else:
+                    carrot_along = min(along + lookahead_m, leg_len)
+                    frac = carrot_along / leg_len if leg_len > 0 else 1.0
+                    carrot_lat = start.latitude + (end.latitude - start.latitude) * frac
+                    carrot_lon = start.longitude + (end.longitude - start.longitude) * frac
+                    carrot_brg = calculate_bearing(
+                        pos.latitude, pos.longitude, carrot_lat, carrot_lon
+                    )
+                    heading_error = normalize_angle(carrot_brg - cog)
+            else:
+                cog = None
+                bearing = calculate_bearing(
+                    pos.latitude, pos.longitude, end.latitude, end.longitude
+                )
+                heading = self.get_calibrated_heading()
+                heading_error = (
+                    normalize_angle(bearing - heading)
+                    if heading is not None else 0.0
+                )
+            vz = max(
+                -self.rotation_rate,
+                min(self.rotation_rate, heading_error * -0.015),
+            )
+
+            imu_yaw_now = self.robot.get_yaw_degrees()
+            if imu_yaw_now is not None:
+                self._maybe_buffer_sample(pos, imu_yaw_now, vz=vz)
+
+            await self.robot.send_velocity(x=speed, z=vz)
+
+            if now - last_status >= 2.0:
+                cog_str = f"{cog:.0f}°" if cog is not None else "—"
+                logger.info(
+                    f"NAV [{leg_steering}] {leg_label} | along={along:.1f}/"
+                    f"{leg_len:.1f}m cross={cross:.2f}m "
+                    f"hdg_err={heading_error:.1f}° cog={cog_str} "
+                    f"fix={pos.fix_type}"
+                )
+                last_status = now
+
+            prev_along, prev_t = along, now
+            await asyncio.sleep(0.1)
+
+        await self.robot.stop()
+        # Recal only at the end of a real survey leg (long straight baseline).
+        # Short crossovers/connectors and the approach are skipped — they'd
+        # only inject a noisy offset (see RECAL_MIN_LEG_M).
+        if leg_len >= self.RECAL_MIN_LEG_M:
+            self._recalibrate_from_buffer()
+
+        return True, n_captured
+
     async def navigate_legs(
         self,
         waypoints: list[Waypoint],
@@ -504,10 +763,39 @@ class WaypointNavigator:
 
         self._running = True
 
-        # Reach the first corner and calibrate the IMU (no capture here).
-        if not await self.navigate_to(waypoints[0], timeout=timeout_per_leg):
-            logger.error("Failed to reach line-survey start corner")
+        # Seed the IMU with the cal walk, then drive the cal-endpoint ->
+        # first-corner approach on the SAME _drive_leg (cross_track) path the
+        # survey legs use, with captures off — no more point_seek stall.
+        if not await self._run_cal_walk(timeout_per_leg):
+            logger.error("Failed initial IMU cal walk for line survey")
             return False
+        cal_pos = self.gps.get_position()
+        if cal_pos is None or not self._is_quality_acceptable(
+            cal_pos, self.gps.has_active_corrections()
+        ):
+            logger.error("No quality GPS fix at cal-walk endpoint")
+            return False
+        approach_start = Waypoint(
+            latitude=cal_pos.latitude, longitude=cal_pos.longitude, name="cal_end"
+        )
+        if (
+            haversine_distance(
+                approach_start.latitude, approach_start.longitude,
+                waypoints[0].latitude, waypoints[0].longitude,
+            )
+            > self.arrival_tolerance
+        ):
+            ok, _ = await self._drive_leg(
+                approach_start, waypoints[0],
+                leg_label="approach", on_capture_cb=None,
+                interval_m=interval_m, speed=speed,
+                turn_tolerance_deg=turn_tolerance_deg, leg_steering=leg_steering,
+                lookahead_m=lookahead_m, course_lookback_m=course_lookback_m,
+                do_capture=False, timeout=timeout_per_leg,
+            )
+            if not ok:
+                logger.error("Failed to reach line-survey start corner")
+                return False
 
         n_captured = 0
         for i in range(len(waypoints) - 1):
@@ -527,186 +815,15 @@ class WaypointNavigator:
                 char="-",
                 logger=logger,
             )
-
-            # Corner turn (no capture). Tolerance matches the rotating-quadrat
-            # strategy so the leg-start corner capture is tightly aligned.
-            await self.robot.stop()
-            await self.turn_to_bearing(
-                leg_bearing, tolerance_deg=turn_tolerance_deg, timeout=20.0
+            ok, n_captured = await self._drive_leg(
+                s, e, leg_label=leg_label, on_capture_cb=on_capture_cb,
+                interval_m=interval_m, speed=speed,
+                turn_tolerance_deg=turn_tolerance_deg, leg_steering=leg_steering,
+                lookahead_m=lookahead_m, course_lookback_m=course_lookback_m,
+                do_capture=True, timeout=timeout_per_leg, n_captured_in=n_captured,
             )
-
-            # Recompute the IMU↔north offset from each leg's straight-line
-            # GPS+IMU samples (a long baseline ⇒ low-noise recal).
-            self._traj_buf.clear()
-            pos_hist: deque = deque(maxlen=64)  # recent (lat, lon) for GPS course
-            next_mark = interval_m
-            prev_along = 0.0
-            prev_t = time.time()
-            mark_index = 0
-            leg_start = time.time()
-            last_status = 0.0
-            last_fired_along = -interval_m  # for end-of-leg de-dup
-
-            # Capture at the leg-start corner (heading just settled from the
-            # turn). Each interior corner thus gets two shots: the previous
-            # leg's end capture (incoming heading) and this start (outgoing).
-            start_pos = self.gps.get_position()
-            if start_pos is not None and self._is_quality_acceptable(
-                start_pos, self.gps.has_active_corrections()
-            ):
-                n_written = await on_capture_cb(
-                    leg_label, mark_index, time.time(), 0.0, start_pos, leg_bearing
-                )
-                n_captured += n_written
-                last_fired_along = 0.0
-                log_banner(
-                    f"CAPTURE {leg_label} start corner | n={n_written}",
-                    char="-", logger=logger,
-                )
-
-            while self._running:
-                if time.time() - leg_start > timeout_per_leg:
-                    logger.error(
-                        f"Line-survey timeout on {leg_label} after "
-                        f"{timeout_per_leg:.0f}s"
-                    )
-                    await self.robot.stop()
-                    return False
-
-                pos = self.gps.get_position()
-                corrections_active = self.gps.has_active_corrections()
-                if not self._is_quality_acceptable(pos, corrections_active):
-                    fix_info, cause = self._fix_lost_diagnostics(
-                        pos, corrections_active
-                    )
-                    logger.warning(
-                        f"GPS lost mid-line-survey ({fix_info}); pausing | {cause}"
-                    )
-                    await self.robot.stop()
-                    if not await self._wait_for_fix_resume():
-                        return False
-                    leg_start = time.time()
-                    prev_t = time.time()
-                    continue
-
-                now = time.time()
-                along, cross = project_along_leg(
-                    s.latitude, s.longitude,
-                    e.latitude, e.longitude,
-                    pos.latitude, pos.longitude,
-                )
-
-                # Fire a capture at each interval mark crossed this tick.
-                while next_mark <= min(along, leg_len):
-                    frac = (
-                        (next_mark - prev_along) / (along - prev_along)
-                        if along > prev_along else 1.0
-                    )
-                    t_mark = prev_t + frac * (now - prev_t)
-                    mark_index += 1
-                    n_written = await on_capture_cb(
-                        leg_label, mark_index, t_mark, next_mark, pos, leg_bearing
-                    )
-                    n_captured += n_written
-                    last_fired_along = next_mark
-                    log_banner(
-                        f"CAPTURE {leg_label} mark {mark_index} @ "
-                        f"{next_mark:.1f}m | n={n_written}",
-                        char="-",
-                        logger=logger,
-                    )
-                    next_mark += interval_m
-
-                # Arrival at the end corner.
-                dist_to_end = haversine_distance(
-                    pos.latitude, pos.longitude, e.latitude, e.longitude
-                )
-                if (
-                    along >= leg_len - self.arrival_tolerance
-                    or dist_to_end < self.arrival_tolerance
-                ):
-                    # Capture at the leg-end corner before turning away —
-                    # unless an interval mark already landed within 0.5 m of it.
-                    if along - last_fired_along > 0.5:
-                        mark_index += 1
-                        n_written = await on_capture_cb(
-                            leg_label, mark_index, time.time(), along, pos,
-                            leg_bearing,
-                        )
-                        n_captured += n_written
-                        log_banner(
-                            f"CAPTURE {leg_label} end corner @ {along:.1f}m | "
-                            f"n={n_written}",
-                            char="-", logger=logger,
-                        )
-                    break
-
-                # Leg steering — two laws (config [capture] leg_steering):
-                #   point_seek (default): re-aim at the end corner each tick on
-                #     the calibrated IMU heading. A small residual offset curves
-                #     the path toward the corner and converges; a drifted offset
-                #     makes the dog bow off-line confidently (hdg_err≈0 while
-                #     cross grows) and, at speed, never recover (see v0.26.0).
-                #   cross_track: pure-pursuit a near carrot on the leg line,
-                #     steering on GPS-derived course (offset-free) instead of the
-                #     IMU. Immune to IMU-offset drift; tracks the line. Same
-                #     proportional law/sign: +error → CCW-negative z on the Go2.
-                if leg_steering == "cross_track":
-                    pos_hist.append((pos.latitude, pos.longitude))
-                    cog = self._gps_course(pos_hist, course_lookback_m)
-                    if cog is None:
-                        # Too little travel for a clean course baseline yet —
-                        # drive straight (doubles as a per-leg cal-stretch).
-                        heading_error = 0.0
-                    else:
-                        carrot_along = min(along + lookahead_m, leg_len)
-                        frac = carrot_along / leg_len if leg_len > 0 else 1.0
-                        carrot_lat = s.latitude + (e.latitude - s.latitude) * frac
-                        carrot_lon = s.longitude + (e.longitude - s.longitude) * frac
-                        carrot_brg = calculate_bearing(
-                            pos.latitude, pos.longitude, carrot_lat, carrot_lon
-                        )
-                        heading_error = normalize_angle(carrot_brg - cog)
-                else:
-                    cog = None
-                    bearing = calculate_bearing(
-                        pos.latitude, pos.longitude, e.latitude, e.longitude
-                    )
-                    heading = self.get_calibrated_heading()
-                    heading_error = (
-                        normalize_angle(bearing - heading)
-                        if heading is not None else 0.0
-                    )
-                vz = max(
-                    -self.rotation_rate,
-                    min(self.rotation_rate, heading_error * -0.015),
-                )
-
-                imu_yaw_now = self.robot.get_yaw_degrees()
-                if imu_yaw_now is not None:
-                    self._maybe_buffer_sample(pos, imu_yaw_now, vz=vz)
-
-                await self.robot.send_velocity(x=speed, z=vz)
-
-                if now - last_status >= 2.0:
-                    cog_str = f"{cog:.0f}°" if cog is not None else "—"
-                    logger.info(
-                        f"NAV [{leg_steering}] {leg_label} | along={along:.1f}/"
-                        f"{leg_len:.1f}m cross={cross:.2f}m "
-                        f"hdg_err={heading_error:.1f}° cog={cog_str} "
-                        f"fix={pos.fix_type}"
-                    )
-                    last_status = now
-
-                prev_along, prev_t = along, now
-                await asyncio.sleep(0.1)
-
-            await self.robot.stop()
-            # Recal only at the end of a real survey leg (long straight
-            # baseline). Short crossovers/connectors are skipped — they'd only
-            # inject a noisy offset (see RECAL_MIN_LEG_M).
-            if leg_len >= self.RECAL_MIN_LEG_M:
-                self._recalibrate_from_buffer()
+            if not ok:
+                return False
 
         await self.robot.stop()
         await self.robot.balance_stand()
@@ -730,42 +847,9 @@ class WaypointNavigator:
         await self.robot.balance_stand()
         await asyncio.sleep(1.0)
 
-        # Phase 1: Calibrate IMU (once per navigator)
-        if self._imu_north_offset is None:
-            log_banner("CALIBRATING IMU", char="-", logger=logger)
-            while self._running:
-                if time.time() - nav_start > timeout:
-                    logger.error(
-                        f"Timeout during IMU calibration for {waypoint.name}"
-                    )
-                    log_banner(
-                        f"CALIBRATION TIMEOUT | {waypoint.name}",
-                        level="error",
-                        char="!",
-                        logger=logger,
-                    )
-                    await self.robot.stop()
-                    return False
-
-                pos = self.gps.get_position()
-                if not pos:
-                    await asyncio.sleep(0.2)
-                    continue
-
-                imu_yaw = self.robot.get_yaw_degrees()
-                if imu_yaw is not None:
-                    # Cal walk is pure forward motion (vz=0) — these are
-                    # the cleanest samples in the whole leg for the
-                    # buffer recal at arrival.
-                    self._maybe_buffer_sample(pos, imu_yaw, vz=0.0)
-                    if self._calibrate_imu(pos, imu_yaw):
-                        await self.robot.stop()
-                        await self.robot.balance_stand()
-                        await asyncio.sleep(1.0)
-                        break
-
-                await self.robot.send_velocity(x=self.max_velocity)
-                await asyncio.sleep(0.2)
+        # Phase 1: Calibrate IMU (once per navigator) — shared cal walk.
+        if not await self._run_cal_walk(timeout):
+            return False
 
         # Phase 2: Turn to face waypoint
         pos = self.gps.get_position()

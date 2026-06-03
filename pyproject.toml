@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "go2-survey"
-version = "0.26.0"
+version = "0.27.0"
 description = "Autonomous waypoint navigation for the Unitree Go2 with RTK GPS positioning"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -13,6 +13,7 @@ dependencies = [
     "pynmea2",
     "numpy",
     "Pillow",
+    "piexif",
     "pyproj",
     "matplotlib",
     "tomli >= 1.1.0 ; python_version < '3.11'",
