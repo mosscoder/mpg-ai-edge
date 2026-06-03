@@ -185,7 +185,7 @@ def cmd_run(args: argparse.Namespace) -> int:
             "--capture-images is a placeholder; hook not yet wired up"
         )
 
-    bearing_method = "cog_fusion" if args.cog_fusion else "endpoint"
+    bearing_method = "cog_fusion" if args.cog_fusion else "running_cog"
     runner = MissionRunner(
         mission_dir=mission_dir,
         run_dir=run_dir,

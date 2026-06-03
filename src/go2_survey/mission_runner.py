@@ -102,7 +102,7 @@ class MissionRunner:
     mission_dir: Path
     run_dir: Path
     dry_run: bool = False
-    bearing_method: str = "endpoint"  # "endpoint" | "cog_fusion"
+    bearing_method: str = "running_cog"  # "running_cog" | "endpoint" | "cog_fusion"
     on_waypoint_reached: WaypointHook | None = None
     on_gps_update: PositionHook | None = None
 

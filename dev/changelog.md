@@ -101,11 +101,50 @@ showed it is.
   serpentine reversal still need an in-place pivot?).
 - Transect buffer length (5 m each end?) and how buffer captures get tagged /
   cropped (by along-track distance, already in the sidecar `extra.line_survey`).
-- Retire the per-leg recal + guardrail; decide what, if anything, replaces the
-  cal walk.
 
-*(Realized since: the post-hoc bearing corrector is now in-pipeline — see v0.27.0
-below; the live-course route was dropped in its favour.)*
+*(Realized since: post-hoc bearing corrector in-pipeline (v0.27.0); the per-leg
+recal + the line-survey cal walk replaced by the self-seeding running COG recal
+(v0.28.0); the live-course route dropped in favour of the post-hoc one. Transect
+buffering remains the open item.)*
+
+## 2026-06-03: v0.28.0 — Line-Survey: running COG IMU recal (self-seeding) replaces the cal walk
+
+### Continuous calibration from motion
+
+The per-leg endpoint recal was noisy — on the 09c log it bounced the IMU offset
+across an 86°↔132° (46°) range with 26° single steps, holding bad offsets for
+whole legs, while the true IMU-yaw drift was a smooth ~18°/13 min (~1.4°/min,
+temp-driven). New `bearing_method="running_cog"` (now the default) replaces it
+with a continuous, per-tick **circular-EMA over straight, centered-COG samples**:
+each tick `_update_running_recal` folds any centered-complete buffered sample
+(`centered_cog + imu_yaw`, the `_calibrate_imu` convention) into the offset with a
+τ≈30 s time constant and a *soft* per-sample outlier gate (never the whole-leg
+reject that broke the endpoint guardrail). Replaying the in-code estimator on the
+09c log: it self-seeds, tracks the drift, and caps single-update jumps at 6.9°
+(continuous; tighter once leg-clamped) vs the endpoint recal's 26.5°. The earlier
+standalone sim measured calibrated-heading error mean 7.9°→1.9° and
+`turn_to_bearing` corner pre-aim 7.1°→3.4°.
+
+Because v0.27.0 put steering on `cross_track` and the EXIF bearing post-hoc, the
+offset's only live consumer is `turn_to_bearing`, so this is a pure **observer**
+swap — it cannot destabilize the path or the data.
+
+### The cal walk is gone for the line survey
+
+`running_cog` **self-seeds** the offset from the first centered-complete sample
+during the cal-endpoint→first-corner approach, so the line survey no longer does
+a dedicated cal walk: `navigate_legs` skips `_run_cal_walk` under `running_cog`,
+and `_drive_leg` skips the in-place `turn_to_bearing` while uncalibrated (the turn
+needs the offset; `cross_track` converges onto the line without it). Field SOP:
+**place the dog 5 m+ from the first waypoint, roughly facing it** — it calibrates
+from its own motion en route and continuously thereafter. Cold-start caveat:
+leg 1 gets the coarsest offset (only the ~5 m approach has fed the estimator);
+`cross_track` converges its first ~2 m and it locks in by leg 2.
+
+The cal walk and the endpoint/cog_fusion recals are retained for the stationary
+strategies (`rotating_quadrat`, `waypoint_forward` via `navigate_to` /
+`navigate_through`) — no motion to self-calibrate from — and remain selectable
+(`--cog-fusion`, or `bearing_method` on the navigator).
 
 ## 2026-06-03: v0.27.0 — Line-Survey: cross_track first-corner approach + post-hoc centered EXIF bearing
 
