@@ -172,43 +172,16 @@ class WaypointForwardStrategy(CaptureStrategy):
         return 1
 
 
-class DriveByStrategy(CaptureStrategy):
-    """In-motion capture: single forward frame triggered as the dog passes
-    the waypoint, while continuing through the route without stopping.
-
-    Distinct from the other strategies, this one doesn't run *at* a
-    waypoint — the whole route runs as one continuous motion in the
-    navigator (`navigate_through`), with a callback firing the per-wp
-    shutter at closest approach. The per-wp work (frame + position +
-    sidecar) lives in `write_drive_by_capture()` below; this class's
-    `execute()` is intentionally never called — the strategy name is
-    just the dispatch marker mission_runner uses to take the drive-by
-    code path.
-
-    Velocity profile, valley radius, and sharp-turn handling are all
-    configured via [capture] fields read in `navigator.navigate_through`.
-    """
-
-    name = "drive_by"
-
-    async def execute(self, ctx: CaptureContext) -> int:
-        raise RuntimeError(
-            "DriveByStrategy.execute() should never be called per-waypoint; "
-            "the drive-by route runs end-to-end inside "
-            "navigator.navigate_through(). Check mission_runner dispatch."
-        )
-
-
 class LineSurveyStrategy(CaptureStrategy):
     """Lawnmower line survey: drive straight legs between corner waypoints,
     turning in place at each corner, and capture a clean frame every
     `capture_interval_m` of along-track travel while moving.
 
-    Like DriveByStrategy this runs end-to-end in the navigator
-    (`navigate_legs`), not per-waypoint — `execute()` is the dispatch
-    marker only and is never called. Per-mark frame selection + geotag
-    lives in `write_interval_capture()` below. Capture points are not
-    waypoints; each image carries its own interpolated RTK position.
+    This runs end-to-end in the navigator (`navigate_legs`), not
+    per-waypoint — `execute()` is the dispatch marker only and is never
+    called. Per-mark frame selection + geotag lives in
+    `write_interval_capture()` below. Capture points are not waypoints;
+    each image carries its own interpolated RTK position.
     """
 
     name = "line_survey"
@@ -219,88 +192,6 @@ class LineSurveyStrategy(CaptureStrategy):
             "the line survey runs end-to-end inside "
             "navigator.navigate_legs(). Check mission_runner dispatch."
         )
-
-
-class RotatingQuadratStrategy(CaptureStrategy):
-    """Rotate to each absolute bearing in the list, capturing at each.
-
-    Bearings are interpreted as true-north absolute (0 = N, 90 = E,
-    etc.). Rotation uses the navigator's calibrated-heading primitive
-    (robot IMU + GPS-derived offset established during approach). If
-    the navigator is unavailable (static mode), falls back to the
-    robot's raw IMU yaw with no true-north calibration and logs a
-    warning.
-
-    This is the botanical-quadrat pattern: 4 shots × 90° = a
-    spot-sampled "view from this point" per waypoint. Per-bearing
-    error is independent (each rotation is to an absolute target, not
-    relative to the previous capture) — so a single bad rotation
-    doesn't poison subsequent ones.
-    """
-
-    name = "rotating_quadrat"
-
-    async def execute(self, ctx: CaptureContext) -> int:
-        s = ctx.settings
-        wp_name = ctx.waypoint.name if ctx.waypoint else "static"
-
-        log_banner(
-            f"CAPTURE @ {wp_name} | {self.name} × {len(s.bearings)}",
-            char="-",
-            logger=logger,
-        )
-
-        n_written = 0
-        for bearing in s.bearings:
-            success = await _turn_to_bearing(ctx, bearing)
-            if not success:
-                logger.warning(
-                    f"Turn to bearing {bearing:.0f}° failed; "
-                    f"continuing with remaining bearings"
-                )
-
-            logger.info(f"Settling for {s.settle_time:.1f}s at {bearing:.0f}°")
-            await asyncio.sleep(s.settle_time)
-
-            position = await _sample_position(ctx)
-            if position is None:
-                logger.error(f"No GPS at {wp_name}/{bearing:.0f}°; skipping")
-                continue
-
-            frame_result = await capture_frame(
-                ctx.robot,
-                max_age=s.frame_max_age,
-                wait_timeout=s.frame_wait_timeout,
-                prefer_clean=s.prefer_clean_frame,
-            )
-            if frame_result is None:
-                logger.error(f"No frame at {wp_name}/{bearing:.0f}°; skipping")
-                continue
-
-            achieved_heading, heading_source = _current_bearing(ctx)
-            out_path = _capture_output_path(ctx, wp_name, bearing)
-            write_geotagged_jpeg(
-                frame=frame_result,
-                position=position,
-                bearing=bearing,
-                achieved_heading=achieved_heading,
-                out_path=out_path,
-                heading_source=heading_source,
-                mission_context=_mission_context(ctx, wp_name, self.name, bearing),
-            )
-            n_written += 1
-            log_banner(
-                f"FRAME {n_written}/{len(s.bearings)} @ {bearing:.0f}°",
-                char="-",
-                logger=logger,
-            )
-
-        log_banner(
-            f"CAPTURE DONE @ {wp_name} | {n_written} frames",
-            char="-",
-            logger=logger,
-        )
-        return n_written
 
 
 # ---- helpers shared by strategies -----------------------------------------
@@ -340,39 +231,6 @@ def _current_bearing(ctx: CaptureContext):
     return None, "none"
 
 
-async def _turn_to_bearing(ctx: CaptureContext, target_bearing_deg: float) -> bool:
-    """Command the robot to face `target_bearing_deg` (true-north degrees).
-
-    Uses the navigator's `turn_to_bearing` primitive when available.
-    Returns True on success. No-ops with a warning when no navigator
-    (static mode with rotating quadrat).
-    """
-    nav = ctx.navigator
-    if nav is None:
-        logger.warning(
-            "No navigator available; skipping rotation. Captures will "
-            "reuse the current robot pose."
-        )
-        return False
-    log_banner(
-        f"TURN TO {target_bearing_deg:.0f}° (true)", char="-", logger=logger
-    )
-    try:
-        return await nav.turn_to_bearing(
-            target_bearing_deg,
-            tolerance_deg=ctx.settings.turn_tolerance_deg,
-            timeout=ctx.settings.turn_timeout_sec,
-            kp=ctx.settings.turn_kp,
-            min_rate_rad_s=ctx.settings.turn_min_rate_rad_s,
-        )
-    except AttributeError:
-        logger.error(
-            "Navigator has no turn_to_bearing method; capture rotation "
-            "cannot proceed without nav support."
-        )
-        return False
-
-
 def _capture_output_path(
     ctx: CaptureContext, wp_name: str, bearing: float | None
 ) -> Path:
@@ -410,66 +268,6 @@ def _mission_context(
         "strategy": strategy_name,
         "target_bearing_deg_true": bearing,
     }
-
-
-async def write_drive_by_capture(
-    ctx: CaptureContext,
-    wp_name: str,
-    position: RTKPosition,
-    distance_at_trigger_m: float,
-    commanded_speed_m_s: float,
-) -> int:
-    """In-motion shutter + write. Called from navigator.navigate_through()
-    at the closest-pass moment of each waypoint.
-
-    The frame is whatever's freshest in the WebRTC cache at the trigger
-    instant; the geotag is the GPS sample passed in (already the
-    closest-pass position). No settle, no GPS averaging, no rotation —
-    the dog is moving the whole time. Drive-by-specific telemetry
-    (distance at trigger, commanded forward velocity) lands in the
-    sidecar `extra` block so post-hoc analysis can correlate frame
-    quality against motion state.
-    """
-    frame_result = await capture_frame(
-        ctx.robot,
-        max_age=ctx.settings.frame_max_age,
-        wait_timeout=ctx.settings.frame_wait_timeout,
-        target_time=position.timestamp,
-        prefer_clean=ctx.settings.prefer_clean_frame,
-    )
-    if frame_result is None:
-        logger.error(f"No fresh frame at {wp_name} (drive_by); skipping")
-        return 0
-
-    # Geotag by the chosen frame's own time: interpolate the RTK position
-    # to frame_result.timestamp rather than using the trigger position, so
-    # an older (cleaner) frame still gets the position it was actually
-    # taken at. Falls back to the trigger position if history is too sparse.
-    interp = ctx.gps.position_at(frame_result.timestamp) if ctx.gps else None
-    geo_pos = interp or position
-    position_interpolated = interp is not None
-
-    achieved_heading, heading_source = _current_bearing(ctx)
-    out_path = _capture_output_path(ctx, wp_name, bearing=None)
-    write_geotagged_jpeg(
-        frame=frame_result,
-        position=geo_pos,
-        bearing=None,
-        achieved_heading=achieved_heading,
-        out_path=out_path,
-        heading_source=heading_source,
-        position_interpolated=position_interpolated,
-        mission_context=_mission_context(ctx, wp_name, DriveByStrategy.name, None),
-        extra={
-            "drive_by": {
-                "distance_at_trigger_m": distance_at_trigger_m,
-                "commanded_speed_m_s": commanded_speed_m_s,
-                "frame_offset_from_trigger_s": frame_result.timestamp
-                - position.timestamp,
-            }
-        },
-    )
-    return 1
 
 
 async def write_interval_capture(
@@ -620,8 +418,6 @@ STRATEGIES = {
     NoOpStrategy.name: NoOpStrategy,
     FrameOnlyStrategy.name: FrameOnlyStrategy,
     WaypointForwardStrategy.name: WaypointForwardStrategy,
-    RotatingQuadratStrategy.name: RotatingQuadratStrategy,
-    DriveByStrategy.name: DriveByStrategy,
     LineSurveyStrategy.name: LineSurveyStrategy,
 }
 

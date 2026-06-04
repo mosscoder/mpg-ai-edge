@@ -104,36 +104,18 @@ class ProbeSettings:
 class CaptureSettings:
     """Per-waypoint capture behavior. See `capture.py::STRATEGIES`."""
 
-    strategy: str = "none"              # "none" | "frame_only" | "waypoint_forward" | "rotating_quadrat" | "drive_by" | "line_survey"
+    strategy: str = "none"              # "none" | "frame_only" | "waypoint_forward" | "line_survey"
     settle_time: float = 2.0            # seconds after stop before sampling
     gps_avg_sec: float = 3.0            # GPS averaging window (0 disables)
-    bearings: list = field(default_factory=lambda: [0.0, 90.0, 180.0, 270.0])
     output_subdir: str = "captures"     # relative to mission dir
     frame_max_age: float = 0.5          # max staleness / selection window half-width (s)
     frame_wait_timeout: float = 5.0     # max wait for a fresh frame (s)
     prefer_clean_frame: bool = True     # prefer a non-corrupt frame within the max_age window
-    # P-controller bearing alignment for rotating_quadrat. The controller
-    # decelerates as it approaches the target so the stop command lands
-    # before overshoot, enabling sub-2° alignment without hunting.
-    # Tuning rule of thumb: turn_kp = self.rotation_rate / angle_at_full_rate.
-    # Default 0.04 = full rotation_rate commanded at error ≥ 20°.
-    # turn_min_rate_rad_s defeats Go2 motor stiction near zero error
-    # (a pure P controller stalls sub-threshold and never converges).
-    turn_tolerance_deg: float = 2.0     # was 5.0; the P-controller makes 2° reachable
-    turn_kp: float = 0.04               # P-controller gain (rad/s per degree of error)
-    turn_min_rate_rad_s: float = 0.45   # dead-band floor (rad/s); Go2 won't rotate in place below ~0.4
-    turn_timeout_sec: float = 15.0      # per-bearing rotation timeout
-    # drive_by strategy: walk continuously through waypoints with a
-    # sinusoidal-valley velocity profile. cruise_speed is the between-wp
-    # forward velocity; within valley_radius_m of the next wp the dog
-    # linearly decelerates to valley_speed, fires the shutter at closest
-    # approach, then accelerates back to cruise on the other side. At
-    # turns sharper than sharp_turn_deg the dog brakes to a stop, rotates
-    # in place, and resumes — "no stop except to turn".
-    cruise_speed: float = 1.0
-    valley_speed: float = 0.25
-    valley_radius_m: float = 1.0
-    sharp_turn_deg: float = 30.0
+    # Corner-turn alignment tolerance: how close to the target bearing the
+    # in-place turn must land before a line-survey leg drive begins (also the
+    # rotate-in-place tolerance for waypoint_forward approaches). The
+    # turn_to_bearing P-controller reaches 2° without hunting.
+    turn_tolerance_deg: float = 2.0
     # line_survey strategy: drive straight legs between corner waypoints at
     # navigation.max_velocity, turning in place at each corner, and capture a
     # clean frame every capture_interval_m of along-track travel (geotagged

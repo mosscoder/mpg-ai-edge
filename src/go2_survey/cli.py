@@ -185,12 +185,10 @@ def cmd_run(args: argparse.Namespace) -> int:
             "--capture-images is a placeholder; hook not yet wired up"
         )
 
-    bearing_method = "cog_fusion" if args.cog_fusion else "running_cog"
     runner = MissionRunner(
         mission_dir=mission_dir,
         run_dir=run_dir,
         dry_run=args.dry_run,
-        bearing_method=bearing_method,
     )
 
     try:
@@ -307,13 +305,6 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="set root log level to DEBUG (the IMU stream goes to imu.log "
         "regardless)",
-    )
-    run_parser.add_argument(
-        "--cog-fusion",
-        action="store_true",
-        help="opt in to inverse-variance-weighted GPS course-over-ground "
-        "fusion for per-arrival IMU recalibration. Default off uses the "
-        "endpoint A→B bearing. Experimental — see changelog.",
     )
     run_parser.set_defaults(func=cmd_run)
 

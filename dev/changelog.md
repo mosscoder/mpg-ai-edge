@@ -107,6 +107,49 @@ recal + the line-survey cal walk replaced by the self-seeding running COG recal
 (v0.28.0); the live-course route dropped in favour of the post-hoc one. Transect
 buffering remains the open item.)*
 
+## 2026-06-04: v0.29.0 — Prune to the 09c line-survey core (drop drive-by, cog_fusion, rotating-quadrat)
+
+The 09c line survey (`line_survey` + `cross_track` + self-seeding `running_cog` +
+post-hoc EXIF bearing) is the proven way to gather landscape imagery with the
+hardware on hand. This release removes the superseded and unused paths around it,
+trimming ~640 net LOC from the nav/capture core with **no change to the 09c path
+or to point-to-point `navigate_to`** (`navigator.py` 1614→1255, `capture.py`
+637→433; 696 deletions / 60 insertions).
+
+### Removed
+
+- **Drive-by (`navigate_through`)** — the closest-pass predecessor that
+  `line_survey` replaced; no mission used it. Gone: `navigate_through`,
+  `_drive_by_speed`, `DriveByStrategy`, `write_drive_by_capture`, the dispatch
+  branch, and the `cruise_speed`/`valley_speed`/`valley_radius_m`/`sharp_turn_deg`
+  config.
+- **`cog_fusion` bearing method** — CLI-only (`--cog-fusion`), never set by any
+  mission, and resting on the F9R course/heading the pipeline already distrusts.
+  Gone: `_recalibrate_cog_fusion`, `COG_FUSION_MIN_SPEED_M_S`, the `cog`/`speed`
+  fields on `_TrajSample`, the `--cog-fusion` flag.
+- **`rotating_quadrat` capture** — too slow and bearing-error-prone (the fix is a
+  second GNSS antenna, a long way out). Gone: `RotatingQuadratStrategy`, the
+  `_turn_to_bearing` capture helper, and the `bearings` / `turn_kp` /
+  `turn_min_rate_rad_s` / `turn_timeout_sec` config.
+- **`bearing_method` parameter** — with both alternatives gone, the line survey is
+  always `running_cog` (self-seeds, no cal walk). The now-unreachable
+  `!= "running_cog"` branches in `navigate_legs` / `_drive_leg` and the param
+  threading through the navigator, `MissionRunner`, and the CLI are removed.
+
+### Kept
+
+Point-to-point `navigate_to` (cal walk → turn → walk → arrival endpoint recal) and
+its `waypoint_forward` / `frame_only` captures; the `static_camera` /
+`static_geotag` / `probe_lidar` modes; and the `point_seek` leg-steering option.
+`turn_tolerance_deg` stays — the line-survey corner turn uses it.
+
+### Breaks (sanctioned)
+
+`05_tennis_single_quadrat` and `06_tennis_quadrat_pair` (the only `rotating_quadrat`
+users) now error at startup with a clear `Unknown capture strategy
+'rotating_quadrat'`. The mission tree is reorganized to match in the follow-on
+commit.
+
 ## 2026-06-03: v0.28.0 — Line-Survey: running COG IMU recal (self-seeding) replaces the cal walk
 
 ### Continuous calibration from motion

@@ -3,7 +3,6 @@
 import asyncio
 import logging
 import math
-import statistics
 import time
 from collections import deque
 from typing import NamedTuple
@@ -21,42 +20,29 @@ from go2_survey.waypoints import Waypoint
 
 logger = logging.getLogger(__name__)
 
-# COG samples below this speed have too much per-sample angular noise to
-# contribute usefully to the inverse-variance-weighted circular mean.
-# At 0.2 m/s with 100ms tick and ~2cm GPS noise, single-sample bearing
-# uncertainty is already ~atan(0.02/0.02) ≈ 45° — saturating the noise
-# model. Above 0.2 m/s noise drops below ~30° per sample, which the
-# weighting + averaging can usefully reduce.
-COG_FUSION_MIN_SPEED_M_S = 0.2
-
-
 class _TrajSample(NamedTuple):
-    """One (time, position, IMU yaw, GPS COG, GPS speed) sample collected
-    while walking. `cog`/`speed` may be None — endpoint recompute only
-    uses the position fields, so older code paths remain valid; cog_fusion
-    requires both.
+    """One (time, position, IMU yaw) sample collected while walking. Feeds
+    the running-COG recal (line survey) and the endpoint recal (navigate_to).
     """
 
     t: float
     lat: float
     lon: float
     imu_yaw: float
-    cog: float | None = None
-    speed: float | None = None
 
 
 class WaypointNavigator:
-    """Navigation controller for waypoint following.
+    """Navigation controller with two drive modes:
 
-    Three-phase state machine per waypoint:
-      1. Calibrate IMU (walk forward until GPS-bearing-vs-IMU-yaw offset is known)
-      2. Turn to face waypoint (committed direction, no oscillation)
-      3. Walk to waypoint (proportional steering)
-
-    The first-leg IMU calibration walk seeds `_imu_north_offset`. With
-    `imu_recalibrate_on_arrival = True` (default), the offset is then
-    refreshed at every waypoint arrival from the GPS+IMU samples
-    collected during that leg's walk — see `_recalibrate_from_buffer`.
+    * `navigate_legs` — the lawnmower line survey (the primary path): drive
+      straight legs between corner waypoints, steering each leg by GPS course
+      (`cross_track`) or the calibrated IMU heading (`point_seek`). The IMU
+      offset self-seeds and tracks continuously from the survey motion via the
+      running COG recal (`_update_running_recal`); no cal walk runs.
+    * `navigate_to` — point-to-point to a single waypoint: a three-phase state
+      machine (cal walk to seed `_imu_north_offset` → turn to face → walk with
+      proportional steering), with the offset refreshed at arrival from the
+      leg's GPS+IMU samples (`_recalibrate_from_buffer`).
     """
 
     # Per-waypoint recalibration tunables. Constants rather than init
@@ -67,21 +53,16 @@ class WaypointNavigator:
     RECAL_DROP_RECENT_SEC = 1.0      # ignore samples from arrival deceleration
     RECAL_STRAIGHT_VZ_THRESHOLD = 0.05  # rad/s — only buffer when going straight
     RECAL_BUFFER_MAXLEN = 400        # ~40s at 10Hz — holds a long survey leg's straight body
-    # Only recal at the end of a real survey leg, never a short crossover /
-    # connector: a short baseline yields a noisier offset than the slow
-    # (~0.4°/min) drift it would correct.
-    RECAL_MIN_LEG_M = 10.0
-    # Initial IMU cal-walk baseline. 5 m (was 1.5 m) so the seed heading offset
-    # is ~1-2°, not the ~6-18° a 1.5 m chord gave (gait wobble ~0.15 m / baseline
-    # sets the floor — see the 2026-05-21 track replay). Used by navigate_to /
-    # navigate_through (quadrat) and by the legacy line-survey recal methods;
-    # bearing_method="running_cog" skips it (self-seeds from the approach).
+    # Initial IMU cal-walk baseline for navigate_to (point-to-point). 5 m so the
+    # seed heading offset is ~1-2°, not the ~6-18° a 1.5 m chord gave (gait
+    # wobble ~0.15 m / baseline sets the floor — see the 2026-05-21 track
+    # replay). The line survey self-seeds from the running COG recal below and
+    # skips the cal walk entirely.
     CALIBRATION_BASELINE_M = 5.0
 
-    # Running COG recal (bearing_method="running_cog"): a continuous, per-tick
-    # circular-EMA of the IMU offset over straight centered-COG samples,
-    # self-seeding (no cal walk) — replaces the per-leg endpoint recal on the
-    # line survey. See _update_running_recal. Validated on the 09c replay
+    # Running COG recal: a continuous, per-tick circular-EMA of the IMU offset
+    # over straight centered-COG samples, self-seeding (no cal walk) — the line
+    # survey's calibration. See _update_running_recal. Validated on the 09c replay
     # (heading error mean 7.9->1.9°, corner pre-aim 7.1->3.4°, max jump 26.5->3.8°).
     RUNNING_RECAL_TAU_S = 30.0       # EMA time constant (s)
     RUNNING_RECAL_LOOKBACK_M = 1.5   # centered half-chord each side (m)
@@ -100,7 +81,6 @@ class WaypointNavigator:
         calibration_timeout: float = 30.0,
         calibration_hacc: float = 0.1,
         imu_recalibrate_on_arrival: bool = True,
-        bearing_method: str = "running_cog",
     ):
         self.gps = gps
         self.robot = robot
@@ -113,12 +93,6 @@ class WaypointNavigator:
         self.calibration_timeout = calibration_timeout
         self.calibration_hacc = calibration_hacc
         self.imu_recalibrate_on_arrival = imu_recalibrate_on_arrival
-        if bearing_method not in ("endpoint", "cog_fusion", "running_cog"):
-            raise ValueError(
-                f"bearing_method must be 'endpoint', 'cog_fusion', or "
-                f"'running_cog', got {bearing_method!r}"
-            )
-        self.bearing_method = bearing_method
 
         self._running = False
         self._paused = False
@@ -211,236 +185,6 @@ class WaypointNavigator:
         else:
             cause = "see receiver state above"
         return fix_info, cause
-
-    async def navigate_through(
-        self,
-        waypoints: list[Waypoint],
-        on_capture_cb,
-        cruise_speed: float,
-        valley_speed: float,
-        valley_radius_m: float,
-        sharp_turn_deg: float,
-        timeout_per_wp: float = 300.0,
-    ) -> bool:
-        """Continuous-motion drive-by route through all waypoints.
-
-        Velocity profile per leg:
-          * distance to current target > valley_radius_m: cruise_speed
-          * within valley_radius_m: linear ramp toward valley_speed (V-shape)
-          * at arrival: fire on_capture_cb(wp, position, dist, vx)
-
-        At each capture, the heading error to the *next* waypoint is
-        measured. If it exceeds sharp_turn_deg, the dog brakes to a
-        stop, calls `turn_to_bearing` to rotate in place, then resumes
-        cruise on the next leg. Otherwise it continues smoothly with
-        no pause.
-
-        Returns True on success after the final waypoint's capture.
-        Returns False on GPS-loss timeout, IMU-calibration timeout, or
-        per-waypoint navigation timeout.
-        """
-        if not waypoints:
-            return True
-
-        log_banner(
-            f"DRIVE-BY ROUTE | {len(waypoints)} wp(s) | "
-            f"cruise={cruise_speed:.2f}m/s valley={valley_speed:.2f}m/s "
-            f"radius={valley_radius_m:.1f}m sharp_turn>{sharp_turn_deg:.0f}°",
-            logger=logger,
-        )
-
-        self._running = True
-        await self.robot.balance_stand()
-        await asyncio.sleep(1.0)
-
-        # Initial IMU calibration walk if not yet calibrated.
-        if self._imu_north_offset is None:
-            log_banner("CALIBRATING IMU (drive-by)", char="-", logger=logger)
-            cal_start = time.time()
-            while self._running:
-                if time.time() - cal_start > timeout_per_wp:
-                    logger.error("Timeout during initial IMU calibration")
-                    await self.robot.stop()
-                    return False
-                pos = self.gps.get_position()
-                if not pos:
-                    await asyncio.sleep(0.2)
-                    continue
-                imu_yaw = self.robot.get_yaw_degrees()
-                if imu_yaw is not None:
-                    self._maybe_buffer_sample(pos, imu_yaw, vz=0.0)
-                    if self._calibrate_imu(pos, imu_yaw):
-                        # Don't stop — flow straight into the route. The
-                        # cal walk happens while heading toward wp1, so
-                        # the dog is already in roughly the right direction.
-                        break
-                await self.robot.send_velocity(x=cruise_speed)
-                await asyncio.sleep(0.2)
-
-        n_captured = 0
-        for i, wp in enumerate(waypoints):
-            is_last = i == len(waypoints) - 1
-            next_wp = None if is_last else waypoints[i + 1]
-            log_banner(
-                f"DRIVE-BY WP {i + 1}/{len(waypoints)}: {wp.name}",
-                char="-",
-                logger=logger,
-            )
-
-            self._traj_buf.clear()
-            leg_start = time.time()
-            prev_distance = float("inf")
-            captured = False
-            last_status = 0.0
-
-            while self._running:
-                if time.time() - leg_start > timeout_per_wp:
-                    logger.error(
-                        f"Drive-by timeout on leg to {wp.name} "
-                        f"after {timeout_per_wp:.0f}s"
-                    )
-                    await self.robot.stop()
-                    return False
-
-                pos = self.gps.get_position()
-                corrections_active = self.gps.has_active_corrections()
-                if not self._is_quality_acceptable(pos, corrections_active):
-                    # Drive-by has no graceful "pause and wait" — if GPS
-                    # degrades mid-route we stop and let the existing
-                    # nav-style fix-lost loop handle it.
-                    fix_info, cause = self._fix_lost_diagnostics(
-                        pos, corrections_active
-                    )
-                    logger.warning(
-                        f"GPS lost mid-drive-by ({fix_info}); pausing | {cause}"
-                    )
-                    await self.robot.stop()
-                    if not await self._wait_for_fix_resume():
-                        return False
-                    leg_start = time.time()  # reset leg timeout after fix
-                    continue
-
-                distance = haversine_distance(
-                    pos.latitude, pos.longitude,
-                    wp.latitude, wp.longitude,
-                )
-
-                # Capture trigger: inside arrival_tolerance OR distance
-                # just turned around (closest-pass detection). The
-                # closest-pass clause is gated on prev_distance being
-                # "near" the waypoint so we don't trigger on noise far
-                # from the target.
-                near_radius = max(2 * valley_radius_m, 0.5)
-                closest_pass = (
-                    distance > prev_distance and prev_distance < near_radius
-                )
-                if not captured and (
-                    distance < self.arrival_tolerance or closest_pass
-                ):
-                    trigger_speed = self._drive_by_speed(
-                        prev_distance, cruise_speed, valley_speed, valley_radius_m
-                    )
-                    log_banner(
-                        f"CAPTURE @ {wp.name} | drive_by | "
-                        f"d={prev_distance:.2f}m v_cmd={trigger_speed:.2f}m/s",
-                        char="-",
-                        logger=logger,
-                    )
-                    n_written = await on_capture_cb(
-                        wp, pos, prev_distance, trigger_speed
-                    )
-                    n_captured += n_written
-                    captured = True
-                    self._recalibrate_from_buffer()
-
-                    if is_last:
-                        await self.robot.stop()
-                        await self.robot.balance_stand()
-                        log_banner(
-                            f"DRIVE-BY ROUTE COMPLETE | {n_captured} frame(s)",
-                            logger=logger,
-                        )
-                        return True
-
-                    # Sharp-turn check toward next waypoint.
-                    next_bearing = calculate_bearing(
-                        pos.latitude, pos.longitude,
-                        next_wp.latitude, next_wp.longitude,
-                    )
-                    heading_now = self.get_calibrated_heading()
-                    if heading_now is not None:
-                        turn_error = abs(
-                            normalize_angle(next_bearing - heading_now)
-                        )
-                        if turn_error > sharp_turn_deg:
-                            log_banner(
-                                f"SHARP TURN | {turn_error:.0f}° to next wp | "
-                                f"pausing to rotate",
-                                char="-",
-                                logger=logger,
-                            )
-                            await self.robot.stop()
-                            await self.turn_to_bearing(
-                                next_bearing,
-                                tolerance_deg=10.0,
-                                timeout=15.0,
-                            )
-                    break  # advance to next waypoint
-
-                # Speed + heading control.
-                desired_speed = self._drive_by_speed(
-                    distance, cruise_speed, valley_speed, valley_radius_m
-                )
-                bearing = calculate_bearing(
-                    pos.latitude, pos.longitude,
-                    wp.latitude, wp.longitude,
-                )
-                heading = self.get_calibrated_heading()
-                heading_error = (
-                    normalize_angle(bearing - heading)
-                    if heading is not None else 0.0
-                )
-                vz = max(
-                    -self.rotation_rate,
-                    min(self.rotation_rate, heading_error * -0.015),
-                )
-
-                imu_yaw_now = self.robot.get_yaw_degrees()
-                if imu_yaw_now is not None:
-                    self._maybe_buffer_sample(pos, imu_yaw_now, vz=vz)
-
-                await self.robot.send_velocity(x=desired_speed, z=vz)
-
-                now = time.time()
-                if now - last_status >= 2.0:
-                    logger.info(
-                        f"NAV [drive_by] | d={distance:.2f}m v={desired_speed:.2f}m/s "
-                        f"hdg_err={heading_error:.1f}° fix={pos.fix_type}"
-                    )
-                    last_status = now
-
-                prev_distance = distance
-                await asyncio.sleep(0.1)
-
-        await self.robot.stop()
-        return True
-
-    @staticmethod
-    def _drive_by_speed(
-        distance: float,
-        cruise: float,
-        valley: float,
-        radius: float,
-    ) -> float:
-        """Linear V-shape: cruise outside the valley, ramp to valley speed
-        at the waypoint. Symmetric on both sides since `distance` is
-        always non-negative — the dog approaches the waypoint from one
-        side, fires, and the *next* waypoint's distance takes over.
-        """
-        if distance >= radius:
-            return cruise
-        # d ∈ [0, radius]: linear from valley (at d=0) to cruise (at d=radius)
-        return valley + (cruise - valley) * (distance / radius)
 
     async def _wait_for_fix_resume(self) -> bool:
         """Block until the receiver returns to acceptable quality, or the
@@ -738,13 +482,8 @@ class WaypointNavigator:
             await asyncio.sleep(0.1)
 
         await self.robot.stop()
-        # Legacy per-arrival recal only at the end of a real survey leg (long
-        # straight baseline); short crossovers/connectors and the approach are
-        # skipped. running_cog refines per-tick via _update_running_recal, so it
-        # skips this arrival recompute entirely.
-        if self.bearing_method != "running_cog" and leg_len >= self.RECAL_MIN_LEG_M:
-            self._recalibrate_from_buffer()
-
+        # The line survey calibrates continuously via _update_running_recal
+        # (per tick, above) — no per-arrival recompute needed.
         return True, n_captured
 
     async def navigate_legs(
@@ -763,13 +502,12 @@ class WaypointNavigator:
         waypoints (the leg corners), turning in place at each corner, and
         fire `on_capture_cb` every `interval_m` of along-track travel.
 
-        The first waypoint is reached (and the IMU calibrated) via
-        `navigate_to()` with no capture; then each consecutive pair is a leg.
-        Per leg: turn to the leg bearing, then point-seek the end corner
-        (re-aim at it every tick via GPS bearing, proportional steering — the
-        same law `navigate_to`/`navigate_through` use), firing a capture each
-        time along-track distance crosses the next interval mark. Captures fire
-        only while driving a leg, never during the corner turns — so on a
+        The first corner is reached via the same `_drive_leg` as a survey leg
+        (captures off); the IMU offset self-seeds from that approach motion via
+        the running COG recal, so no cal walk runs. Per leg: turn to the leg
+        bearing, then steer the end corner (`leg_steering`), firing a capture
+        each time along-track distance crosses the next interval mark. Captures
+        fire only while driving a leg, never during the corner turns — so on a
         straight leg the camera points along-track and coverage is even by real
         distance.
 
@@ -789,23 +527,18 @@ class WaypointNavigator:
 
         self._running = True
 
-        # Running COG recal self-seeds the IMU from the approach motion, so the
-        # line survey needs no dedicated cal walk (legacy endpoint/cog_fusion
-        # still seed via one). Then drive the cal-endpoint -> first-corner
-        # approach on the SAME _drive_leg (cross_track) path the survey legs
-        # use, captures off — no point_seek stall.
-        if self.bearing_method != "running_cog":
-            if not await self._run_cal_walk(timeout_per_leg):
-                logger.error("Failed initial IMU cal walk for line survey")
-                return False
-        cal_pos = self.gps.get_position()
-        if cal_pos is None or not self._is_quality_acceptable(
-            cal_pos, self.gps.has_active_corrections()
+        # The running COG recal self-seeds the IMU offset from the approach
+        # motion, so the line survey needs no dedicated cal walk. Drive the
+        # start fix -> first-corner approach on the SAME cross_track _drive_leg
+        # the survey legs use (captures off) while the offset self-seeds.
+        start_pos = self.gps.get_position()
+        if start_pos is None or not self._is_quality_acceptable(
+            start_pos, self.gps.has_active_corrections()
         ):
-            logger.error("No quality GPS fix at cal-walk endpoint")
+            logger.error("No quality GPS fix at line-survey start")
             return False
         approach_start = Waypoint(
-            latitude=cal_pos.latitude, longitude=cal_pos.longitude, name="cal_end"
+            latitude=start_pos.latitude, longitude=start_pos.longitude, name="start"
         )
         if (
             haversine_distance(
@@ -1252,17 +985,15 @@ class WaypointNavigator:
                 lat=pos.latitude,
                 lon=pos.longitude,
                 imu_yaw=imu_yaw,
-                cog=pos.course_over_ground,
-                speed=pos.speed_over_ground,
             )
         )
 
     def _update_running_recal(self) -> None:
         """Continuously refine `_imu_north_offset` from straight centered-COG
-        samples (bearing_method="running_cog"). Self-seeding: sets the offset
-        from the first centered-complete sample (no cal walk needed), then
-        folds later samples with a time-constant circular EMA. Called once per
-        drive tick from `_drive_leg`, right after `_maybe_buffer_sample`.
+        samples. Self-seeding: sets the offset from the first centered-complete
+        sample (no cal walk needed), then folds later samples with a
+        time-constant circular EMA. Called once per drive tick from
+        `_drive_leg`, right after `_maybe_buffer_sample`.
 
         Each "fresh" estimate is `centered_cog + imu_yaw` (the `_calibrate_imu`
         convention): the bearing of the chord from a buffered fix
@@ -1271,8 +1002,6 @@ class WaypointNavigator:
         samples for the current leg (cleared at each leg start), so a centered
         chord never straddles a corner.
         """
-        if self.bearing_method != "running_cog":
-            return
         buf = self._traj_buf
         if len(buf) < 3:
             return
@@ -1330,23 +1059,16 @@ class WaypointNavigator:
             self._running_recal_logged = now
 
     def _recalibrate_from_buffer(self) -> None:
-        """Dispatch to the configured per-arrival recompute algorithm.
-
-        Both backends share the early-skip guards (feature disabled,
-        first-leg cal not yet complete) before branching. See
-        `_recalibrate_endpoint` and `_recalibrate_cog_fusion` for the
-        per-algorithm logic and log-banner shape.
+        """Refresh the IMU offset from the leg's GPS+IMU buffer on arrival
+        (navigate_to / point-to-point). Skips when disabled or before the
+        first-leg cal walk has set the offset. See `_recalibrate_endpoint`.
         """
         if not self.imu_recalibrate_on_arrival:
             return
         if self._imu_north_offset is None:
             # First-leg cal walk hasn't completed; nothing to refine.
             return
-
-        if self.bearing_method == "cog_fusion":
-            self._recalibrate_cog_fusion()
-        else:
-            self._recalibrate_endpoint()
+        self._recalibrate_endpoint()
 
     def _recalibrate_endpoint(self) -> None:
         """Refresh `_imu_north_offset` from the leg's GPS endpoints.
@@ -1415,87 +1137,6 @@ class WaypointNavigator:
         log_banner(
             f"IMU RECAL [endpoint] | {old:.1f}° → {new_offset:.1f}° "
             f"(Δ {delta:+.1f}°) | n={len(candidates)} bsl={baseline:.2f}m",
-            char="-",
-            logger=logger,
-        )
-
-    def _recalibrate_cog_fusion(self) -> None:
-        """Refresh `_imu_north_offset` via inverse-variance-weighted
-        circular mean of GPS course-over-ground samples.
-
-        Each per-tick COG sample has angular noise σ_θ ≈ σ_pos / (v·Δt),
-        so variance scales as 1/v². Optimal inverse-variance weighting
-        therefore weights each sample by v². The vector-sum form of the
-        circular mean (`atan2(Σw·sin, Σw·cos)`) handles the 0°/360°
-        wrap-around correctly.
-
-        Falls back to the same `RECAL_MAX_DELTA_DEG` guardrail as the
-        endpoint method. Skips with a warning if:
-          - fewer than `RECAL_MIN_SAMPLES` qualify (after speed gate)
-          - the weighted vector sum is degenerate (samples cancel out)
-          - proposed offset shift exceeds the delta guardrail
-
-        Note: the per-sample speed/cog gate (`s.speed > MIN_SPEED`,
-        `s.cog is not None`) is on top of the `_maybe_buffer_sample`
-        gating that already requires `min_fix_type`, `max_hacc`, and
-        small `|vz|`. The remaining samples are good-quality, nearly-
-        straight motion above the noise-floor speed.
-        """
-        qualifying = [
-            s for s in self._traj_buf
-            if s.cog is not None
-            and s.speed is not None
-            and s.speed > COG_FUSION_MIN_SPEED_M_S
-        ]
-        if len(qualifying) < self.RECAL_MIN_SAMPLES:
-            logger.warning(
-                f"IMU recal [cog_fusion]: only {len(qualifying)}/"
-                f"{self.RECAL_MIN_SAMPLES} qualifying samples (need cog + "
-                f"speed > {COG_FUSION_MIN_SPEED_M_S}m/s); keeping offset "
-                f"{self._imu_north_offset:.1f}°"
-            )
-            return
-
-        # Inverse-variance weighting (weight = v²) + vector-sum circular
-        # mean. cog is in degrees; convert to radians for the trig.
-        xs = sum(
-            (s.speed ** 2) * math.cos(math.radians(s.cog))
-            for s in qualifying
-        )
-        ys = sum(
-            (s.speed ** 2) * math.sin(math.radians(s.cog))
-            for s in qualifying
-        )
-        if xs * xs + ys * ys < 1e-9:
-            logger.warning(
-                f"IMU recal [cog_fusion]: degenerate vector sum "
-                f"(n={len(qualifying)} samples cancelled out); keeping "
-                f"offset {self._imu_north_offset:.1f}°"
-            )
-            return
-
-        fused_bearing_deg = math.degrees(math.atan2(ys, xs)) % 360.0
-        # Anchor to the most-recent qualifying sample's IMU yaw, mirroring
-        # the endpoint method's use of B.imu_yaw.
-        new_offset = normalize_angle(fused_bearing_deg + qualifying[-1].imu_yaw)
-        delta = normalize_angle(new_offset - self._imu_north_offset)
-
-        if abs(delta) > self.RECAL_MAX_DELTA_DEG:
-            logger.warning(
-                f"IMU recal [cog_fusion]: proposed shift {delta:+.1f}° "
-                f"exceeds {self.RECAL_MAX_DELTA_DEG:.0f}° guardrail "
-                f"(n={len(qualifying)}); keeping offset "
-                f"{self._imu_north_offset:.1f}°"
-            )
-            return
-
-        old = self._imu_north_offset
-        self._imu_north_offset = new_offset
-        avg_speed = statistics.mean(s.speed for s in qualifying)
-        log_banner(
-            f"IMU RECAL [cog_fusion] | {old:.1f}° → {new_offset:.1f}° "
-            f"(Δ {delta:+.1f}°) | n={len(qualifying)} "
-            f"avg_speed={avg_speed:.2f}m/s",
             char="-",
             logger=logger,
         )

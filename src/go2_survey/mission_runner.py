@@ -14,11 +14,9 @@ from typing import Awaitable, Callable
 
 from go2_survey.capture import (
     CaptureContext,
-    DriveByStrategy,
     LineSurveyStrategy,
     build_strategy,
     write_captures_manifest,
-    write_drive_by_capture,
     write_interval_capture,
 )
 from go2_survey.bearings import finalize_bearings
@@ -102,7 +100,6 @@ class MissionRunner:
     mission_dir: Path
     run_dir: Path
     dry_run: bool = False
-    bearing_method: str = "running_cog"  # "running_cog" | "endpoint" | "cog_fusion"
     on_waypoint_reached: WaypointHook | None = None
     on_gps_update: PositionHook | None = None
 
@@ -155,7 +152,6 @@ async def run_mission(runner: MissionRunner) -> bool:
         f"minFix={settings.navigation.min_fix_type} "
         f"maxHacc={settings.navigation.max_hacc}m"
     )
-    logger.info(f"Bearing recompute method: {runner.bearing_method}")
 
     if runner.dry_run:
         log_banner("DRY RUN — not connecting to hardware", logger=logger)
@@ -223,7 +219,6 @@ async def run_mission(runner: MissionRunner) -> bool:
         max_hacc=settings.navigation.max_hacc,
         gps_timeout=settings.navigation.mid_mission_fix_timeout,
         imu_recalibrate_on_arrival=settings.navigation.imu_recalibrate_on_arrival,
-        bearing_method=runner.bearing_method,
     )
 
     try:
@@ -278,48 +273,7 @@ async def run_mission(runner: MissionRunner) -> bool:
             logger=logger,
         )
 
-        if settings.capture.strategy == DriveByStrategy.name:
-            # Drive-by mode runs the route end-to-end inside the
-            # navigator; per-waypoint capture fires as a callback at
-            # closest pass. The per-wp navigate_to + capture_strategy
-            # loop is bypassed entirely.
-            async def _drive_by_capture_cb(
-                wp, position, distance_at_trigger, commanded_speed
-            ):
-                ctx = CaptureContext(
-                    mission_name=settings.name or mission_dir.name,
-                    mission_dir=mission_dir,
-                    run_dir=runner.run_dir,
-                    robot=robot,
-                    gps=gps,
-                    navigator=navigator,
-                    settings=settings.capture,
-                    waypoint=wp,
-                    arrival_position=position,
-                )
-                n_written = await write_drive_by_capture(
-                    ctx,
-                    wp_name=wp.name,
-                    position=position,
-                    distance_at_trigger_m=distance_at_trigger,
-                    commanded_speed_m_s=commanded_speed,
-                )
-                if runner.on_waypoint_reached is not None:
-                    await runner.on_waypoint_reached(wp, position)
-                return n_written
-
-            success = await navigator.navigate_through(
-                waypoints=waypoints,
-                on_capture_cb=_drive_by_capture_cb,
-                cruise_speed=settings.capture.cruise_speed,
-                valley_speed=settings.capture.valley_speed,
-                valley_radius_m=settings.capture.valley_radius_m,
-                sharp_turn_deg=settings.capture.sharp_turn_deg,
-            )
-            if not success:
-                logger.error("Drive-by route failed")
-                return False
-        elif settings.capture.strategy == LineSurveyStrategy.name:
+        if settings.capture.strategy == LineSurveyStrategy.name:
             # Line survey runs the route end-to-end inside the navigator:
             # drive straight legs between corner waypoints, capture every
             # capture_interval_m of along-track travel via the callback.
