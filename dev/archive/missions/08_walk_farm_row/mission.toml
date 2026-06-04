@@ -1,5 +1,5 @@
-name        = "10_farm_rainyday"
-description = "Lawnmower line survey of a 30 m × 30 m grid: 7 parallel legs (~30 m) spaced 5 m, walked corner-to-corner at 0.5 m/s, capturing a clean frame every 2 m of along-track travel. 14 corner waypoints generated from a seed point via make-waypoints (EPSG 6514)."
+name        = "08_walk_farm_row"
+description = "Lawnmower line survey of the farm: 2 parallel rows (~15 m legs) walked corner-to-corner at 0.5 m/s, capturing a clean frame every 2 m of along-track travel. Waypoints are the real field-measured row corners (4 leg endpoints)."
 mode        = "nav"
 
 [gps]

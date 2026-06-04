@@ -1,5 +1,5 @@
-name        = "08b_walk_farm_row"
-description = "Fast (1 m/s) variant of 08_walk_farm_row: lawnmower line survey of the farm, 2 parallel rows (~15 m legs) walked corner-to-corner at 1 m/s, capturing a clean frame every 2 m of along-track travel. Waypoints are the real field-measured row corners (4 leg endpoints)."
+name        = "09_field_test"
+description = "Lawnmower line survey of a 50 m × 50 m grid: 11 parallel legs (~50 m) spaced 5 m, walked corner-to-corner at 0.5 m/s, capturing a clean frame every 2 m of along-track travel. 22 corner waypoints generated from a seed point via make-waypoints (EPSG 6514)."
 mode        = "nav"
 
 [gps]
@@ -18,7 +18,7 @@ connection_mode = "LocalSTA"
 
 [navigation]
 arrival_tolerance = 0.25
-max_velocity      = 1.0
+max_velocity      = 0.5
 rotation_rate     = 0.8
 min_fix_type      = 4
 max_hacc          = 0.10

@@ -1,5 +1,5 @@
 name        = "08_walk_farm_row"
-description = "Lawnmower line survey of the farm: 2 parallel rows (~15 m legs) walked corner-to-corner at 0.5 m/s, capturing a clean frame every 2 m of along-track travel. Waypoints are the real field-measured row corners (4 leg endpoints)."
+description = "Lawnmower line survey of the farm: 2 parallel rows (~15 m legs) walked corner-to-corner at 1 m/s, capturing a clean frame every 2 m of along-track travel, steered by cross_track (GPS-course pure pursuit). Waypoints are the real field-measured row corners (4 leg endpoints)."
 mode        = "nav"
 
 [gps]
@@ -18,7 +18,7 @@ connection_mode = "LocalSTA"
 
 [navigation]
 arrival_tolerance = 0.25
-max_velocity      = 0.5
+max_velocity      = 1.0
 rotation_rate     = 0.8
 min_fix_type      = 4
 max_hacc          = 0.10
@@ -29,8 +29,11 @@ gps_fix_timeout   = 300
 # [navigation] max_velocity, turning in place at each corner, and capture a
 # clean frame every capture_interval_m of along-track travel. Capture points
 # are not waypoints — each image is geotagged with its own interpolated RTK
-# position. Leg steering point-seeks the end corner each tick (GPS bearing,
-# proportional) — tolerant of a residual heading offset, always converges.
+# position. Leg steering is cross_track: pure-pursue a near carrot on the leg
+# LINE using GPS course-over-ground (offset-free), immune to IMU-yaw drift.
 strategy           = "line_survey"
 capture_interval_m = 2.0
 output_subdir      = "captures"
+leg_steering       = "cross_track"
+lookahead_m        = 4.0
+course_lookback_m  = 1.0

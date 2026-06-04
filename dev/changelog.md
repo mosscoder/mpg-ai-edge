@@ -143,12 +143,28 @@ its `waypoint_forward` / `frame_only` captures; the `static_camera` /
 `static_geotag` / `probe_lidar` modes; and the `point_seek` leg-steering option.
 `turn_tolerance_deg` stays — the line-survey corner turn uses it.
 
-### Breaks (sanctioned)
+### Missions: pruned to the active set
 
-`05_tennis_single_quadrat` and `06_tennis_quadrat_pair` (the only `rotating_quadrat`
-users) now error at startup with a clear `Unknown capture strategy
-'rotating_quadrat'`. The mission tree is reorganized to match in the follow-on
-commit.
+With the code down to the 09c path, the mission tree was tidied to match
+(`go2-survey list` only scans `dev/missions/`, so archiving hides a mission while
+keeping it in git):
+
+- **Renamed to clean slots** — the a/b/c suffixes only disambiguated dev
+  iterations: `09c_field_test → 09_field_test` (the validated cross_track
+  reference survey) and `08b_walk_farm_row → 08_walk_farm_row` (updated to
+  `cross_track` to match). Their historical run dirs keep their original
+  `09c_…` / `08b_…` timestamped names.
+- **Archived** to `dev/archive/missions/` (in git, hidden from `list`):
+  `01_tennis_court`, `04_tennis_single_forward`, the now-broken
+  `05_tennis_single_quadrat` / `06_tennis_quadrat_pair` (the only
+  `rotating_quadrat` users — they would error with `Unknown capture strategy`),
+  and the superseded `08_walk_farm_row` / `09_field_test` / `09b_field_test`
+  line-survey steps.
+- **Deleted**: `10_farm_rainyday` / `10b_farm_rainyday` — synthetic CLI grids,
+  regenerable via `make-waypoints`.
+
+Active set: `00` (bare-nav smoke), `02` (camera bench), `03` (static geotag),
+`07` (lidar probe), `08` (farm-row survey), `09` (field survey — the reference).
 
 ## 2026-06-03: v0.28.0 — Line-Survey: running COG IMU recal (self-seeding) replaces the cal walk
 

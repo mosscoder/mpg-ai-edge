@@ -1,5 +1,5 @@
 name        = "09_field_test"
-description = "Lawnmower line survey of a 50 m × 50 m grid: 11 parallel legs (~50 m) spaced 5 m, walked corner-to-corner at 0.5 m/s, capturing a clean frame every 2 m of along-track travel. 22 corner waypoints generated from a seed point via make-waypoints (EPSG 6514)."
+description = "Lawnmower line survey: 50 m × 50 m / 11-leg serpentine walked at 1 m/s, capturing a clean frame every 2 m of along-track travel, steered by cross_track (pure-pursuit of a near carrot on the leg line using GPS-derived course — offset-free, immune to IMU-yaw drift). The validated reference survey: the 2026-06-02 run held ~0.10 m on-leg MAD across all legs. 22 corner waypoints (EPSG 6514)."
 mode        = "nav"
 
 [gps]
@@ -18,19 +18,25 @@ connection_mode = "LocalSTA"
 
 [navigation]
 arrival_tolerance = 0.25
-max_velocity      = 0.5
+max_velocity      = 1.0
 rotation_rate     = 0.8
 min_fix_type      = 4
 max_hacc          = 0.10
 gps_fix_timeout   = 300
 
 [capture]
-# Line survey: drive straight legs between the corner waypoints at
-# [navigation] max_velocity, turning in place at each corner, and capture a
-# clean frame every capture_interval_m of along-track travel. Capture points
-# are not waypoints — each image is geotagged with its own interpolated RTK
-# position. Leg steering point-seeks the end corner each tick (GPS bearing,
-# proportional) — tolerant of a residual heading offset, always converges.
+# Line survey, fast (1 m/s), with cross_track leg steering. Instead of
+# point-seeking the end corner on the calibrated IMU heading (09b), each leg
+# is steered by pure-pursuit of a carrot lookahead_m ahead on the leg LINE,
+# using GPS course-over-ground (computed from the RTK track over the last
+# course_lookback_m) as the heading reference. That course is offset-free, so
+# the steering is immune to the IMU-yaw drift that made 09b bow ~14 m off-line
+# and run off the grid by leg 13. The first ~1 m of each leg drives straight
+# (no course baseline yet), which doubles as a per-leg cal-stretch.
+# Captures, marks, corner shots, and recal are unchanged from 09b.
 strategy           = "line_survey"
 capture_interval_m = 2.0
 output_subdir      = "captures"
+leg_steering       = "cross_track"
+lookahead_m        = 4.0
+course_lookback_m  = 1.0
