@@ -14,6 +14,7 @@ Usage:
 import argparse
 import asyncio
 import logging
+import os
 import subprocess
 import sys
 import time
@@ -21,6 +22,7 @@ from pathlib import Path
 from typing import Iterator
 
 from go2_survey import __version__
+from go2_survey.config import load_mission_config
 from go2_survey.logging_utils import (
     GPSTelemetryFilter,
     GPSTelemetryOnlyFilter,
@@ -34,11 +36,16 @@ from go2_survey.waypoint_gen import cmd_make_waypoints, cmd_plot_waypoints
 
 
 def _git_short_sha() -> str:
-    """Return the current git SHA (short form), or 'unknown' on failure."""
+    """Return the go2-survey checkout's git SHA (short), or 'unknown'.
+
+    Anchored to this package's own directory, NOT the CWD — a mission run
+    by path from inside some other repo must not stamp that repo's SHA
+    into the log banner.
+    """
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
-            cwd=_find_repo_root(),
+            cwd=Path(__file__).resolve().parent,
             capture_output=True,
             text=True,
             timeout=2,
@@ -80,12 +87,18 @@ def resolve_mission_dir(arg: str) -> Path | None:
     return None
 
 
-def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
-    """Configure logging to a per-run directory under <mission_dir>/runs/.
+def setup_logging(
+    mission_dir: Path, verbose: bool = False, output_dir: str = ""
+) -> Path:
+    """Configure logging to a per-run directory.
 
-    Layout: ``<mission_dir>/runs/<name>_<TIMESTAMP>/{main.log, imu.log, gps.log}``.
-    Captures land under the same run directory (``captures/<wp>/...``)
-    so every artifact from one mission run lives in one place.
+    Layout: ``<mission_dir>/runs/<name>_<TIMESTAMP>/{main.log, imu.log, gps.log}``,
+    or ``<output_dir>/<mission_name>/<name>_<TIMESTAMP>/...`` when the
+    mission sets ``output_dir`` (keeps field data out of the repo; ``~``
+    and ``$ENV_VARS`` expanded, relative paths resolve against the
+    mission dir). Captures land under the same run directory
+    (``captures/...``) so every artifact from one mission run lives in
+    one place.
 
     - ``main.log`` and the console carry the mission narrative
       (everything EXCEPT the 20 Hz IMU flood and the dense per-second
@@ -100,7 +113,14 @@ def setup_logging(mission_dir: Path, verbose: bool = False) -> Path:
     Returns the run directory.
     """
     timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-    run_dir = mission_dir / "runs" / f"{mission_dir.name}_{timestamp}"
+    if output_dir:
+        root = Path(os.path.expandvars(output_dir)).expanduser()
+        if not root.is_absolute():
+            root = mission_dir / root
+        run_parent = root / mission_dir.name
+    else:
+        run_parent = mission_dir / "runs"
+    run_dir = run_parent / f"{mission_dir.name}_{timestamp}"
     run_dir.mkdir(parents=True, exist_ok=True)
     main_log = run_dir / "main.log"
     imu_log = run_dir / "imu.log"
@@ -175,7 +195,18 @@ def cmd_run(args: argparse.Namespace) -> int:
         )
         return 1
 
-    run_dir = setup_logging(mission_dir, verbose=args.verbose)
+    # Load config pre-logging so output_dir can parent the run dir. A
+    # config error here gets a clean one-liner instead of a traceback;
+    # run_mission re-loads (cheap, pure) for everything else.
+    try:
+        settings = load_mission_config(mission_dir)
+    except Exception as e:
+        print(f"error: failed to load mission config: {e}", file=sys.stderr)
+        return 1
+
+    run_dir = setup_logging(
+        mission_dir, verbose=args.verbose, output_dir=settings.output_dir
+    )
     logger = logging.getLogger(__name__)
     logger.info(f"Logging to: {run_dir}/main.log (+ imu.log, gps.log)")
     logger.info(f"Mission dir: {mission_dir}")
@@ -355,9 +386,19 @@ def build_parser() -> argparse.ArgumentParser:
     mkwp_parser.add_argument(
         "--bearing-deg",
         type=float,
-        default=0.0,
-        help="rotate the legs clockwise from the default E–W orientation. "
-        "e.g. --bearing-deg=30 → legs tilt 30° clockwise.",
+        default=None,
+        help="rotate the legs clockwise from the E–W orientation, e.g. "
+        "--bearing-deg=30 → legs tilt 30° clockwise. Default: 0 (E–W) for "
+        "point input; for polygon input, auto-align to the polygon's "
+        "longest edge (fewest corner turns).",
+    )
+    mkwp_parser.add_argument(
+        "--start-corner",
+        choices=["south", "north", "east", "west"],
+        default="south",
+        help="which compass corner of the grid wp_001 starts at — same "
+        "serpentine, walked from that corner (ties break west, then "
+        "south). Default: south.",
     )
     mkwp_parser.add_argument(
         "--no-plot",

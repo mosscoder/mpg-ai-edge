@@ -107,7 +107,7 @@ class CaptureSettings:
     strategy: str = "none"              # "none" | "frame_only" | "waypoint_forward" | "line_survey"
     settle_time: float = 2.0            # seconds after stop before sampling
     gps_avg_sec: float = 3.0            # GPS averaging window (0 disables)
-    output_subdir: str = "captures"     # relative to mission dir
+    output_subdir: str = "captures"     # relative to the run dir
     frame_max_age: float = 0.5          # max staleness / selection window half-width (s)
     frame_wait_timeout: float = 5.0     # max wait for a fresh frame (s)
     prefer_clean_frame: bool = True     # prefer a non-corrupt frame within the max_age window
@@ -141,6 +141,13 @@ class MissionSettings:
     name: str = ""
     description: str = ""
     mode: str = "nav"  # "nav" | "static_camera" | "static_geotag" | "probe_gps" | "probe_lidar"
+    # Root directory for run outputs (logs, captures, sidecars, manifest).
+    # Empty (default) keeps runs at <mission_dir>/runs/ — tracked in the
+    # repo, the historical layout. Set a path to keep field data out of
+    # the repo: runs then land at <output_dir>/<mission_name>/<run_name>/.
+    # `~` and $ENV_VARS are expanded; a relative path resolves against the
+    # mission dir. Env override: GO2_SURVEY_OUTPUT_DIR.
+    output_dir: str = ""
     gps: GPSSettings = field(default_factory=GPSSettings)
     ntrip: NTRIPSettings = field(default_factory=NTRIPSettings)
     robot: RobotSettings = field(default_factory=RobotSettings)
@@ -158,6 +165,8 @@ def _apply_section(target: object, section: dict) -> None:
 
 def _apply_env_overrides(cfg: MissionSettings) -> None:
     env = os.environ
+    if "GO2_SURVEY_OUTPUT_DIR" in env:
+        cfg.output_dir = env["GO2_SURVEY_OUTPUT_DIR"]
     if "GPS_PORT" in env:
         cfg.gps.port = env["GPS_PORT"]
     if "GPS_BAUD" in env:
@@ -271,6 +280,7 @@ def load_mission_config(mission_dir: Path) -> MissionSettings:
     cfg.name = data.get("name", mission_dir.name)
     cfg.description = data.get("description", "")
     cfg.mode = data.get("mode", "nav")
+    cfg.output_dir = data.get("output_dir", "")
     _apply_section(cfg.gps, data.get("gps", {}))
     ntrip_section = data.get("ntrip", {})
     _check_ntrip_legacy(ntrip_section, toml_path)

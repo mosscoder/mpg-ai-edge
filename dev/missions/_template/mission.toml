@@ -8,6 +8,12 @@
 name        = "TEMPLATE"
 description = "Replace with a one-line description of what this mission does"
 
+# Run outputs (logs, captures, sidecars) default to <mission>/runs/ inside
+# the repo. Set output_dir to keep field data out of the repo — runs then
+# land at <output_dir>/<mission_name>/<run_name>/. `~` and $ENV_VARS are
+# expanded; a relative path resolves against the mission dir.
+# output_dir = "~/go2-survey-data"
+
 [gps]
 port = "/dev/ttyACM0"
 baud = 38400
@@ -46,16 +52,15 @@ stabilization_period_s     = 60   # seconds — robot stationary after initial f
 stabilization_early_exit_s = 3.0  # seconds — if RTK Fixed + active corrections held this long, exit dwell early (0 disables)
 
 # [capture] block is optional — uncomment + set strategy to enable.
-# Captures land at:
-#   <mission>/runs/<mission>_<TS>/<output_subdir>/<waypoint>/<bearing>_<TS>.jpg
-# (co-located with main.log / imu.log / gps.log for that run).
+# Captures land under <run_dir>/<output_subdir>/, co-located with
+# main.log / imu.log / gps.log for that run.
 # [capture]
-# strategy             = "rotating_quadrat"   # "none" | "frame_only" | "waypoint_forward" | "rotating_quadrat"
-# bearings             = [0.0, 90.0, 180.0, 270.0]  # rotating_quadrat only
-# settle_time          = 2.0      # seconds after aligned, before sampling
-# gps_avg_sec          = 3.0      # GPS averaging window at capture (0 disables)
-# turn_tolerance_deg   = 2.0      # how close to target bearing before capture
-# turn_kp              = 0.04     # P-controller gain (rad/s per degree of error)
-# turn_min_rate_rad_s  = 0.15     # dead-band floor (below this, robot doesn't rotate)
-# turn_timeout_sec     = 15.0     # per-bearing rotation timeout
-# output_subdir        = "captures"  # subdir under run_dir where captures land
+# strategy             = "line_survey"   # "none" | "frame_only" | "waypoint_forward" | "line_survey"
+# capture_interval_m   = 2.0          # line_survey: capture every N m of along-track travel
+# leg_steering         = "cross_track"  # "point_seek" | "cross_track" — cross_track is the validated steering
+# lookahead_m          = 4.0          # cross_track carrot distance on the leg line (m)
+# course_lookback_m    = 1.0          # cross_track GPS-course baseline (m)
+# turn_tolerance_deg   = 2.0          # corner-turn alignment tolerance before a leg drive
+# settle_time          = 2.0          # seconds after stop, before sampling (waypoint strategies)
+# gps_avg_sec          = 3.0          # GPS averaging window at capture (0 disables)
+# output_subdir        = "captures"   # subdir under run_dir where captures land

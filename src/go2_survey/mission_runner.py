@@ -550,8 +550,6 @@ async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:
 
 async def _run_probe_gps(runner: MissionRunner, settings: MissionSettings) -> bool:
     """GPS-only diagnostic probe. No robot, no navigation, no waypoints."""
-    mission_dir = runner.mission_dir
-
     logger.info(
         f"GPS: {settings.gps.port} @ {settings.gps.baud} | "
         f"NTRIP: {settings.ntrip.host}:{settings.ntrip.port} "
@@ -592,7 +590,7 @@ async def _run_probe_gps(runner: MissionRunner, settings: MissionSettings) -> bo
 
         await run_f9r_probe(
             gps=gps,
-            out_dir=mission_dir,
+            out_dir=runner.run_dir,
             duration_sec=settings.probe.duration_sec,
             sample_rate_hz=settings.probe.sample_rate_hz,
         )

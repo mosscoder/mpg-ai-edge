@@ -107,6 +107,81 @@ recal + the line-survey cal walk replaced by the self-seeding running COG recal
 (v0.28.0); the live-course route dropped in favour of the post-hoc one. Transect
 buffering remains the open item.)*
 
+## 2026-06-10: v0.30.0 — External output root (`output_dir`) + exact polygon survey areas
+
+Two independent quality-of-life features around the line-survey core; the nav
+path itself is untouched.
+
+### Output root — keep field data out of the repo
+
+- New top-level mission.toml key **`output_dir`** (default unset). Unset, runs
+  keep landing at `<mission_dir>/runs/<name>_<TS>/` exactly as before. Set,
+  the run dir becomes `<output_dir>/<mission_name>/<name>_<TS>/` — same run-dir
+  naming, different parent — and **everything** already anchored to `run_dir`
+  follows for free: main/imu/gps logs, captures + sidecars, `captures.geojson`,
+  `finalize_bearings`, lidar-probe artifacts. `~` and `$ENV_VARS` are expanded;
+  a relative path resolves against the mission dir. Env override:
+  `GO2_SURVEY_OUTPUT_DIR` (mission.toml is committed; output disks are
+  per-machine). `go2-survey finalize-bearings` already takes any path.
+- Capacity only for now (user choice): no keeper mission sets it yet, so
+  default behavior is unchanged everywhere. Future runs stop growing the repo
+  (~336 MB of run data is tracked today, kept as history) once a toml opts in.
+- `cmd_run` now loads the mission config *before* logging starts (to parent
+  the run dir) — a malformed mission.toml gets a clean one-line error instead
+  of a traceback.
+- Consistency fix: `probe_gps` was the one mode writing artifacts into the
+  mission dir; it now writes to `run_dir` like every other mode.
+- Provenance fix: the log banner's `git <sha>` is now anchored to the
+  go2-survey package's own checkout instead of the CWD — running a by-path
+  mission from inside another repo (e.g. multimodal_survey on the field
+  datastick) used to stamp *that* repo's SHA into the run log.
+
+### Polygon survey areas — `make-waypoints` upgrade
+
+Polygon input (GeoJSON/KML) existed but was too crude to field: leg endpoints
+snapped to a `leg_space_m` sampling raster (up to a full spacing short of the
+boundary, and the half-spacing tolerance let endpoints sit *outside* the
+polygon), concave notches were silently spanned, and a polygon+pin KML
+collapsed to centroid-point mode. Now:
+
+- **Boxify.** The polygon is reduced to its oriented bounding box: long axis
+  along the legs, short axis rounded UP to a whole number of `--leg-space-m`
+  swaths (15 m short axis at 5 m spacing → exactly 3 legs). The box is swept
+  by `width / spacing` **identical** legs — every leg the full long-axis
+  length, exact spacing throughout, each inset half a spacing from the box
+  edge so the swath bands tile the box. A perfect rectangle, 100% coverage of
+  the polygon; legs overrun the boundary wherever the polygon is narrower
+  than its box (angled ends, concave notches), and the layout plot draws both
+  so the overrun is eyeballable.
+- **Auto bearing** (user choice): `--bearing-deg` unset now aligns the legs to
+  the polygon's **longest edge** (longest legs, fewest corner turns — the slow
+  part of a survey). Explicit `--bearing-deg` overrides; point input keeps E–W.
+  The resolved bearing + `bearing_source: "auto_longest_edge"` are recorded in
+  the `generation` metadata.
+- **`--start-corner south|north|east|west`** (default **south**): which compass
+  corner of the grid wp_001 sits on. Same legs, same spacing — the serpentine
+  is just walked from that corner (one of its four equivalent traversals; ties,
+  e.g. exactly E–W legs, break west then south). Applies to point/seed grids
+  too; recorded in the `generation` metadata.
+- **Multi-feature files:** exactly one polygon among the features wins (stray
+  Google Earth pins ignored, with an info line); >1 polygon errors; all-point
+  inputs keep the centroid behavior.
+- **Projected-CRS GeoJSON:** a legacy `crs` member declaring a non-4326 EPSG
+  (QGIS exports projected layers this way — first hit: `site_1_strip3`'s
+  `seed_poly.geojson` in EPSG:6514 meters) is honored: coordinates are
+  transformed to WGS-84 on read instead of being misread as lon/lat.
+- **Layout shows the boundary:** the source ring is embedded in
+  `waypoints.geojson` `generation.source_polygon`, and `mission_layout.png`
+  (incl. `plot-waypoints` re-runs) draws it, so clipping is eyeballable before
+  a field day. Outputs are otherwise identical to the seed-point flow
+  (`waypoints.geojson` + `mission_layout.png` next to the input).
+- Dropped the now-unused ray-casting helpers (`_point_in_polygon`,
+  `_point_segment_distance`, `_point_in_polygon_with_tol`, `_polygon_centroid`).
+
+Also refreshed `dev/missions/_template/mission.toml`, which still advertised
+the removed `rotating_quadrat` strategy and its dead knobs — it now shows a
+`line_survey`/`cross_track` capture block and the `output_dir` example.
+
 ## 2026-06-04: v0.29.0 — Prune to the 09c line-survey core (drop drive-by, cog_fusion, rotating-quadrat)
 
 The 09c line survey (`line_survey` + `cross_track` + self-seeding `running_cog` +
