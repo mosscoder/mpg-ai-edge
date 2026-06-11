@@ -107,6 +107,31 @@ recal + the line-survey cal walk replaced by the self-seeding running COG recal
 (v0.28.0); the live-course route dropped in favour of the post-hoc one. Transect
 buffering remains the open item.)*
 
+## 2026-06-11: v0.31.0 — Line-survey running recal: buffer all leg samples, gate straightness at fold time
+
+The 2026-06-11 `site_1_strip_3` run — the first field test of the running
+recal — completed cleanly (no-nudge first corner, self-seed on the approach,
+all 7 corner turns ≤1.9°, 312/312 clean captures), but the estimator folded
+only **twice** in 11 minutes: the commanded-vz buffer gate
+(`|vz| ≤ RECAL_STRAIGHT_VZ_THRESHOLD = 0.05 rad/s`) rejected nearly every leg
+tick, because cross_track constantly issues small steering corrections.
+"Continuous" calibration was effectively "seed once" — harmless at 10–15 min
+(nothing critical consumes the offset but corner pre-aim), increasingly stale
+on longer missions (corner pre-aims drift, leg-entry recovery arcs grow).
+
+- `_drive_leg` now buffers **every** quality sample
+  (`_maybe_buffer_sample(..., enforce_straight=False)`): legs are straight by
+  construction — the buffer clears at each corner.
+- `_update_running_recal` enforces straightness on **measured geometry**
+  instead: a centered chord whose IMU yaw turned more than
+  `RUNNING_RECAL_MAX_TURN_DEG` (8° — above gait wobble, below a corner-entry
+  recovery arc) end-to-end is consumed without folding.
+- `navigate_to` / cal-walk paths keep the commanded-vz gate (endpoint recal
+  unchanged).
+- Synthetic check: under constant steering vz = 0.12 rad/s (which starved the
+  old gate to zero) the estimator folds every tick and converges on the true
+  offset with ±2.5° gait wobble injected; a 2°/sample arc never seeds.
+
 ## 2026-06-10: v0.30.0 — External output root (`output_dir`) + exact polygon survey areas
 
 Two independent quality-of-life features around the line-survey core; the nav

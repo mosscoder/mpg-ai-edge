@@ -67,6 +67,14 @@ class WaypointNavigator:
     RUNNING_RECAL_TAU_S = 30.0       # EMA time constant (s)
     RUNNING_RECAL_LOOKBACK_M = 1.5   # centered half-chord each side (m)
     RUNNING_RECAL_GATE_DEG = 25.0    # soft per-sample outlier reject
+    # Fold-time measured-straightness gate: reject a centered chord whose IMU
+    # yaw turned more than this end-to-end. Replaces the commanded-vz buffer
+    # gate for survey legs — cross_track's constant small steering corrections
+    # kept |vz| above RECAL_STRAIGHT_VZ_THRESHOLD nearly every tick, starving
+    # the estimator (2 folds in the whole 2026-06-11 site_1_strip_3 run). 8°
+    # admits gait wobble (±3°/endpoint) and on-line corrections, rejects
+    # corner-entry recovery arcs.
+    RUNNING_RECAL_MAX_TURN_DEG = 8.0
 
     def __init__(
         self,
@@ -463,7 +471,11 @@ class WaypointNavigator:
 
             imu_yaw_now = self.robot.get_yaw_degrees()
             if imu_yaw_now is not None:
-                self._maybe_buffer_sample(pos, imu_yaw_now, vz=vz)
+                # Legs are straight by construction — buffer every quality
+                # sample; the running recal gates on measured chord turn.
+                self._maybe_buffer_sample(
+                    pos, imu_yaw_now, vz=vz, enforce_straight=False
+                )
                 self._update_running_recal()
 
             await self.robot.send_velocity(x=speed, z=vz)
@@ -962,7 +974,11 @@ class WaypointNavigator:
         return None
 
     def _maybe_buffer_sample(
-        self, pos: RTKPosition, imu_yaw: float, vz: float
+        self,
+        pos: RTKPosition,
+        imu_yaw: float,
+        vz: float,
+        enforce_straight: bool = True,
     ) -> None:
         """Append a trajectory sample if it passes quality + straight-line filters.
 
@@ -971,13 +987,18 @@ class WaypointNavigator:
         Straight-line gate (`|vz| <= RECAL_STRAIGHT_VZ_THRESHOLD`) keeps
         only samples taken during near-zero commanded rotation, so the
         chord-vs-curve geometric error in `calculate_bearing(A, B)`
-        stays small.
+        stays small. Survey-leg drives pass ``enforce_straight=False``:
+        legs are straight by construction (the buffer clears at each
+        corner) and cross_track's constant small vz corrections would
+        otherwise starve the buffer — the running recal applies its own
+        measured-straightness gate at fold time instead
+        (`RUNNING_RECAL_MAX_TURN_DEG`).
         """
         if pos.fix_type < self.min_fix_type:
             return
         if pos.accuracy_horizontal > self.max_hacc:
             return
-        if abs(vz) > self.RECAL_STRAIGHT_VZ_THRESHOLD:
+        if enforce_straight and abs(vz) > self.RECAL_STRAIGHT_VZ_THRESHOLD:
             return
         self._traj_buf.append(
             _TrajSample(
@@ -998,9 +1019,11 @@ class WaypointNavigator:
         Each "fresh" estimate is `centered_cog + imu_yaw` (the `_calibrate_imu`
         convention): the bearing of the chord from a buffered fix
         >= RUNNING_RECAL_LOOKBACK_M behind a sample to one >= that ahead, plus
-        that sample's IMU yaw. `_traj_buf` holds only straight (vz~0), quality
-        samples for the current leg (cleared at each leg start), so a centered
-        chord never straddles a corner.
+        that sample's IMU yaw. `_traj_buf` holds the current leg's quality
+        samples (cleared at each leg start, so a centered chord never straddles
+        a corner); straightness is enforced HERE, on measured geometry — a
+        chord whose IMU yaw turned more than RUNNING_RECAL_MAX_TURN_DEG
+        end-to-end (a corner-entry recovery arc, not gait wobble) is skipped.
         """
         buf = self._traj_buf
         if len(buf) < 3:
@@ -1027,6 +1050,14 @@ class WaypointNavigator:
                 if haversine_distance(p.lat, p.lon, c.lat, c.lon) >= lb:
                     fwd = p  # nearest sample >= lb ahead of c
             if fwd is None:
+                continue
+            if (
+                abs(normalize_angle(fwd.imu_yaw - back.imu_yaw))
+                > self.RUNNING_RECAL_MAX_TURN_DEG
+            ):
+                # Body turned across the chord (corner-entry recovery arc) —
+                # the chord bearing wouldn't represent the body heading.
+                self._recal_last_t = c.t  # consume; this chord never improves
                 continue
             centered_cog = calculate_bearing(back.lat, back.lon, fwd.lat, fwd.lon)
             fresh = normalize_angle(centered_cog + c.imu_yaw)
