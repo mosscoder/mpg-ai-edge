@@ -107,6 +107,38 @@ recal + the line-survey cal walk replaced by the self-seeding running COG recal
 (v0.28.0); the live-course route dropped in favour of the post-hoc one. Transect
 buffering remains the open item.)*
 
+## 2026-06-16: v0.33.0 — Background GPS reader: position reads no longer block the event loop
+
+Fixes the mid-mission "no position" pauses (strip_4 2026-06-16: 13 pauses on the
+late legs, all `receiver returned no fix`). Root cause was **event-loop
+saturation**, not a cable or the antenna: under mission load (capture JPEG/disk
+writes + nav + NTRIP + video), the single asyncio loop fell behind — the GPS
+sample rate halved (~50→26/min) exactly when the pauses spiked — and the
+**synchronous 0.5 s `poll_nav_pvt` serial read timed out → None → pause**. The
+GPS dropouts co-occurred with WiFi video frame-skips (12/13 within ±2 s, 10×
+chance), proving a shared *Jetson-side* cause (USB-serial and WiFi don't share a
+cable). Same mechanism behind the 06-15 "RTCM stale" pauses — different symptom,
+one disease.
+
+- `GPSManager` now runs a **dedicated background reader thread** that polls the
+  receiver ~10 Hz and caches the latest fix; `get_position()` returns that cache
+  instantly (verified: ~5 ms vs a 600 ms blocked poll) instead of blocking the
+  caller's event loop. The blocking serial read releases the GIL, so the reader
+  keeps up even when the loop is saturated. Position reads are now immune to
+  event-loop load — the direct fix for the pausing.
+- `get_position()` reports None only when the cache is older than
+  `POSITION_MAX_AGE_S` (1.0 s) — a genuine receiver outage still pauses; a busy
+  loop no longer does. `position_at()` history is now filled by the reader at a
+  steady rate (maxlen 64→128) regardless of loop load.
+- Reader starts in `GPSManager.connect()` (sole poller; all callers already go
+  through `get_position()`), stops cleanly in `disconnect()` before the port
+  closes.
+
+Remaining lever (not in this release): the loop *slowdown* itself still drops
+video frames during busy stretches — offloading capture JPEG/disk writes off the
+asyncio hot path would address that. The 1 m interval doubles that write load
+vs 2 m.
+
 ## 2026-06-16: v0.32.0 — Battery telemetry: per-run battery.log + start/end banners + 10 s SOC lines
 
 The Go2 publishes battery state on the `rt/lf/lowstate` data-channel topic

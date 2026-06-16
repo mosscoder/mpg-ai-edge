@@ -594,6 +594,11 @@ class GPSManager:
       reconnecting   — async reconnect in progress
     """
 
+    # Max age of the cached fix before get_position() reports "no position".
+    # The reader refreshes at ~10Hz, so the cache is normally <0.1s old; this
+    # only trips on a genuine receiver outage, not event-loop slowdown.
+    POSITION_MAX_AGE_S = 1.0
+
     def __init__(
         self,
         port: str | None = None,
@@ -615,9 +620,20 @@ class GPSManager:
         self._reconnect_thread: threading.Thread | None = None
         self._reconnect_lock = threading.Lock()
         self._last_telemetry_at: float = 0.0
-        # Rolling history of recent fixes for frame-time interpolation
-        # (~12s at 5Hz). Populated on every get_position(); see position_at().
-        self._pos_history: deque = deque(maxlen=64)
+        # Rolling history of recent fixes for frame-time interpolation.
+        # Populated by the background position reader; see position_at().
+        self._pos_history: deque = deque(maxlen=128)
+        # Background position reader: a dedicated thread polls the receiver
+        # and caches the latest fix, so get_position() returns instantly
+        # instead of blocking the caller's event loop on the 0.5s serial
+        # poll. Decouples position reads from event-loop load — the cause of
+        # the mid-mission "no position" pauses (capture + nav + NTRIP
+        # saturating the loop starved the synchronous poll past its window).
+        self._cached_pos: RTKPosition | None = None
+        self._cached_pos_t: float = 0.0
+        self._pos_lock = threading.Lock()
+        self._reader_thread: threading.Thread | None = None
+        self._reader_running = False
 
     def connect(self, use_ntrip: bool = True) -> bool:
         """Connect to GPS and optionally start NTRIP corrections.
@@ -631,6 +647,8 @@ class GPSManager:
         """
         if not self.gps.connect():
             return False
+
+        self._start_position_reader()
 
         if use_ntrip and self.ntrip_settings.mountpoints:
             self.ntrip = self._connect_ntrip_with_fallback()
@@ -758,15 +776,52 @@ class GPSManager:
         self._reconnect_thread.start()
 
     def disconnect(self) -> None:
+        # Stop the reader before closing the serial port it polls.
+        self._reader_running = False
+        if self._reader_thread is not None:
+            self._reader_thread.join(timeout=2.0)
+            self._reader_thread = None
         if self.ntrip is not None:
             self.ntrip.disconnect()
         self.gps.disconnect()
         self._connected = False
 
+    def _start_position_reader(self) -> None:
+        """Spawn the background reader thread (idempotent)."""
+        if self._reader_thread is not None:
+            return
+        self._reader_running = True
+        self._reader_thread = threading.Thread(
+            target=self._position_reader_loop, daemon=True, name="gps-reader"
+        )
+        self._reader_thread.start()
+
+    def _position_reader_loop(self) -> None:
+        """Poll the receiver ~10Hz and cache the latest fix. Runs in its own
+        thread; the blocking serial read releases the GIL, so it keeps making
+        progress even when the asyncio loop is saturated.
+        """
+        while self._reader_running:
+            try:
+                pos = self.gps.get_position()
+            except Exception:
+                logger.debug("position reader poll failed", exc_info=True)
+                pos = None
+            if pos is not None:
+                with self._pos_lock:
+                    self._cached_pos = pos
+                    self._cached_pos_t = time.time()
+                self._pos_history.append(pos)
+            time.sleep(0.1)
+
     def get_position(self) -> RTKPosition | None:
-        pos = self.gps.get_position()
-        if pos is not None:
-            self._pos_history.append(pos)
+        """Return the latest cached fix (refreshed by the reader thread), or
+        None if no fresh fix — never blocks on the serial poll."""
+        with self._pos_lock:
+            pos = self._cached_pos
+            age = time.time() - self._cached_pos_t
+        if pos is None or age > self.POSITION_MAX_AGE_S:
+            pos = None
         self._maybe_emit_telemetry(pos)
         return pos
 
