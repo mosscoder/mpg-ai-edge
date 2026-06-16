@@ -1,5 +1,54 @@
 # Navigation Changelog
 
+## 2026-06-16: Field Findings — Shoulder (thigh) motor temperatures (no code change)
+
+A day of site_1 strips surfaced a motor-thermal failure mode and a persistent
+shoulder-temperature asymmetry. Recorded here for the field record; no software
+change. Data source: the Go2 `rt/lf/lowstate` `motor_state[].temperature` (12
+motors = FR/FL/RR/RL × hip/thigh/calf; the **thigh** motors, indices 1/4/7/10,
+are the "shoulders"), already in `main.log` since the v0.32.0 battery work.
+
+**What we observed**
+- **Persistent diagonal differential.** The **front-left + rear-right thighs run
+  ~10 °C hotter** than the front-right + rear-left pair, under load, in *every*
+  run measured (strip_4 clean, strip_5, both strip_2 attempts). Rear-right is
+  usually the single hottest, and its **foot force drops over a run** (most
+  offloaded — 70→20 on the 15:06 strip_2), i.e. the RR leg works hardest yet
+  bears least weight.
+- **It's load-dependent, not a sensor offset.** At a cool start all four thighs
+  read within ~1 °C; the differential opens to ~+10 °C only as they do work — so
+  it's genuine extra mechanical work on that diagonal, not a miscalibrated
+  thermistor.
+- **It only collapses the robot without thermal headroom.** strip_4 (cool start
+  31 °C → peak 61 °C) and the 15:06 strip_2 (cool 37 °C → peak 65 °C) finished
+  fine. The 12:57 strip_2 **collapsed (red light, shoulder hot to touch)**
+  because it started **hot (64–72 °C, no cooldown from prior runs)** and the same
+  diagonal hit the **~83 °C** thermal-protection ceiling, which kills the
+  locomotion controller (sportmodestate freezes while lowstate keeps reporting →
+  legs go limp). Distinct from the earlier strip_5 collapse, which was **battery**
+  (42% SOC sag under a corner-load surge), not thermal — motors were only 59 °C.
+
+**Leading hypotheses for the asymmetry**
+1. **Boot-up joint-calibration (now favored).** Unitree advises powering the dog
+   on **flat ground with the legs/joints in the prescribed alignment** so the
+   joint-angle zeros calibrate correctly. A bad startup posture biases the
+   joint-angle reference → the controller commands slightly-off angles → a
+   standing torque/load imbalance on one diagonal → those motors run hotter. This
+   would produce exactly a *persistent, load-dependent, non-damage* differential.
+   **Testable:** re-boot carefully on flat ground with joints aligned; if the
+   FL/RR–vs–FR/RL gap shrinks, it's calibration, not mechanics.
+2. **Mechanical friction/bind** in the FL & RR thigh joints, and/or an off-center
+   payload (the loose backpack) twisting load onto that diagonal.
+
+**Operational guidance (until resolved)**
+- **Start every strip cool** — never begin with the thighs much above ~40–45 °C;
+  give real cooldown between strips (the thigh temps are in `main.log` for a
+  pre-flight check). This alone prevented the repeat collapse.
+- **Start above ~50% SOC** (separate failure mode — strip_5).
+- **Inspect the rear-right leg** (hottest + most offloaded + highest motor
+  comm-loss count), and **test the boot-up hypothesis** before assuming a
+  mechanical fault.
+
 ## 2026-06-03: Design Notes (speculative) — GPS-Course Bearing, Calibration Retirement, Transect Buffering
 
 **Status: speculative / forward-looking.** Captured from discussion after the
