@@ -152,3 +152,26 @@ class GPSTelemetryOnlyFilter(logging.Filter):
 
     def filter(self, record: logging.LogRecord) -> bool:
         return record.name.startswith(GPS_TELEMETRY_LOGGER_NAME)
+
+
+BATTERY_TELEMETRY_LOGGER_NAME = "go2_survey.battery.telemetry"
+
+
+class BatteryTelemetryFilter(logging.Filter):
+    """Drop the detailed per-interval battery lines — they belong in
+    battery.log only. Attached to console + main.log so the narrative keeps
+    just the concise `go2_survey.battery` banner (which does NOT start with
+    the telemetry logger name and so passes through).
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return not record.name.startswith(BATTERY_TELEMETRY_LOGGER_NAME)
+
+
+class BatteryTelemetryOnlyFilter(logging.Filter):
+    """Inverse of BatteryTelemetryFilter — keeps only the detailed battery
+    telemetry. Attached to the per-run battery.log handler.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.name.startswith(BATTERY_TELEMETRY_LOGGER_NAME)

@@ -82,6 +82,27 @@ The same message payload also carries `position`, `velocity`,
 consume any of these but they're there if a future mission needs
 them.
 
+## Battery access (`LOW_STATE` / `rt/lf/lowstate`)
+
+Subscribe to `RTC_TOPIC['LOW_STATE']`; the message carries battery state in
+`message['data']['bms_state']`, with pack voltage alongside it at
+`message['data']['power_v']`. Consumed by `go2_survey.battery` (parsed into a
+`BatteryState` and logged to `battery.log` + the main-log banners); see also
+`Go2Robot.get_battery_state()`.
+
+| Field | Path | Units | Description |
+|---|---|---|---|
+| `soc` | `bms_state['soc']` | % | **State of charge, 0–100** |
+| `current` | `bms_state['current']` | mA | Pack current (negative = discharging) |
+| `cycle` | `bms_state['cycle']` | — | Charge-cycle count (battery health) |
+| `bq_ntc` | `bms_state['bq_ntc']` | °C | Battery NTC temps `[t1, t2]` |
+| `mcu_ntc` | `bms_state['mcu_ntc']` | °C | MCU NTC temps `[t1, t2]` |
+| `power_v` | `data['power_v']` | V | Pack voltage (sibling of `bms_state`) |
+
+The full lowstate payload also includes `motor_state[]`, `foot_force`,
+`temperature_ntc1`, and `imu_state`. Field names confirmed against the
+library's `examples/go2/data_channel/lowstate/lowstate.py`.
+
 ### Integration in this repo
 
 Implemented in `src/go2_survey/robot.py`:

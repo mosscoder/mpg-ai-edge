@@ -6,12 +6,14 @@ attached to the MissionRunner. Every mission runs through this function
 — per-mission Python files should not re-implement setup/teardown.
 """
 
+import asyncio
 import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Awaitable, Callable
 
+from go2_survey import battery
 from go2_survey.capture import (
     CaptureContext,
     LineSurveyStrategy,
@@ -221,6 +223,9 @@ async def run_mission(runner: MissionRunner) -> bool:
         imu_recalibrate_on_arrival=settings.navigation.imu_recalibrate_on_arrival,
     )
 
+    battery_task: asyncio.Task | None = None
+    start_soc: int | None = None
+
     try:
         log_banner("PHASE 1: GPS", char="-", logger=logger)
         if not gps.connect(use_ntrip=bool(settings.ntrip.mountpoints)):
@@ -257,6 +262,24 @@ async def run_mission(runner: MissionRunner) -> bool:
             logger.error("Failed to connect to robot")
             return False
         await robot.prepare_for_navigation()
+
+        # Battery: wait briefly for the first lowstate sample, banner the
+        # starting charge (+ seed battery.log), then log SOC every 10 s.
+        start_bs = None
+        for _ in range(20):  # ~4 s for the first lowstate frame
+            start_bs = robot.get_battery_state()
+            if start_bs is not None:
+                break
+            await asyncio.sleep(0.2)
+        if start_bs is not None:
+            log_banner(
+                battery.format_start_banner(start_bs), char="-", logger=logger
+            )
+            battery.telemetry_logger.info(battery.format_telemetry(start_bs))
+            start_soc = start_bs.soc
+        else:
+            logger.info("Battery telemetry not yet available")
+        battery_task = asyncio.create_task(battery.run_battery_logger(robot))
 
         capture_strategy = build_strategy(settings.capture)
         if settings.capture.strategy != "none":
@@ -374,6 +397,21 @@ async def run_mission(runner: MissionRunner) -> bool:
         logger.error(f"Mission error: {e}", exc_info=True)
         return False
     finally:
+        # Stop the battery logger and banner the ending charge while the
+        # WebRTC connection (and its lowstate stream) is still alive.
+        if battery_task is not None:
+            battery_task.cancel()
+            try:
+                await battery_task
+            except asyncio.CancelledError:
+                pass
+            end_bs = robot.get_battery_state()
+            if end_bs is not None:
+                log_banner(
+                    battery.format_end_banner(end_bs, start_soc),
+                    char="-",
+                    logger=logger,
+                )
         # Suppress library-side stream-end noise from the WebRTC
         # teardown that follows. Mid-mission instances of the same
         # patterns still surface — the filter only activates from here.

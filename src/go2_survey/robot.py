@@ -19,6 +19,7 @@ from unitree_webrtc_connect.webrtc_driver import (
     WebRTCConnectionMethod,
 )
 
+from go2_survey.battery import BatteryState, parse_bms
 from go2_survey.logging_utils import log_banner
 
 logger = logging.getLogger(__name__)
@@ -43,6 +44,10 @@ class Go2Robot:
         self._connected = False
         self._latest_imu: dict | None = None
         self._imu_timestamp: float = 0.0
+        # Latest rt/lf/lowstate payload (battery BMS + power_v) and its
+        # wall-clock timestamp. See get_battery_state / go2_survey.battery.
+        self._latest_lowstate: dict | None = None
+        self._lowstate_timestamp: float = 0.0
         # Video cache (populated after enable_video()). Shape follows the
         # IMU cache above: latest frame as numpy BGR ndarray + wall-clock
         # timestamp. See docs/webrtc/README.md for the library quirks
@@ -92,6 +97,10 @@ class Go2Robot:
                 RTC_TOPIC["LF_SPORT_MOD_STATE"], self._on_sport_state
             )
             logger.info("Subscribed to sport mode state (IMU)")
+            self.conn.datachannel.pub_sub.subscribe(
+                RTC_TOPIC["LOW_STATE"], self._on_low_state
+            )
+            logger.info("Subscribed to low state (battery)")
 
             self._connected = True
             return True
@@ -121,6 +130,13 @@ class Go2Robot:
         except (KeyError, TypeError):
             pass
 
+    def _on_low_state(self, message: dict) -> None:
+        try:
+            self._latest_lowstate = message["data"]
+            self._lowstate_timestamp = time.time()
+        except (KeyError, TypeError):
+            pass
+
     def get_yaw_degrees(self, max_age: float = 1.0) -> float | None:
         """Get current IMU yaw in degrees.
 
@@ -136,6 +152,19 @@ class Go2Robot:
             return math.degrees(self._latest_imu["rpy"][2])
         except (KeyError, TypeError, IndexError):
             return None
+
+    def get_battery_state(self, max_age: float = 15.0) -> BatteryState | None:
+        """Latest battery snapshot from rt/lf/lowstate, or None if absent/stale.
+
+        Returns None until the first lowstate sample arrives or if the last
+        one is older than max_age (lowstate is lower-rate than the IMU, so
+        the window is wider than get_yaw_degrees').
+        """
+        if self._latest_lowstate is None:
+            return None
+        if time.time() - self._lowstate_timestamp > max_age:
+            return None
+        return parse_bms(self._latest_lowstate, self._lowstate_timestamp)
 
     async def enable_video(self) -> None:
         """Subscribe to the Go2 video track and start caching frames.

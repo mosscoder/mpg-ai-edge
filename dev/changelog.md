@@ -107,6 +107,30 @@ recal + the line-survey cal walk replaced by the self-seeding running COG recal
 (v0.28.0); the live-course route dropped in favour of the post-hoc one. Transect
 buffering remains the open item.)*
 
+## 2026-06-16: v0.32.0 — Battery telemetry: per-run battery.log + start/end banners + 10 s SOC lines
+
+The Go2 publishes battery state on the `rt/lf/lowstate` data-channel topic
+(`bms_state` = soc / current / cycle / temps, plus top-level `power_v`). This
+release subscribes to it and surfaces charge throughout a run.
+
+- **New `battery.log` sidecar** alongside main/imu/gps.log (always on). Carries
+  the detailed per-interval line: `SOC 82% | 28.91V | -4.6A (discharging) |
+  batt 34°C | mcu 36°C | cycles 42`, sampled every 10 s.
+- **`main.log` battery banners:** `BATTERY AT START: 84% | 29.4V | 31°C` in the
+  robot phase, a concise `BATTERY 82% | -4.6A | ~16 min left @ current draw`
+  line every 10 s through navigation, and `BATTERY AT END: 68% | 28.1V | 39°C
+  (−16% over run)` at teardown (emitted before the WebRTC stream closes, so it
+  lands even on abort).
+- **Runtime estimate** from a rolling 3-minute SOC-drain rate (`RuntimeEstimator`);
+  reads "estimating…" until there's a measurable drop over ≥60 s.
+- New `go2_survey.battery` module (`BatteryState`, `parse_bms`, formatting,
+  `run_battery_logger`); `Go2Robot` subscribes to `LOW_STATE` and exposes
+  `get_battery_state()` mirroring `get_yaw_degrees()`. Logging split mirrors
+  the GPS one: `go2_survey.battery.telemetry` → battery.log only,
+  `go2_survey.battery` → main.log/console (`BatteryTelemetry*Filter`).
+- Wired into the nav `run_mission` path (the surveys); a concurrent task ticks
+  every 10 s and is cancelled at teardown. No mission.toml change required.
+
 ## 2026-06-11: v0.31.0 — Line-survey running recal: buffer all leg samples, gate straightness at fold time
 
 The 2026-06-11 `site_1_strip_3` run — the first field test of the running

@@ -24,6 +24,8 @@ from typing import Iterator
 from go2_survey import __version__
 from go2_survey.config import load_mission_config
 from go2_survey.logging_utils import (
+    BatteryTelemetryFilter,
+    BatteryTelemetryOnlyFilter,
     GPSTelemetryFilter,
     GPSTelemetryOnlyFilter,
     SportModeStateFilter,
@@ -107,8 +109,11 @@ def setup_logging(
     - ``gps.log`` captures dense JSON-per-line GPS/RTK telemetry at 1 Hz
       so post-hoc analysis can reconstruct fix transitions, hAcc, NTRIP
       state, and RTCM-age timelines without requiring a verbose re-run.
+    - ``battery.log`` captures the detailed per-interval battery (BMS)
+      stream — SOC, voltage, current, temps, cycles — while ``main.log``
+      keeps only the concise battery banner.
 
-    All three sidecars are always on regardless of ``-v``.
+    All four sidecars are always on regardless of ``-v``.
 
     Returns the run directory.
     """
@@ -125,6 +130,7 @@ def setup_logging(
     main_log = run_dir / "main.log"
     imu_log = run_dir / "imu.log"
     gps_log = run_dir / "gps.log"
+    battery_log = run_dir / "battery.log"
 
     level = logging.DEBUG if verbose else logging.INFO
     fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -140,6 +146,7 @@ def setup_logging(
     main_filters: list[logging.Filter] = [
         SportModeStateFilter(),
         GPSTelemetryFilter(),
+        BatteryTelemetryFilter(),
         WebRTCFallbackNoiseFilter(),
         WebRTCTeardownNoiseFilter(),
     ]
@@ -169,6 +176,14 @@ def setup_logging(
     gps_handler.addFilter(GPSTelemetryOnlyFilter())
     gps_handler.setLevel(logging.DEBUG)
     root.addHandler(gps_handler)
+
+    # battery.log: capture ONLY the detailed per-interval battery (BMS)
+    # stream (go2_survey.battery.telemetry). Always on at DEBUG.
+    battery_handler = logging.FileHandler(battery_log)
+    battery_handler.setFormatter(fmt)
+    battery_handler.addFilter(BatteryTelemetryOnlyFilter())
+    battery_handler.setLevel(logging.DEBUG)
+    root.addHandler(battery_handler)
 
     # Quiet noisy transitive deps
     for noisy in ("aioice", "aiortc", "av"):
