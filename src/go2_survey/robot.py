@@ -20,6 +20,7 @@ from unitree_webrtc_connect.webrtc_driver import (
 )
 
 from go2_survey.battery import BatteryState, parse_bms
+from go2_survey.motors import MotorState, parse_motors
 from go2_survey.logging_utils import log_banner
 
 logger = logging.getLogger(__name__)
@@ -165,6 +166,19 @@ class Go2Robot:
         if time.time() - self._lowstate_timestamp > max_age:
             return None
         return parse_bms(self._latest_lowstate, self._lowstate_timestamp)
+
+    def get_motor_state(self, max_age: float = 15.0) -> MotorState | None:
+        """Latest 12-motor snapshot from rt/lf/lowstate, or None if absent/stale.
+
+        Same source + staleness window as get_battery_state (both come from
+        the lowstate frame). Used by the health banners to surface thigh
+        ("shoulder") temperatures.
+        """
+        if self._latest_lowstate is None:
+            return None
+        if time.time() - self._lowstate_timestamp > max_age:
+            return None
+        return parse_motors(self._latest_lowstate, self._lowstate_timestamp)
 
     async def enable_video(self) -> None:
         """Subscribe to the Go2 video track and start caching frames.

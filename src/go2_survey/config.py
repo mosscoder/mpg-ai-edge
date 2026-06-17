@@ -89,6 +89,12 @@ class NavigationSettings:
     # GPS+IMU samples already collected during the walk leg. Disable to
     # preserve the legacy single-shot calibration set on the first leg.
     imu_recalibrate_on_arrival: bool = True
+    # Thigh ("shoulder") motor temperature thresholds (°C) for the health
+    # banners. Caution = start watching the climb; danger = collapse risk,
+    # cool down. Anchored on the 2026-06-16 strip_2 cut-out at 83 °C
+    # (Unitree's soft ceiling ~80 °C), with margin below it.
+    motor_caution_temp_c: int = 70
+    motor_danger_temp_c: int = 78
 
 
 @dataclass

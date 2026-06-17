@@ -1,5 +1,48 @@
 # Navigation Changelog
 
+## 2026-06-17: v0.34.0 — Health banners: motor temperature + battery, surfaced waypoint-to-waypoint
+
+Makes the thermal failure mode (2026-06-16 strip_2 collapse at 83 °C) *visible
+during a run*. Until now motor temperature appeared only in the raw `rt/lf/lowstate`
+JSON the WebRTC library dumps to the console at ~1 Hz — never parsed — so tracking
+it meant hand-reading heartbeats; battery was one easily-missed line every 10 s.
+This adds a consolidated **HEALTH** view that combines battery + the 12 motor
+temps, foregrounding the **thigh ("shoulder") motors** that overheat.
+
+- **Per-leg HEALTH CHECK banner** (the headline): a boxed block at every corner —
+  the waypoint→waypoint boundary — with battery (SOC, current, runtime, Δ since
+  last leg), all four thigh temps with the hottest marked + the hot diagonal,
+  the hottest thigh's **rise this leg** and **°C/min trend**, the 8 other motors'
+  max, and a status line (`ok` / `[!]` caution / `[STOP]` danger). Emitted from
+  `navigate_legs` at each corner (and from the nav-mode waypoint loop).
+- **HEALTH AT START / END** banners: start flags a **warm start** (the 12:57
+  collapse began at 72 °C with no cooldown — now caught before launch); end
+  reports the battery delta + **peak thigh** reached over the run.
+- **Periodic HEALTH line** every 10 s between corners (replaces the bare
+  `BATTERY …` line): `HEALTH batt 90% -4.8A ~38min · motors 83°C max RR_thigh ▲+3.4°/min [STOP]`.
+- **THERMAL alert** the instant a thigh crosses a threshold (≤10 s latency): a
+  loud box at WARNING (caution) / ERROR (danger), independent of the banner
+  cadence. Crossings re-arm on cool-down.
+- **`motor.log` sidecar + `LowStateFilter`**: the raw ~1 Hz lowstate frames are
+  now dropped from console/main.log (readability) and routed to a dedicated
+  `motor.log` (mirrors imu.log/gps.log/battery.log) — full 12-motor + BMS detail
+  preserved for post-hoc analysis, lossless.
+- Thresholds in `[navigation]` (`motor_caution_temp_c=70`, `motor_danger_temp_c=78`;
+  anchored on the 83 °C cut-out with margin), so they're tunable per mission.
+
+New modules `motors.py` (MotorState + `parse_motors` + `MotorTempTrend`) and
+`health.py` (HealthMonitor + banner formatters + the `run_health_logger` task,
+which supersedes `battery.run_battery_logger`); `robot.get_motor_state()` mirrors
+`get_battery_state()`. Battery banner formatters moved out of `battery.py` (now
+just BMS state + the detailed battery.log line + `RuntimeEstimator`).
+
+**Replay proof** — fed the 12:57 collapse's real frames through the emit path:
+HEALTH AT START flags `[!] WARM START RR_thigh 72°C`, a `[STOP]` DANGER alert
+fires when FL crosses 78 °C, and every subsequent leg banner reads `[STOP] … COOL
+DOWN` — **three legs of escalating warning** before the locomotion cut-out,
+instead of a surprise red light. Markers (`▲ ✓ [!] [STOP]` …) are module-level
+constants for easy ASCII swap.
+
 ## 2026-06-16: Field Findings — Shoulder (thigh) motor temperatures (no code change)
 
 A day of site_1 strips surfaced a motor-thermal failure mode and a persistent

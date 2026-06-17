@@ -509,6 +509,7 @@ class WaypointNavigator:
         leg_steering: str = "point_seek",
         lookahead_m: float = 4.0,
         course_lookback_m: float = 1.0,
+        health=None,
     ) -> bool:
         """Lawnmower line survey: drive straight legs between consecutive
         waypoints (the leg corners), turning in place at each corner, and
@@ -598,6 +599,10 @@ class WaypointNavigator:
             )
             if not ok:
                 return False
+            # Per-leg HEALTH banner at the corner just reached (waypoint
+            # boundary): battery + thigh temps + per-leg rise + trend.
+            if health is not None:
+                health.emit_leg(self.robot, i + 1, len(waypoints) - 1)
 
         await self.robot.stop()
         await self.robot.balance_stand()

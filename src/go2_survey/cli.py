@@ -28,6 +28,8 @@ from go2_survey.logging_utils import (
     BatteryTelemetryOnlyFilter,
     GPSTelemetryFilter,
     GPSTelemetryOnlyFilter,
+    LowStateFilter,
+    LowStateOnlyFilter,
     SportModeStateFilter,
     SportModeStateOnlyFilter,
     WebRTCFallbackNoiseFilter,
@@ -131,6 +133,7 @@ def setup_logging(
     imu_log = run_dir / "imu.log"
     gps_log = run_dir / "gps.log"
     battery_log = run_dir / "battery.log"
+    motor_log = run_dir / "motor.log"
 
     level = logging.DEBUG if verbose else logging.INFO
     fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s: %(message)s")
@@ -145,6 +148,7 @@ def setup_logging(
     # so the mission narrative stays readable.
     main_filters: list[logging.Filter] = [
         SportModeStateFilter(),
+        LowStateFilter(),
         GPSTelemetryFilter(),
         BatteryTelemetryFilter(),
         WebRTCFallbackNoiseFilter(),
@@ -184,6 +188,15 @@ def setup_logging(
     battery_handler.addFilter(BatteryTelemetryOnlyFilter())
     battery_handler.setLevel(logging.DEBUG)
     root.addHandler(battery_handler)
+
+    # motor.log: capture ONLY the raw rt/lf/lowstate frames (12 motors +
+    # BMS, ~1 Hz) that LowStateFilter strips from the narrative. Always on
+    # at DEBUG — preserves the full motor stream for post-hoc analysis.
+    motor_handler = logging.FileHandler(motor_log)
+    motor_handler.setFormatter(fmt)
+    motor_handler.addFilter(LowStateOnlyFilter())
+    motor_handler.setLevel(logging.DEBUG)
+    root.addHandler(motor_handler)
 
     # Quiet noisy transitive deps
     for noisy in ("aioice", "aiortc", "av"):

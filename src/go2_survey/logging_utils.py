@@ -77,6 +77,33 @@ class SportModeStateOnlyFilter(logging.Filter):
         return "rt/lf/sportmodestate" in record.getMessage()
 
 
+class LowStateFilter(logging.Filter):
+    """Suppress the ~1 Hz rt/lf/lowstate message-log flood.
+
+    The unitree_webrtc_connect library emits every data-channel message at
+    INFO on the root logger. The lowstate topic dumps the full 12-motor +
+    BMS payload as one dense JSON line per frame. Attached to console +
+    main.log so the mission narrative (and the readable health banners) stay
+    legible; the same payloads are captured by the motor.log handler (see
+    LowStateOnlyFilter) and surfaced human-readably by the health banners.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "rt/lf/lowstate" not in record.getMessage()
+
+
+class LowStateOnlyFilter(logging.Filter):
+    """Inverse of LowStateFilter — keeps only rt/lf/lowstate.
+
+    Attached to the per-run motor.log handler so the full 12-motor + BMS
+    stream is preserved on disk for post-hoc analysis (temperatures, foot
+    forces, currents) without polluting the main mission log.
+    """
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        return "rt/lf/lowstate" in record.getMessage()
+
+
 GPS_TELEMETRY_LOGGER_NAME = "go2_survey.gps.telemetry"
 
 
