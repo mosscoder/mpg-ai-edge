@@ -287,6 +287,8 @@ class WaypointNavigator:
         timeout: float,
         on_capture_cb=None,
         n_captured_in: int = 0,
+        mark_offset: int = 0,
+        capture_start_corner: bool = True,
     ) -> tuple[bool, int]:
         """Turn to the leg bearing, then drive start->end on the configured
         steering law (cross_track | point_seek), optionally firing interval +
@@ -294,6 +296,12 @@ class WaypointNavigator:
         arrival. Shared by the survey legs (do_capture=True) and the
         cal-endpoint -> first-corner approach (do_capture=False,
         on_capture_cb=None). Returns (ok, n_captured_total).
+
+        ``mark_offset`` is added to every mark index passed to ``on_capture_cb``
+        (and the capture filenames it writes); ``capture_start_corner=False``
+        skips the leg-start shot. Both are set on a resume's first (partial)
+        leg so it continues the original ``legNN_m<MMM>`` numbering from the
+        anchor mark instead of re-shooting it (see :mod:`resume`).
         """
         leg_bearing = calculate_bearing(
             start.latitude, start.longitude, end.latitude, end.longitude
@@ -336,13 +344,14 @@ class WaypointNavigator:
         # Capture at the leg-start corner (heading just settled from the
         # turn). Each interior corner thus gets two shots: the previous
         # leg's end capture (incoming heading) and this start (outgoing).
-        if do_capture:
+        if do_capture and capture_start_corner:
             start_pos = self.gps.get_position()
             if start_pos is not None and self._is_quality_acceptable(
                 start_pos, self.gps.has_active_corrections()
             ):
                 n_written = await on_capture_cb(
-                    leg_label, mark_index, time.time(), 0.0, start_pos, leg_bearing
+                    leg_label, mark_index + mark_offset, time.time(), 0.0,
+                    start_pos, leg_bearing,
                 )
                 n_captured += n_written
                 last_fired_along = 0.0
@@ -392,12 +401,13 @@ class WaypointNavigator:
                     t_mark = prev_t + frac * (now - prev_t)
                     mark_index += 1
                     n_written = await on_capture_cb(
-                        leg_label, mark_index, t_mark, next_mark, pos, leg_bearing
+                        leg_label, mark_index + mark_offset, t_mark, next_mark,
+                        pos, leg_bearing,
                     )
                     n_captured += n_written
                     last_fired_along = next_mark
                     log_banner(
-                        f"CAPTURE {leg_label} mark {mark_index} @ "
+                        f"CAPTURE {leg_label} mark {mark_index + mark_offset} @ "
                         f"{next_mark:.1f}m | n={n_written}",
                         char="-",
                         logger=logger,
@@ -417,8 +427,8 @@ class WaypointNavigator:
                 if do_capture and along - last_fired_along > 0.5:
                     mark_index += 1
                     n_written = await on_capture_cb(
-                        leg_label, mark_index, time.time(), along, pos,
-                        leg_bearing,
+                        leg_label, mark_index + mark_offset, time.time(), along,
+                        pos, leg_bearing,
                     )
                     n_captured += n_written
                     log_banner(
@@ -510,6 +520,10 @@ class WaypointNavigator:
         lookahead_m: float = 4.0,
         course_lookback_m: float = 1.0,
         health=None,
+        leg_number_start: int = 1,
+        first_leg_mark_offset: int = 0,
+        first_leg_skip_start_capture: bool = False,
+        n_captured_start: int = 0,
     ) -> bool:
         """Lawnmower line survey: drive straight legs between consecutive
         waypoints (the leg corners), turning in place at each corner, and
@@ -527,6 +541,14 @@ class WaypointNavigator:
         `on_capture_cb(leg_label, mark_index, t_mark, along_m, position,
         leg_bearing) -> int` (frames written). Returns True on success,
         False on GPS-loss or per-leg timeout.
+
+        Resume (see :mod:`resume`): when picking up an interrupted survey,
+        `waypoints[0]` is the anchor mark's position and `waypoints[1:]` the
+        remaining corners; `leg_number_start` continues the `legNN` numbering
+        (= the anchor leg), `first_leg_mark_offset` continues `m<MMM>` from the
+        anchor mark, and `first_leg_skip_start_capture` avoids re-shooting the
+        anchor. `n_captured_start` seeds the completion tally. All default to a
+        fresh run (start at leg01/m000, capture the first corner).
         """
         if len(waypoints) < 2:
             logger.error("navigate_legs needs at least 2 waypoints (1 leg)")
@@ -572,12 +594,12 @@ class WaypointNavigator:
                 logger.error("Failed to reach line-survey start corner")
                 return False
 
-        n_captured = 0
+        n_captured = n_captured_start
         for i in range(len(waypoints) - 1):
             if not self._running:
                 break
             s, e = waypoints[i], waypoints[i + 1]
-            leg_label = f"leg{i + 1:02d}"
+            leg_label = f"leg{leg_number_start + i:02d}"
             leg_bearing = calculate_bearing(
                 s.latitude, s.longitude, e.latitude, e.longitude
             )
@@ -596,6 +618,8 @@ class WaypointNavigator:
                 turn_tolerance_deg=turn_tolerance_deg, leg_steering=leg_steering,
                 lookahead_m=lookahead_m, course_lookback_m=course_lookback_m,
                 do_capture=True, timeout=timeout_per_leg, n_captured_in=n_captured,
+                mark_offset=(first_leg_mark_offset if i == 0 else 0),
+                capture_start_corner=not (first_leg_skip_start_capture and i == 0),
             )
             if not ok:
                 return False

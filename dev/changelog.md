@@ -1,6 +1,36 @@
 # Navigation Changelog
 
-## 2026-06-17: v0.34.0 — Health banners: motor temperature + battery, surfaced waypoint-to-waypoint
+## 2026-06-18: v0.35.0 — `run --resume`: pick an interrupted line survey back up from the last good mark
+
+A mid-mission stop (GPS loss, Ctrl-C, a crash) no longer means re-walking the
+whole strip. `go2-survey run DIR --resume` inspects the most recent run,
+finds the **last cleanly-captured mark**, and continues from there.
+
+- **Anchor from sidecars, no checkpoint file.** `resume.py::find_resume_anchor`
+  scans the newest run dir (by timestamp) and returns the highest-`(leg, mark)`
+  capture whose RTK position passes the mission fix gate (`fix_type ≥ min_fix`,
+  `hAcc ≤ max_hacc`) — so a GPS-degraded *tail* of bad fixes is discarded and
+  the anchor is the last **good** mark. The per-capture sidecar JSON is the
+  durable record (written every frame), so the anchor survives any abrupt stop.
+  Refuses if the newest run already logged `LINE SURVEY COMPLETE`; falls through
+  0-capture false-starts to the newest run that has real captures.
+- **Treats the anchor as the starting waypoint.** The remaining route is
+  `[anchor P, cL, c(L+1), …, cN]`: `navigate_legs`' existing first-corner
+  approach drives the dog to `P` — **self-seeding the IMU offset from that
+  motion and lining up on the leg bearing** — then continues the unfinished
+  tail of leg L and the remaining legs. No cal walk; same cross_track machinery.
+- **One complete survey.** Captures merge **into the original partial run dir**
+  (the file logs append; `leg_number_start`/`first_leg_mark_offset` continue the
+  `legNN_m<MMM>` numbering from the anchor without re-shooting it), so leg L ends
+  up whole and `finalize_bearings` + the manifest run over the full dir. The
+  completed run keeps the partial's dir timestamp (one survey, dated from when
+  it began).
+- **SOP:** place the dog ~5 m back **along the leg**, facing the anchor (room to
+  self-calibrate + a clean lineup); the run banner prints `RESUMING legL/mM @
+  (lat, lon)`. Purely additive — all new `navigate_legs`/`_drive_leg` params
+  default to a fresh run, so non-resume behavior is unchanged.
+
+
 
 Makes the thermal failure mode (2026-06-16 strip_2 collapse at 83 °C) *visible
 during a run*. Until now motor temperature appeared only in the raw `rt/lf/lowstate`

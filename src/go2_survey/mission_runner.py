@@ -28,6 +28,7 @@ from go2_survey.gps import GPSManager, RTKPosition
 from go2_survey.logging_utils import log_banner, set_teardown_in_progress
 from go2_survey.navigator import WaypointNavigator
 from go2_survey.probes import run_f9r_probe, run_lidar_probe
+from go2_survey.resume import ResumeAnchor
 from go2_survey.robot import Go2Robot
 from go2_survey.waypoints import Waypoint, load_waypoints
 
@@ -104,6 +105,10 @@ class MissionRunner:
     dry_run: bool = False
     on_waypoint_reached: WaypointHook | None = None
     on_gps_update: PositionHook | None = None
+    # Set by `run --resume`: the anchor (last good mark) the line survey
+    # continues from. `run_dir` then points at that partial run's directory so
+    # the resumed captures merge into one complete survey. See :mod:`resume`.
+    resume_anchor: ResumeAnchor | None = None
 
 
 async def run_mission(runner: MissionRunner) -> bool:
@@ -327,9 +332,35 @@ async def run_mission(runner: MissionRunner) -> bool:
                     target_bearing=leg_bearing,
                 )
 
+            # Resume: anchor the survey at the last good mark's position (a
+            # synthetic start waypoint) followed by the remaining corners, and
+            # continue the legNN/mMMM numbering into this (the partial's) run
+            # dir so it ends up as one complete survey.
+            route = waypoints
+            resume_kwargs: dict = {}
+            if runner.resume_anchor is not None:
+                a = runner.resume_anchor
+                anchor_wp = Waypoint(
+                    latitude=a.latitude, longitude=a.longitude,
+                    name=f"resume_leg{a.leg:02d}_m{a.mark:03d}",
+                )
+                route = [anchor_wp, *waypoints[a.leg:]]
+                resume_kwargs = dict(
+                    leg_number_start=a.leg,
+                    first_leg_mark_offset=a.mark,
+                    first_leg_skip_start_capture=True,
+                    n_captured_start=a.n_captured,
+                )
+                log_banner(
+                    f"RESUMING leg{a.leg:02d}/m{a.mark:03d} | {a.n_captured} "
+                    f"prior frame(s) | {len(route) - 1} leg(s) remain -> "
+                    f"approaching ({a.latitude:.8f}, {a.longitude:.8f})",
+                    logger=logger,
+                )
+
             try:
                 success = await navigator.navigate_legs(
-                    waypoints=waypoints,
+                    waypoints=route,
                     on_capture_cb=_interval_capture_cb,
                     interval_m=settings.capture.capture_interval_m,
                     speed=settings.navigation.max_velocity,
@@ -338,6 +369,7 @@ async def run_mission(runner: MissionRunner) -> bool:
                     lookahead_m=settings.capture.lookahead_m,
                     course_lookback_m=settings.capture.course_lookback_m,
                     health=health_monitor,
+                    **resume_kwargs,
                 )
             finally:
                 # Finalize EXIF bearings from each leg's full RTK track

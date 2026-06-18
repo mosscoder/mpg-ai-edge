@@ -36,6 +36,7 @@ from go2_survey.logging_utils import (
     WebRTCTeardownNoiseFilter,
 )
 from go2_survey.mission_runner import MissionRunner, run_mission
+from go2_survey.resume import find_resume_anchor
 from go2_survey.waypoint_gen import cmd_make_waypoints, cmd_plot_waypoints
 
 
@@ -74,6 +75,22 @@ def _missions_root() -> Path:
     return _find_repo_root() / "dev" / "missions"
 
 
+def _run_parent(mission_dir: Path, output_dir: str = "") -> Path:
+    """Directory that holds a mission's per-run subdirs.
+
+    ``<output_dir>/<mission_name>/`` when the mission sets ``output_dir``
+    (``~`` / ``$ENV`` expanded; relative paths resolve against the mission
+    dir), else ``<mission_dir>/runs/``. Used both to create a fresh run dir
+    and to locate the latest run for ``--resume``.
+    """
+    if output_dir:
+        root = Path(os.path.expandvars(output_dir)).expanduser()
+        if not root.is_absolute():
+            root = mission_dir / root
+        return root / mission_dir.name
+    return mission_dir / "runs"
+
+
 def resolve_mission_dir(arg: str) -> Path | None:
     """Resolve a mission argument to a directory.
 
@@ -92,7 +109,8 @@ def resolve_mission_dir(arg: str) -> Path | None:
 
 
 def setup_logging(
-    mission_dir: Path, verbose: bool = False, output_dir: str = ""
+    mission_dir: Path, verbose: bool = False, output_dir: str = "",
+    resume_dir: Path | None = None,
 ) -> Path:
     """Configure logging to a per-run directory.
 
@@ -119,15 +137,17 @@ def setup_logging(
 
     Returns the run directory.
     """
-    timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
-    if output_dir:
-        root = Path(os.path.expandvars(output_dir)).expanduser()
-        if not root.is_absolute():
-            root = mission_dir / root
-        run_parent = root / mission_dir.name
+    if resume_dir is not None:
+        # --resume: append into the existing partial run dir (the file handlers
+        # below default to append mode) so the survey's logs and captures stay
+        # together as one complete run.
+        run_dir = resume_dir
     else:
-        run_parent = mission_dir / "runs"
-    run_dir = run_parent / f"{mission_dir.name}_{timestamp}"
+        timestamp = time.strftime("%Y-%m-%d_%H-%M-%S")
+        run_dir = (
+            _run_parent(mission_dir, output_dir)
+            / f"{mission_dir.name}_{timestamp}"
+        )
     run_dir.mkdir(parents=True, exist_ok=True)
     main_log = run_dir / "main.log"
     imu_log = run_dir / "imu.log"
@@ -232,12 +252,38 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(f"error: failed to load mission config: {e}", file=sys.stderr)
         return 1
 
+    # --resume: locate the last good mark of the most recent run BEFORE logging
+    # setup, so we append into that partial run's dir instead of starting fresh.
+    anchor = None
+    if getattr(args, "resume", False):
+        run_parent = _run_parent(mission_dir, settings.output_dir)
+        anchor = find_resume_anchor(
+            run_parent,
+            settings.capture.output_subdir,
+            settings.navigation.min_fix_type,
+            settings.navigation.max_hacc,
+        )
+        if anchor is None:
+            print(
+                f"error: --resume found nothing to resume under {run_parent} "
+                "(the latest run already completed, or no run has captured marks)",
+                file=sys.stderr,
+            )
+            return 1
+
     run_dir = setup_logging(
-        mission_dir, verbose=args.verbose, output_dir=settings.output_dir
+        mission_dir, verbose=args.verbose, output_dir=settings.output_dir,
+        resume_dir=anchor.run_dir if anchor is not None else None,
     )
     logger = logging.getLogger(__name__)
     logger.info(f"Logging to: {run_dir}/main.log (+ imu.log, gps.log)")
     logger.info(f"Mission dir: {mission_dir}")
+    if anchor is not None:
+        logger.info(
+            f"RESUME: continuing {anchor.run_dir.name} from "
+            f"leg{anchor.leg:02d}/m{anchor.mark:03d} "
+            f"({anchor.n_captured} captured marks kept)"
+        )
 
     if args.capture_images:
         logger.warning(
@@ -248,6 +294,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         mission_dir=mission_dir,
         run_dir=run_dir,
         dry_run=args.dry_run,
+        resume_anchor=anchor,
     )
 
     try:
@@ -352,6 +399,14 @@ def build_parser() -> argparse.ArgumentParser:
         "--dry-run",
         action="store_true",
         help="load config + waypoints, log plan, don't touch hardware",
+    )
+    run_parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="resume an interrupted line survey: continue the most recent run "
+        "from its last cleanly-captured mark (after GPS loss, Ctrl-C, or a "
+        "crash), driving to that mark to line up and merging the remaining "
+        "captures into the same run dir",
     )
     run_parser.add_argument(
         "--capture-images",
