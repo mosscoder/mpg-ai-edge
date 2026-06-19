@@ -1,6 +1,33 @@
 # Navigation Changelog
 
-## 2026-06-18: v0.35.0 — `run --resume`: pick an interrupted line survey back up from the last good mark
+## 2026-06-18: v0.36.0 — `run --resume <run_dir>`: name the failed run, anchor on its last photo
+
+Refactors v0.35.0's resume to be explicit and simpler. `--resume` now takes the
+**path to the failed run** instead of auto-picking the newest run by timestamp —
+you name exactly which run to continue, so there's no fall-through / refuse logic
+to surprise you (v0.35.0 walked back to the *completed* T1 run when a same-strip
+collapse was the newest dir, and refused). The mission is **derived from the run
+path** (`<mission>/runs/<run>`), so it's a single argument:
+
+```
+go2-survey run --resume /…/missions/site_1/strip_3/runs/strip_3_2026-06-18_14-12-43
+```
+
+- **Anchor = the run's last photo.** `resume.py` drops the whole newest-by-
+  timestamp scan, the empty-abort fall-through, the `LINE SURVEY COMPLETE` check,
+  and the `fix_type`/`hAcc` re-gate. It just sorts the capture sidecars by
+  `(leg, mark)` and takes the highest one with a readable position (skipping a
+  half-written final sidecar from the crash). A photo only exists because its
+  position *already* passed the live quality gate at capture, so re-gating was
+  redundant — and was the likely reason a real collapse got refused.
+- **`mission` positional is now optional** (`nargs="?"`) — required for a fresh
+  run, derived from the run path under `--resume`.
+- Everything downstream is unchanged from v0.35.0: drive to the anchor (self-seed
+  the IMU, line up on the leg bearing), continue the `legNN_m<MMM>` numbering from
+  the anchor, merge into that run dir, finalize bearings + manifest over the whole
+  survey. `mission_runner` / `navigator` are untouched — same `ResumeAnchor`.
+
+
 
 A mid-mission stop (GPS loss, Ctrl-C, a crash) no longer means re-walking the
 whole strip. `go2-survey run DIR --resume` inspects the most recent run,

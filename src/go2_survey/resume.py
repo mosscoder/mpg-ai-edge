@@ -1,17 +1,16 @@
-"""Resume an interrupted line survey from the last cleanly-captured mark.
+"""Resume an interrupted line survey from the last photo of a given run.
 
-``go2-survey run DIR --resume`` picks an interrupted survey back up (GPS loss,
-Ctrl-C, crash) without re-walking the covered ground. The durable record is the
-per-capture sidecar JSON — written on every frame — so the resume anchor
-survives any abrupt stop with no separate checkpoint file.
+``go2-survey run --resume <failed_run_dir>`` continues an interrupted survey
+(GPS loss, Ctrl-C, a collapse) without re-walking the covered ground. You point
+it at the failed run; it reads that run's **last photo**, makes that photo's
+position the start, and drives the remaining legs into the same run dir so the
+survey ends up as one complete dataset. The mission (waypoints) is derived from
+the run path (``<mission>/runs/<run>``).
 
-:func:`find_resume_anchor` inspects the newest run directory by timestamp and
-returns the highest-``(leg, mark)`` capture whose RTK position passes the
-mission's fix gate (so a GPS-degraded tail of bad fixes is discarded). The
-mission runner then treats that mark's position as a synthetic starting
-waypoint: the dog drives to it (self-seeding the IMU offset and lining up on the
-leg bearing) and continues the remaining legs, writing into the *same* run
-directory so the survey ends up as one complete dataset.
+The last photo is the durable record of where the dog got to — and a frame only
+exists because its position already passed the live quality gate at capture
+time, so the last readable capture is, by construction, a good anchor. No
+re-gating, no scanning sibling runs: the operator names the run to continue.
 """
 
 from __future__ import annotations
@@ -30,90 +29,53 @@ _SIDECAR_RE = re.compile(r"leg(\d+)_m(\d+)_")
 
 @dataclass
 class ResumeAnchor:
-    """The point an interrupted survey resumes from."""
+    """The point an interrupted survey resumes from — the run's last photo."""
 
-    run_dir: Path     # the partial run dir to resume INTO (captures append here)
-    leg: int          # 1-indexed leg number (legNN) of the last good mark
-    mark: int         # mark index of the last good mark within that leg
+    run_dir: Path     # the run dir to resume INTO (captures append here)
+    leg: int          # 1-indexed leg number (legNN) of the last photo
+    mark: int         # mark index of the last photo within that leg
     latitude: float
     longitude: float
-    n_captured: int   # quality-passing captures already in the run (banner total)
+    n_captured: int   # photos already in the run (kept; for the banner tally)
 
 
-def _anchor_in_run(
-    run_dir: Path, output_subdir: str, min_fix_type: int, max_hacc: float
-) -> ResumeAnchor | None:
-    """Highest ``(leg, mark)`` capture in ``run_dir`` passing the fix gate, else
-    None. Half-written sidecars (from an abrupt stop) and a GPS-degraded tail of
-    sub-quality fixes are skipped, so the anchor is the last *good* mark."""
+def anchor_from_run(run_dir: Path, output_subdir: str = "captures") -> ResumeAnchor | None:
+    """The last photo of ``run_dir`` as a resume anchor, or None if it has no
+    readable capture.
+
+    Walks the capture sidecars in survey order ``(leg, mark)`` and takes the
+    highest one that carries a position — skipping a half-written final sidecar
+    from an abrupt stop. No fix/hAcc re-gate: a capture only got written because
+    its position already passed the live quality check, so its existence is the
+    signal.
+    """
     captures = run_dir / output_subdir
     if not captures.is_dir():
+        logger.error("--resume: no captures directory at %s", captures)
         return None
-    best_key: tuple[int, int] | None = None
-    best_pos: tuple[float, float] = (0.0, 0.0)
-    n_good = 0
+
+    keyed: list[tuple[tuple[int, int], Path]] = []
     for sidecar in captures.glob("leg*_m*.json"):
         m = _SIDECAR_RE.match(sidecar.name)
-        if not m:
-            continue
+        if m:
+            keyed.append(((int(m.group(1)), int(m.group(2))), sidecar))
+    if not keyed:
+        logger.error("--resume: %s has no captures to resume from", run_dir.name)
+        return None
+
+    n_captured = len(list(captures.glob("leg*_m*.jpg")))  # frames already on disk
+    for (leg, mark), sidecar in sorted(keyed, key=lambda kv: kv[0], reverse=True):
         try:
-            data = json.loads(sidecar.read_text())
+            pos = json.loads(sidecar.read_text()).get("position") or {}
         except (OSError, json.JSONDecodeError):
-            continue  # half-written sidecar from an abrupt stop — skip
-        pos = data.get("position") or {}
-        lat, lon = pos.get("latitude"), pos.get("longitude")
-        if lat is None or lon is None:
+            continue  # half-written sidecar from an abrupt stop — try the prior
+        if pos.get("latitude") is None or pos.get("longitude") is None:
             continue
-        if (pos.get("fix_type") or 0) < min_fix_type:
-            continue
-        hacc = pos.get("accuracy_horizontal")
-        if hacc is None or hacc > max_hacc:
-            continue
-        n_good += 1
-        key = (int(m.group(1)), int(m.group(2)))
-        if best_key is None or key > best_key:
-            best_key, best_pos = key, (lat, lon)
-    if best_key is None:
-        return None
-    return ResumeAnchor(
-        run_dir=run_dir, leg=best_key[0], mark=best_key[1],
-        latitude=best_pos[0], longitude=best_pos[1], n_captured=n_good,
-    )
+        return ResumeAnchor(
+            run_dir=run_dir, leg=leg, mark=mark,
+            latitude=pos["latitude"], longitude=pos["longitude"],
+            n_captured=n_captured,
+        )
 
-
-def _is_complete(run_dir: Path) -> bool:
-    """True if this run already logged ``LINE SURVEY COMPLETE`` (nothing to do)."""
-    main_log = run_dir / "main.log"
-    if not main_log.exists():
-        return False
-    try:
-        return "LINE SURVEY COMPLETE" in main_log.read_text(errors="replace")
-    except OSError:
-        return False
-
-
-def find_resume_anchor(
-    run_parent: Path, output_subdir: str, min_fix_type: int, max_hacc: float
-) -> ResumeAnchor | None:
-    """Find the mark to resume from across the runs under ``run_parent``.
-
-    Walks run directories newest-first (the dir name carries the run
-    timestamp, which sorts chronologically). Refuses if the newest real run
-    already logged ``LINE SURVEY COMPLETE`` (the survey finished). Falls through
-    0-capture false-starts to the newest run that has quality-passing marks.
-    Returns the anchor, or None if there is nothing to resume.
-    """
-    if not run_parent.is_dir():
-        logger.debug("--resume: no runs directory at %s", run_parent)
-        return None
-    for run_dir in sorted(
-        (d for d in run_parent.iterdir() if d.is_dir()), reverse=True
-    ):
-        if _is_complete(run_dir):
-            logger.debug("--resume: %s already complete", run_dir.name)
-            return None
-        anchor = _anchor_in_run(run_dir, output_subdir, min_fix_type, max_hacc)
-        if anchor is not None:
-            return anchor
-        logger.debug("--resume: %s has no quality captures; older run", run_dir.name)
+    logger.error("--resume: %s has no readable photo position", run_dir.name)
     return None

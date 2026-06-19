@@ -36,7 +36,7 @@ from go2_survey.logging_utils import (
     WebRTCTeardownNoiseFilter,
 )
 from go2_survey.mission_runner import MissionRunner, run_mission
-from go2_survey.resume import find_resume_anchor
+from go2_survey.resume import anchor_from_run
 from go2_survey.waypoint_gen import cmd_make_waypoints, cmd_plot_waypoints
 
 
@@ -233,12 +233,36 @@ def setup_logging(
 
 
 def cmd_run(args: argparse.Namespace) -> int:
-    mission_dir = resolve_mission_dir(args.mission)
-    if mission_dir is None:
-        print(f"error: could not find mission '{args.mission}'", file=sys.stderr)
-        print(f"       tried: {Path(args.mission).resolve()}", file=sys.stderr)
+    # --resume takes the path to a failed run; the mission is derived from it
+    # (<mission>/runs/<run>) unless a mission is also passed explicitly.
+    resume_run = Path(args.resume).resolve() if args.resume else None
+    if resume_run is not None and not resume_run.is_dir():
+        print(f"error: --resume path is not a directory: {resume_run}", file=sys.stderr)
+        return 1
+
+    if args.mission:
+        mission_dir = resolve_mission_dir(args.mission)
+        if mission_dir is None:
+            print(f"error: could not find mission '{args.mission}'", file=sys.stderr)
+            print(f"       tried: {Path(args.mission).resolve()}", file=sys.stderr)
+            print(
+                f"       tried: {(_missions_root() / args.mission).resolve()}",
+                file=sys.stderr,
+            )
+            return 1
+    elif resume_run is not None:
+        mission_dir = resume_run.parent.parent  # <mission>/runs/<run>
+        if not (mission_dir / "mission.toml").exists():
+            print(
+                f"error: could not derive the mission from --resume {resume_run}\n"
+                f"       (no mission.toml at {mission_dir}); pass the mission too",
+                file=sys.stderr,
+            )
+            return 1
+        mission_dir = mission_dir.resolve()
+    else:
         print(
-            f"       tried: {(_missions_root() / args.mission).resolve()}",
+            "error: a mission is required (path or name), or use --resume <run_dir>",
             file=sys.stderr,
         )
         return 1
@@ -252,21 +276,14 @@ def cmd_run(args: argparse.Namespace) -> int:
         print(f"error: failed to load mission config: {e}", file=sys.stderr)
         return 1
 
-    # --resume: locate the last good mark of the most recent run BEFORE logging
-    # setup, so we append into that partial run's dir instead of starting fresh.
+    # --resume: anchor on the failed run's last photo (its position is the
+    # start). Resolved BEFORE logging setup so we append into that run's dir.
     anchor = None
-    if getattr(args, "resume", False):
-        run_parent = _run_parent(mission_dir, settings.output_dir)
-        anchor = find_resume_anchor(
-            run_parent,
-            settings.capture.output_subdir,
-            settings.navigation.min_fix_type,
-            settings.navigation.max_hacc,
-        )
+    if resume_run is not None:
+        anchor = anchor_from_run(resume_run, settings.capture.output_subdir)
         if anchor is None:
             print(
-                f"error: --resume found nothing to resume under {run_parent} "
-                "(the latest run already completed, or no run has captured marks)",
+                f"error: --resume found no readable photo in {resume_run} to resume from",
                 file=sys.stderr,
             )
             return 1
@@ -280,9 +297,9 @@ def cmd_run(args: argparse.Namespace) -> int:
     logger.info(f"Mission dir: {mission_dir}")
     if anchor is not None:
         logger.info(
-            f"RESUME: continuing {anchor.run_dir.name} from "
-            f"leg{anchor.leg:02d}/m{anchor.mark:03d} "
-            f"({anchor.n_captured} captured marks kept)"
+            f"RESUME: {anchor.run_dir.name} | last photo "
+            f"leg{anchor.leg:02d}/m{anchor.mark:03d} | "
+            f"{anchor.n_captured} frame(s) kept"
         )
 
     if args.capture_images:
@@ -393,7 +410,9 @@ def build_parser() -> argparse.ArgumentParser:
     run_parser = subparsers.add_parser("run", help="run a mission")
     run_parser.add_argument(
         "mission",
-        help="mission directory path or name under dev/missions/",
+        nargs="?",
+        help="mission directory path or name under dev/missions/ "
+        "(optional with --resume — derived from the run path)",
     )
     run_parser.add_argument(
         "--dry-run",
@@ -402,11 +421,12 @@ def build_parser() -> argparse.ArgumentParser:
     )
     run_parser.add_argument(
         "--resume",
-        action="store_true",
-        help="resume an interrupted line survey: continue the most recent run "
-        "from its last cleanly-captured mark (after GPS loss, Ctrl-C, or a "
-        "crash), driving to that mark to line up and merging the remaining "
-        "captures into the same run dir",
+        metavar="RUN_DIR",
+        default=None,
+        help="resume an interrupted line survey from the given failed run dir: "
+        "take that run's last photo as the start, drive there to line up, and "
+        "continue the remaining legs into the same dir (after GPS loss, Ctrl-C, "
+        "or a collapse); the mission is derived from the run path",
     )
     run_parser.add_argument(
         "--capture-images",
