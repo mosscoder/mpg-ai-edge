@@ -226,6 +226,7 @@ async def run_mission(runner: MissionRunner) -> bool:
         max_hacc=settings.navigation.max_hacc,
         gps_timeout=settings.navigation.mid_mission_fix_timeout,
         imu_recalibrate_on_arrival=settings.navigation.imu_recalibrate_on_arrival,
+        require_active_corrections=settings.navigation.require_active_corrections,
         cooling_settings=settings.cooling,
     )
 
@@ -245,6 +246,7 @@ async def run_mission(runner: MissionRunner) -> bool:
         if not gps.wait_for_fix(
             timeout=settings.navigation.gps_fix_timeout,
             min_fix_type=settings.navigation.min_fix_type,
+            require_active_corrections=settings.navigation.require_active_corrections,
         ):
             logger.error("GPS fix timeout")
             return False
@@ -275,7 +277,8 @@ async def run_mission(runner: MissionRunner) -> bool:
 
         # Health: wait briefly for the first lowstate sample, banner the
         # starting battery + thigh temps (+ seed battery.log), then emit the
-        # consolidated HEALTH line + thermal alerts every 10 s.
+        # consolidated HEALTH line + thermal alerts. Cooling tests use the
+        # cooling poll interval so motor temps are visible while heat-building.
         start_bs = None
         for _ in range(20):  # ~4 s for the first lowstate frame
             start_bs = robot.get_battery_state()
@@ -286,8 +289,17 @@ async def run_mission(runner: MissionRunner) -> bool:
         if start_bs is not None:
             battery.telemetry_logger.info(battery.format_telemetry(start_bs))
             start_soc = start_bs.soc
+        health_interval_s = (
+            settings.cooling.poll_interval_s
+            if settings.mode == "cooling_test"
+            else 10.0
+        )
         health_task = asyncio.create_task(
-            health.run_health_logger(robot, health_monitor)
+            health.run_health_logger(
+                robot,
+                health_monitor,
+                interval=health_interval_s,
+            )
         )
 
         if settings.mode == "cooling_test":
@@ -524,11 +536,13 @@ async def _run_cooling_test_route(
             logger=logger,
         )
         if not await navigator.navigate_to(wp):
-            logger.error(f"Cooling test failed to reach {wp.name}")
-            return False
-
-        visit_count += 1
-        health_monitor.emit_leg(robot, visit_count, visit_count)
+            logger.warning(
+                f"Cooling test could not reach {wp.name}; "
+                "continuing arbitrary work in place"
+            )
+        else:
+            visit_count += 1
+            health_monitor.emit_leg(robot, visit_count, visit_count)
         if navigator.cooldown_count > before:
             break
 
@@ -538,8 +552,6 @@ async def _run_cooling_test_route(
             settle_time_s=settings.capture.settle_time,
             turn_tolerance_deg=settings.capture.turn_tolerance_deg,
         )
-        if cooled_during_work is None:
-            return False
         if cooled_during_work:
             break
 
@@ -586,27 +598,59 @@ async def _run_cooling_test_work(
     bearings: tuple[float, ...],
     settle_time_s: float,
     turn_tolerance_deg: float,
-) -> bool | None:
+) -> bool:
     """Run rotating-quadrat-style work without image capture.
 
     Returns True when cooldown fired during the work, False when the work
-    completed without cooldown, and None on turn failure.
+    completed without cooldown. If absolute bearing alignment fails, falls
+    back to open-loop rotation so the heat-stress test keeps exercising motors.
     """
     before = navigator.cooldown_count
-    log_banner("COOLING TEST WORK | cardinal turns, no capture", char="-", logger=logger)
-    for bearing in bearings:
+    log_banner(
+        "COOLING TEST WORK | cardinal turns, no capture",
+        char="-",
+        logger=logger,
+    )
+    for i, bearing in enumerate(bearings):
         if not await navigator.turn_to_bearing(
             bearing,
             tolerance_deg=turn_tolerance_deg,
             timeout=20.0,
         ):
-            logger.error(f"Cooling test turn to {bearing:.0f} deg failed")
-            return None
+            logger.warning(
+                f"Cooling test turn to {bearing:.0f} deg failed; "
+                "using open-loop rotation work"
+            )
+            if await _run_open_loop_cooling_work(
+                navigator=navigator,
+                direction=1.0 if i % 2 else -1.0,
+                duration_s=max(settle_time_s, 2.0),
+            ):
+                return True
+            continue
         if navigator.cooldown_count > before:
             return True
         if settle_time_s > 0:
             await asyncio.sleep(settle_time_s)
     return navigator.cooldown_count > before
+
+
+async def _run_open_loop_cooling_work(
+    *,
+    navigator: WaypointNavigator,
+    direction: float,
+    duration_s: float,
+) -> bool:
+    """Rotate without GPS/heading dependence, checking cooling while moving."""
+    end_t = time.time() + max(duration_s, 0.1)
+    await navigator.robot.balance_stand()
+    while time.time() < end_t:
+        if await navigator._maybe_stop_for_cooling("cooling test open-loop work"):
+            return True
+        await navigator.robot.send_velocity(z=direction * navigator.rotation_rate)
+        await asyncio.sleep(0.2)
+    await navigator.robot.stop()
+    return False
 
 
 async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:

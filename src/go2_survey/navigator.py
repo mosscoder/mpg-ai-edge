@@ -92,6 +92,7 @@ class WaypointNavigator:
         calibration_timeout: float = 30.0,
         calibration_hacc: float = 0.1,
         imu_recalibrate_on_arrival: bool = True,
+        require_active_corrections: bool = True,
         cooling_settings: "CoolingSettings | None" = None,
     ):
         self.gps = gps
@@ -105,6 +106,7 @@ class WaypointNavigator:
         self.calibration_timeout = calibration_timeout
         self.calibration_hacc = calibration_hacc
         self.imu_recalibrate_on_arrival = imu_recalibrate_on_arrival
+        self.require_active_corrections = require_active_corrections
         self.cooling = cooling_settings
         self.cooldown_count = 0
 
@@ -147,7 +149,11 @@ class WaypointNavigator:
         if pos.accuracy_horizontal > self.max_hacc:
             return False
         # RTK-tier reading without corrections: float-coast, reject.
-        if pos.fix_type >= 5 and not corrections_active:
+        if (
+            self.require_active_corrections
+            and pos.fix_type >= 5
+            and not corrections_active
+        ):
             return False
         return True
 

@@ -1068,14 +1068,21 @@ class GPSManager:
             "elapsed_s": elapsed_total,
         }
 
-    def wait_for_fix(self, timeout: float = 300.0, min_fix_type: int = 4) -> bool:
+    def wait_for_fix(
+        self,
+        timeout: float = 300.0,
+        min_fix_type: int = 4,
+        require_active_corrections: bool = True,
+    ) -> bool:
         """Block until a TRUSTED fix is achieved, or until timeout.
 
-        Stricter than the bare receiver gate: a reported RTK fix
+        By default, stricter than the bare receiver gate: a reported RTK fix
         (Float / Fixed) is only accepted when active corrections are
         flowing within max_rtcm_age_s. Without that check the receiver
         will hold Float for 30-60s after corrections stop and the
         rest of the system trusts it (the 2026-05-08 float-coast bug).
+        Diagnostic missions can disable that RTK-staleness check with
+        require_active_corrections=False.
 
         For low-tier fixes (type <= 4 / GNSS-only), corrections are
         not expected and the receiver gate alone is sufficient.
@@ -1105,7 +1112,9 @@ class GPSManager:
             rtk_claimed = pos is not None and pos.fix_type >= 5
             rtk_trusted = rtk_claimed and corrections_active
 
-            if pos and pos.fix_type >= min_fix_type and (pos.fix_type <= 4 or rtk_trusted):
+            if pos and pos.fix_type >= min_fix_type and (
+                not require_active_corrections or pos.fix_type <= 4 or rtk_trusted
+            ):
                 fix_label = fix_names.get(pos.fix_type, "Fix")
                 msl_str = (
                     f" hMSL: {pos.altitude_msl:.2f}m"

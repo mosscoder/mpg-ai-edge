@@ -75,6 +75,10 @@ class NavigationSettings:
     # ~30-60s after corrections stop, but those readings are increasingly
     # stale. Below this threshold, RTK readings are trusted.
     max_rtcm_age_s: float = 5.0
+    # Require active RTCM corrections before trusting RTK-tier fixes. Disable
+    # only for diagnostic heat-stress missions where motion continuity matters
+    # more than accurate waypoint tracking.
+    require_active_corrections: bool = True
     # Soak time after the initial fix and before the robot starts
     # moving. Lets the F9P's carrier-phase ambiguity resolution
     # complete (Float -> Fixed typically takes 30-60s) and captures a
