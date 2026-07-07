@@ -371,6 +371,20 @@ class Go2Robot:
             RTC_TOPIC["SPORT_MOD"], {"api_id": SPORT_CMD["BalanceStand"]}
         )
 
+    async def stand_up(self) -> None:
+        """Bring the robot up from a crouched/resting posture."""
+        logger.info("StandUp...")
+        await self.conn.datachannel.pub_sub.publish_request_new(
+            RTC_TOPIC["SPORT_MOD"], {"api_id": SPORT_CMD["StandUp"]}
+        )
+
+    async def stand_down(self) -> None:
+        """Move the robot into its crouched/resting posture."""
+        logger.info("StandDown...")
+        await self.conn.datachannel.pub_sub.publish_request_new(
+            RTC_TOPIC["SPORT_MOD"], {"api_id": SPORT_CMD["StandDown"]}
+        )
+
     async def send_velocity(self, x: float = 0, y: float = 0, z: float = 0) -> None:
         """Send velocity command.
 
@@ -388,6 +402,74 @@ class Go2Robot:
         await self.conn.datachannel.pub_sub.publish_request_new(
             RTC_TOPIC["SPORT_MOD"], {"api_id": SPORT_CMD["StopMove"]}
         )
+
+    async def stop_and_cool(
+        self,
+        *,
+        resume_temp_c: int = 55,
+        poll_interval_s: float = 5.0,
+        log_interval_s: float = 30.0,
+        telemetry_max_age_s: float = 15.0,
+        lock_wait_s: float = 1.0,
+        crouch_wait_s: float = 3.0,
+        stand_wait_s: float = 2.0,
+        stand_on_resume: bool = True,
+        hold_forever: bool = False,
+    ) -> bool:
+        """Stop, crouch, and wait for all four thigh motors to cool.
+
+        The four monitored leg motors are the thigh/shoulder motors exposed by
+        ``MotorState.thighs``. When ``hold_forever`` is true this enters the
+        same crouched cooling posture and keeps logging temperatures until the
+        process is interrupted.
+        """
+        log_banner("COOLING MODE", level="warning", char="!", logger=logger)
+        await self.stop()
+        await asyncio.sleep(0.2)
+        await self.balance_stand()
+        await asyncio.sleep(max(lock_wait_s, 0.0))
+        await self.stand_down()
+        await asyncio.sleep(max(crouch_wait_s, 0.0))
+
+        last_log = 0.0
+        poll_s = max(poll_interval_s, 0.1)
+        while True:
+            ms = self.get_motor_state(max_age=telemetry_max_age_s)
+            now = time.time()
+
+            if ms is None:
+                if log_interval_s <= 0 or now - last_log >= log_interval_s:
+                    logger.warning(
+                        "COOLING | waiting for fresh motor telemetry "
+                        f"(max age {telemetry_max_age_s:.1f}s)"
+                    )
+                    last_log = now
+                await asyncio.sleep(poll_s)
+                continue
+
+            thighs = ms.thighs
+            thigh_str = " ".join(f"{leg}={temp}C" for leg, temp in thighs.items())
+            should_log = log_interval_s <= 0 or now - last_log >= log_interval_s
+            if should_log or (not hold_forever and ms.max_thigh <= resume_temp_c):
+                logger.info(
+                    f"COOLING | max_thigh={ms.max_thigh}C "
+                    f"target<={resume_temp_c}C | {thigh_str}"
+                )
+                last_log = now
+
+            if not hold_forever and ms.max_thigh <= resume_temp_c:
+                log_banner(
+                    f"COOLED | max thigh {ms.max_thigh}C <= {resume_temp_c}C",
+                    logger=logger,
+                )
+                if stand_on_resume:
+                    await self.stand_up()
+                    await asyncio.sleep(max(stand_wait_s, 0.0))
+                    await self.balance_stand()
+                    await asyncio.sleep(0.5)
+                return True
+
+            await asyncio.sleep(poll_s)
 
     async def prepare_for_navigation(self) -> None:
         """Full preparation sequence before issuing motion commands."""

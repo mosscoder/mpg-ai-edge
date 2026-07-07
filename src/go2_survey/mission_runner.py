@@ -226,6 +226,7 @@ async def run_mission(runner: MissionRunner) -> bool:
         max_hacc=settings.navigation.max_hacc,
         gps_timeout=settings.navigation.mid_mission_fix_timeout,
         imu_recalibrate_on_arrival=settings.navigation.imu_recalibrate_on_arrival,
+        cooling_settings=settings.cooling,
     )
 
     health_task: asyncio.Task | None = None
@@ -288,6 +289,20 @@ async def run_mission(runner: MissionRunner) -> bool:
         health_task = asyncio.create_task(
             health.run_health_logger(robot, health_monitor)
         )
+
+        if settings.mode == "cooling_test":
+            log_banner("PHASE 4: COOLING TEST", char="-", logger=logger)
+            success = await _run_cooling_test_route(
+                settings=settings,
+                waypoints=waypoints,
+                robot=robot,
+                navigator=navigator,
+                health_monitor=health_monitor,
+            )
+            if not success:
+                return False
+            log_banner("MISSION COMPLETE", logger=logger)
+            return True
 
         capture_strategy = build_strategy(settings.capture)
         if settings.capture.strategy != "none":
@@ -465,6 +480,133 @@ async def run_mission(runner: MissionRunner) -> bool:
         except Exception:
             logger.debug("gps.disconnect raised during teardown", exc_info=True)
         logger.info("Connections closed")
+
+
+async def _run_cooling_test_route(
+    *,
+    settings: MissionSettings,
+    waypoints: list[Waypoint],
+    robot: Go2Robot,
+    navigator: WaypointNavigator,
+    health_monitor: health.HealthMonitor,
+) -> bool:
+    """Two-waypoint thermal-interlock exercise.
+
+    Alternates between the tennis-court waypoint pair and performs the old
+    quadrat-style cardinal turns without enabling video or writing frames. Once
+    the cooling interlock has fired at least once, it visits the other waypoint
+    one final time and then stays in crouched cooling mode until interrupted.
+    """
+    if len(waypoints) != 2:
+        logger.error("cooling_test mode requires exactly two waypoints")
+        return False
+    if not settings.cooling.enabled:
+        logger.warning(
+            "cooling_test mode is running with [cooling] enabled=false; "
+            "it will alternate forever unless cooling is enabled"
+        )
+
+    target_idx = 0
+    visit_count = 0
+    work_bearings = (0.0, 90.0, 180.0, 270.0)
+
+    log_banner(
+        "COOLING TEST | alternate two waypoints until one cooldown",
+        char="-",
+        logger=logger,
+    )
+
+    while navigator.cooldown_count < 1:
+        before = navigator.cooldown_count
+        wp = waypoints[target_idx]
+        log_banner(
+            f"COOLING TEST WAYPOINT {visit_count + 1}: {wp.name}",
+            logger=logger,
+        )
+        if not await navigator.navigate_to(wp):
+            logger.error(f"Cooling test failed to reach {wp.name}")
+            return False
+
+        visit_count += 1
+        health_monitor.emit_leg(robot, visit_count, visit_count)
+        if navigator.cooldown_count > before:
+            break
+
+        cooled_during_work = await _run_cooling_test_work(
+            navigator=navigator,
+            bearings=work_bearings,
+            settle_time_s=settings.capture.settle_time,
+            turn_tolerance_deg=settings.capture.turn_tolerance_deg,
+        )
+        if cooled_during_work is None:
+            return False
+        if cooled_during_work:
+            break
+
+        target_idx = 1 - target_idx
+
+    final_idx = 1 - target_idx
+    final_wp = waypoints[final_idx]
+    log_banner(
+        f"COOLING TEST FINAL WAYPOINT: {final_wp.name}",
+        char="-",
+        logger=logger,
+    )
+    if not await navigator.navigate_to(final_wp):
+        logger.error(f"Cooling test failed to reach final waypoint {final_wp.name}")
+        return False
+
+    visit_count += 1
+    health_monitor.emit_leg(robot, visit_count, visit_count)
+
+    log_banner(
+        "COOLING TEST FINAL HOLD | crouched cooldown until interrupted",
+        level="warning",
+        char="!",
+        logger=logger,
+    )
+    c = settings.cooling
+    await robot.stop_and_cool(
+        resume_temp_c=c.resume_temp_c,
+        poll_interval_s=c.poll_interval_s,
+        log_interval_s=c.log_interval_s,
+        telemetry_max_age_s=c.telemetry_max_age_s,
+        lock_wait_s=c.lock_wait_s,
+        crouch_wait_s=c.crouch_wait_s,
+        stand_wait_s=c.stand_wait_s,
+        stand_on_resume=False,
+        hold_forever=True,
+    )
+    return True
+
+
+async def _run_cooling_test_work(
+    *,
+    navigator: WaypointNavigator,
+    bearings: tuple[float, ...],
+    settle_time_s: float,
+    turn_tolerance_deg: float,
+) -> bool | None:
+    """Run rotating-quadrat-style work without image capture.
+
+    Returns True when cooldown fired during the work, False when the work
+    completed without cooldown, and None on turn failure.
+    """
+    before = navigator.cooldown_count
+    log_banner("COOLING TEST WORK | cardinal turns, no capture", char="-", logger=logger)
+    for bearing in bearings:
+        if not await navigator.turn_to_bearing(
+            bearing,
+            tolerance_deg=turn_tolerance_deg,
+            timeout=20.0,
+        ):
+            logger.error(f"Cooling test turn to {bearing:.0f} deg failed")
+            return None
+        if navigator.cooldown_count > before:
+            return True
+        if settle_time_s > 0:
+            await asyncio.sleep(settle_time_s)
+    return navigator.cooldown_count > before
 
 
 async def _run_static(runner: MissionRunner, settings: MissionSettings) -> bool:

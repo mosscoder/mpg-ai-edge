@@ -7,6 +7,8 @@
 
 name        = "TEMPLATE"
 description = "Replace with a one-line description of what this mission does"
+# mode defaults to "nav". Other supported modes include "cooling_test",
+# "static_camera", "static_geotag", "probe_gps", and "probe_lidar".
 
 # Run outputs (logs, captures, sidecars) default to <mission>/runs/ inside
 # the repo. Set output_dir to keep field data out of the repo — runs then
@@ -50,6 +52,21 @@ mid_mission_fix_timeout = 60     # seconds — max pause once underway before ab
 max_rtcm_age_s          = 5.0    # seconds — beyond this, RTK readings are treated as "coasting"
 stabilization_period_s     = 60   # seconds — robot stationary after initial fix, lets RTK soak to Fixed (0 disables)
 stabilization_early_exit_s = 3.0  # seconds — if RTK Fixed + active corrections held this long, exit dwell early (0 disables)
+
+# [cooling] block is optional. By default, navigation pauses as soon as the
+# hottest thigh/shoulder motor reaches 70 C, crouches the robot, and resumes
+# only after all four thigh motors are at or below 55 C. Uncomment to retune
+# or set enabled=false to disable.
+# [cooling]
+# enabled             = true
+# trigger_temp_c      = 70
+# resume_temp_c       = 55
+# poll_interval_s     = 5.0
+# log_interval_s      = 30.0
+# telemetry_max_age_s = 15.0
+# lock_wait_s         = 1.0
+# crouch_wait_s       = 3.0
+# stand_wait_s        = 2.0
 
 # [capture] block is optional — uncomment + set strategy to enable.
 # Captures land under <run_dir>/<output_subdir>/, co-located with

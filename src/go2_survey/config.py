@@ -98,6 +98,21 @@ class NavigationSettings:
 
 
 @dataclass
+class CoolingSettings:
+    """Thermal interlock settings for motor-temperature cooldowns."""
+
+    enabled: bool = True
+    trigger_temp_c: int = 70
+    resume_temp_c: int = 55
+    poll_interval_s: float = 5.0
+    log_interval_s: float = 30.0
+    telemetry_max_age_s: float = 15.0
+    lock_wait_s: float = 1.0
+    crouch_wait_s: float = 3.0
+    stand_wait_s: float = 2.0
+
+
+@dataclass
 class ProbeSettings:
     """Settings for mode = "probe_gps" diagnostic missions."""
 
@@ -146,7 +161,7 @@ class CaptureSettings:
 class MissionSettings:
     name: str = ""
     description: str = ""
-    mode: str = "nav"  # "nav" | "static_camera" | "static_geotag" | "probe_gps" | "probe_lidar"
+    mode: str = "nav"  # "nav" | "cooling_test" | "static_camera" | "static_geotag" | "probe_gps" | "probe_lidar"
     # Root directory for run outputs (logs, captures, sidecars, manifest).
     # Empty (default) keeps runs at <mission_dir>/runs/ — tracked in the
     # repo, the historical layout. Set a path to keep field data out of
@@ -158,6 +173,7 @@ class MissionSettings:
     ntrip: NTRIPSettings = field(default_factory=NTRIPSettings)
     robot: RobotSettings = field(default_factory=RobotSettings)
     navigation: NavigationSettings = field(default_factory=NavigationSettings)
+    cooling: CoolingSettings = field(default_factory=CoolingSettings)
     probe: ProbeSettings = field(default_factory=ProbeSettings)
     capture: CaptureSettings = field(default_factory=CaptureSettings)
 
@@ -293,6 +309,7 @@ def load_mission_config(mission_dir: Path) -> MissionSettings:
     _apply_section(cfg.ntrip, ntrip_section)
     _apply_section(cfg.robot, data.get("robot", {}))
     _apply_section(cfg.navigation, data.get("navigation", {}))
+    _apply_section(cfg.cooling, data.get("cooling", {}))
     _apply_section(cfg.probe, data.get("probe", {}))
     _apply_section(cfg.capture, data.get("capture", {}))
     _apply_env_overrides(cfg)

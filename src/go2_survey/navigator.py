@@ -5,7 +5,7 @@ import logging
 import math
 import time
 from collections import deque
-from typing import NamedTuple
+from typing import TYPE_CHECKING, NamedTuple
 
 from go2_survey.geometry import (
     calculate_bearing,
@@ -17,6 +17,9 @@ from go2_survey.gps import GPSManager, RTKPosition
 from go2_survey.logging_utils import log_banner
 from go2_survey.robot import Go2Robot
 from go2_survey.waypoints import Waypoint
+
+if TYPE_CHECKING:
+    from go2_survey.config import CoolingSettings
 
 logger = logging.getLogger(__name__)
 
@@ -89,6 +92,7 @@ class WaypointNavigator:
         calibration_timeout: float = 30.0,
         calibration_hacc: float = 0.1,
         imu_recalibrate_on_arrival: bool = True,
+        cooling_settings: "CoolingSettings | None" = None,
     ):
         self.gps = gps
         self.robot = robot
@@ -101,6 +105,8 @@ class WaypointNavigator:
         self.calibration_timeout = calibration_timeout
         self.calibration_hacc = calibration_hacc
         self.imu_recalibrate_on_arrival = imu_recalibrate_on_arrival
+        self.cooling = cooling_settings
+        self.cooldown_count = 0
 
         self._running = False
         self._paused = False
@@ -227,6 +233,39 @@ class WaypointNavigator:
             await asyncio.sleep(0.5)
         return False
 
+    async def _maybe_stop_for_cooling(self, context: str) -> bool:
+        """Enter cooldown if the four thigh motors exceed the configured limit."""
+        cooling = self.cooling
+        if cooling is None or not cooling.enabled:
+            return False
+
+        ms = self.robot.get_motor_state(max_age=cooling.telemetry_max_age_s)
+        if ms is None or ms.max_thigh < cooling.trigger_temp_c:
+            return False
+
+        thigh_str = " ".join(f"{leg}={temp}C" for leg, temp in ms.thighs.items())
+        log_banner(
+            f"THERMAL COOLING | {context} | max thigh {ms.max_thigh}C "
+            f">= {cooling.trigger_temp_c}C | {thigh_str}",
+            level="warning",
+            char="!",
+            logger=logger,
+        )
+        cooled = await self.robot.stop_and_cool(
+            resume_temp_c=cooling.resume_temp_c,
+            poll_interval_s=cooling.poll_interval_s,
+            log_interval_s=cooling.log_interval_s,
+            telemetry_max_age_s=cooling.telemetry_max_age_s,
+            lock_wait_s=cooling.lock_wait_s,
+            crouch_wait_s=cooling.crouch_wait_s,
+            stand_wait_s=cooling.stand_wait_s,
+        )
+        if cooled:
+            self.cooldown_count += 1
+            self._traj_buf.clear()
+            self._recal_last_t = None
+        return cooled
+
     async def _run_cal_walk(self, timeout: float) -> bool:
         """Walk straight forward (vz=0) until the IMU<->north offset is set.
 
@@ -266,6 +305,13 @@ class WaypointNavigator:
                     await self.robot.balance_stand()
                     await asyncio.sleep(1.0)
                     return True
+
+            if await self._maybe_stop_for_cooling("imu calibration"):
+                cal_start = time.time()
+                self._calibration_start_pos = None
+                self._calibration_start_time = None
+                self._calibration_last_progress = None
+                continue
 
             await self.robot.send_velocity(x=self.max_velocity)
             await asyncio.sleep(0.2)
@@ -390,6 +436,14 @@ class WaypointNavigator:
                 end.latitude, end.longitude,
                 pos.latitude, pos.longitude,
             )
+
+            if await self._maybe_stop_for_cooling(leg_label):
+                leg_start = time.time()
+                prev_t = leg_start
+                prev_along = along
+                pos_hist.clear()
+                last_status = 0.0
+                continue
 
             # Fire a capture at each interval mark crossed this tick.
             if do_capture:
@@ -701,6 +755,13 @@ class WaypointNavigator:
                         )
                         error = normalize_angle(bearing - current_heading)
 
+                        if await self._maybe_stop_for_cooling(
+                            f"turn to {waypoint.name}"
+                        ):
+                            nav_start = time.time()
+                            turn_last_log = 0.0
+                            continue
+
                         now = time.time()
                         if now - turn_last_log >= 2.0:
                             logger.info(
@@ -836,6 +897,11 @@ class WaypointNavigator:
                 self._pause_last_progress = None
                 await self.robot.balance_stand()
                 await asyncio.sleep(1.0)
+
+            if await self._maybe_stop_for_cooling(f"navigate_to {waypoint.name}"):
+                nav_start = time.time()
+                self._nav_last_status = None
+                continue
 
             distance = haversine_distance(
                 pos.latitude, pos.longitude, waypoint.latitude, waypoint.longitude
@@ -1260,6 +1326,13 @@ class WaypointNavigator:
             heading = self.get_calibrated_heading()
             if heading is None:
                 await asyncio.sleep(0.1)
+                continue
+
+            if await self._maybe_stop_for_cooling(
+                f"turn_to_bearing {target:.0f}deg"
+            ):
+                t_start = time.time()
+                last_log = 0.0
                 continue
 
             error = normalize_angle(target - heading)
